@@ -1,0 +1,13 @@
+services:
+  front-end:
+    build: ./front-end
+    ports:
+      - "3000:3000"
+    networks:
+      - my-app-network
+
+
+networks:
+  my-app-network:
+    name: my-app-network
+    driver: bridge
