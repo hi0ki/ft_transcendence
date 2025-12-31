@@ -1,13 +1,41 @@
-services:
-  front-end:
-    build: ./front-end
-    ports:
-      - "5173:5173"
-    networks:
-      - my-app-network
+  services:
+    # Front-End Service
+    front-end:
+      container_name: front-end
+      build: ./front-end
+      restart: always
+      ports:
+        - "5173:5173"
+      networks:
+        - my-app-network
+      volumes:
+        - front-end-data:/app
+        - /app/node_modules
+
+    # Nginx Service
+    nginx:
+      container_name: nginx
+      build: ./back-end/nginx
+      restart: always
+      ports:
+        - "8080:80"
+      depends_on:
+        - front-end
+      networks:
+        - my-app-network
 
 
-networks:
-  my-app-network:
-    name: my-app-network
-    driver: bridge
+  # Volumes
+  volumes:
+    front-end-data:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: ./front-end
+
+  # Networks
+  networks:
+    my-app-network:
+      name: my-app-network
+      driver: bridge
