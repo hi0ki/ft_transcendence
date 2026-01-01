@@ -1,0 +1,2 @@
+#how to connect two tables
+    - foreign key : u just link them with id like user have profile and u take the user id and put it on the profiles table
