@@ -1,1 +1,7 @@
-walo lyouma ahahahhahhaa
+FROM postgres:15
+
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=ft_transcendence
+
+EXPOSE 5432
