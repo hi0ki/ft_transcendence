@@ -7,5 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    // watch: {
+    //   usePolling: true,        // CRITICAL for Alpine/Docker
+    //   interval: 1000           // Check every second
+    // }
   }
 }) 
