@@ -1,6 +1,6 @@
-FROM node:20-bullseye
+FROM node:20-alpine
 
-RUN apt-get update
+RUN apk add bash
 
 COPY . /app
 

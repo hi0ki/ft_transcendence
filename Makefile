@@ -6,3 +6,12 @@ down :
 
 logs :
 	docker compose logs -f
+
+ps :
+	docker compose ps
+
+restart :
+	docker compose restart
+
+clean :
+	docker system prune -a --volumes -f

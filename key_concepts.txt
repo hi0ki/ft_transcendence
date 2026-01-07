@@ -1,2 +1,16 @@
 #how to connect two tables
     - foreign key : u just link them with id like user have profile and u take the user id and put it on the profiles table
+
+# for real-time chat
+    1. @nestjs/websockets (Native) ✅ Recommended
+        Built into NestJS
+        Works with socket.io or ws library
+        Easy integration with NestJS architecture
+
+    2. @nestjs/platform-socket.io ✅ Most Popular for Chat
+        Uses Socket.IO (best for real-time chat)
+        Auto-reconnection
+        Room support (perfect for chat rooms)
+        Fallback to HTTP long-polling
+
+
