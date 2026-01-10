@@ -1,16 +1,63 @@
-# create tables "CREATE TABLE" 
-CREATE TABLE cars (
-    brand VARCHAR(255)
-    model VARCHAR(255)
-    year int
-);
 
-# insert row "INSERT INTO"
-INSERT INTO cars (brand, model, year)
-VALUES ('ford', 'mustang', 2020);
+### create tables "CREATE TABLE" 
+    CREATE TABLE cars (
+        brand VARCHAR(255)
+        model VARCHAR(255)
+        year int
+    );
 
-    # to insert multi values
-VALUES 
-    ('ford', 'mustang', 2020)
-    ('BWM', 'M4', 2025)
-    ('ford', 'V1', 2021);
+### insert row "INSERT INTO"
+
+    INSERT INTO cars (brand, model, year)
+    VALUES ('ford', 'mustang', 2020);
+
+        # to insert multi values
+    VALUES 
+        ('ford', 'mustang', 2020)
+        ('BWM', 'M4', 2025)
+        ('ford', 'V1', 2021);
+
+### get data
+
+    SELECT |what u want to get| FROM |TABLE|  
+    SELECT  brand, model, year  FROM  cars;
+
+    // or get all the data
+        SELECT * FROM  cars;
+
+### add column OR edit the column
+
+    - syntax
+    ALTER TABLE 'table name' // after that use ADD
+    ADD 'column name' 'type';
+            |
+            v
+    ALTER TABLE cars
+    ADD color VARCHAR(255);
+
+     ## CHANGE THE TYPE
+        ALTER TABLE 'table name'
+        ALTER COLUMN 'column name' TYPE newType;
+     
+     ## REMOVE A COLUMN 
+        ALTER TABLE 'table name'
+        DROP COLUMN 'column name;
+
+### update value
+
+    UPDATE 'table name'
+    SET 'column name'=value // u can stop here if u want to edit everything
+    // multi column syntax -> 'column name 1'=value , 'column name 2'=value
+    WHERE brand='ford'; // 'brand' just an exmaple
+
+### DELETE rows
+    
+    DELETE TABLE 'table name'; // delete all
+
+    DELETE TABLE 'table name'
+    WHERE brand='ford'; // just rows with ford brand;
+
+### DROP table = delete table 
+    
+    DROP table 'table name';
+

@@ -23,6 +23,16 @@
         - front-end
       networks:
         - my-app-network
+    postgres:
+      container_name: postgres
+      build: ./back-end/database
+      restart: always
+      ports:
+        - "5432:5432"
+      networks:
+        - my-app-network
+      volumes:
+        - postgres-data:/var/lib/postgresql/data
 
 
   # Volumes
@@ -33,6 +43,12 @@
         type: none
         o: bind
         device: ./front-end
+    postgres-data:
+      driver: local
+      driver_opts:
+        type: none
+        o: bind
+        device: ./back-end/database/data
 
   # Networks
   networks:
