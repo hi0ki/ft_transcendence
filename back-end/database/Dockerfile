@@ -4,6 +4,6 @@ RUN apk add bash
 
 ENV POSTGRES_USER=postgres
 ENV POSTGRES_PASSWORD=postgres
-ENV POSTGRES_DB=ft_transcendence
+ENV POSTGRES_DB=ft_transc
 
 EXPOSE 5432
