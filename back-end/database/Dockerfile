@@ -1,5 +1,7 @@
 FROM postgres:15-alpine
 
+RUN apk add bash
+
 ENV POSTGRES_USER=postgres
 ENV POSTGRES_PASSWORD=postgres
 ENV POSTGRES_DB=ft_transcendence

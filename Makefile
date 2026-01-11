@@ -13,5 +13,5 @@ ps :
 restart :
 	docker compose restart
 
-clean :
+clean : down
 	docker system prune -a --volumes -f
