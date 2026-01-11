@@ -13,4 +13,5 @@
         Room support (perfect for chat rooms)
         Fallback to HTTP long-polling
 
-
+# for friends list 
+    Store both directions (AB + BA) concept
