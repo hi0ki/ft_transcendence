@@ -25,8 +25,8 @@ enum post_type {
 model posts {
 	id         		Int       @id @default(autoincrement())
 	user_id    		Int
-	type					post_type
-	title					String
-	content				String
-	created_at    DateTime  @default(now())
+	type			post_type
+	title			String
+	content			String
+	created_at    	DateTime  @default(now())
 }

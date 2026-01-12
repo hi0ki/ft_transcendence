@@ -12,7 +12,7 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
-CREATE TABLE "tables" (
+CREATE TABLE "posts" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "type" "post_type" NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE "tables" (
     "content" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "tables_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "posts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

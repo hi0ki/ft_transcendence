@@ -55,6 +55,51 @@ model Example {
   @@map("examples")
 }
 
+// ============================================
+// 11. GENERATOR & DATASOURCE (TOP OF FILE)
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+  // ↑ Generates JavaScript/TypeScript code to use Prisma
+}
+
+datasource db {
+  provider = "postgresql"
+  // ↑ Which database (postgresql, mysql, sqlite, etc.)
+  
+  url = env("DATABASE_URL")
+  // ↑ Connection string from .env file
+}
+
+
+// ============================================
+// 12. READING THIS FILE
+// ============================================
+
+/*
+WORDS YOU'LL SEE:
+
+model       = Table (like "users" table)
+Int         = Integer/number
+String      = Text
+Boolean     = True/false
+DateTime    = Date and time
+@id         = Primary key (unique identifier)
+@unique     = No duplicates allowed
+@default    = Default value
+@relation   = Connection to another table
+?           = Optional (can be empty/null)
+[]          = Array/list (one-to-many)
+@@map       = Actual table name in database
+@@unique    = Combination must be unique
+
+SYMBOLS:
+@           = Attribute for single field
+@@          = Attribute for whole model/table
+?           = Optional/nullable
+[]          = Array/multiple
+*/
 
 // ============================================
 // 3. ATTRIBUTES (@ symbols)
@@ -301,48 +346,3 @@ model UserRoom {
 }
 
 
-// ============================================
-// 11. GENERATOR & DATASOURCE (TOP OF FILE)
-// ============================================
-
-generator client {
-  provider = "prisma-client-js"
-  // ↑ Generates JavaScript/TypeScript code to use Prisma
-}
-
-datasource db {
-  provider = "postgresql"
-  // ↑ Which database (postgresql, mysql, sqlite, etc.)
-  
-  url = env("DATABASE_URL")
-  // ↑ Connection string from .env file
-}
-
-
-// ============================================
-// 12. READING THIS FILE
-// ============================================
-
-/*
-WORDS YOU'LL SEE:
-
-model       = Table (like "users" table)
-Int         = Integer/number
-String      = Text
-Boolean     = True/false
-DateTime    = Date and time
-@id         = Primary key (unique identifier)
-@unique     = No duplicates allowed
-@default    = Default value
-@relation   = Connection to another table
-?           = Optional (can be empty/null)
-[]          = Array/list (one-to-many)
-@@map       = Actual table name in database
-@@unique    = Combination must be unique
-
-SYMBOLS:
-@           = Attribute for single field
-@@          = Attribute for whole model/table
-?           = Optional/nullable
-[]          = Array/multiple
-*/
