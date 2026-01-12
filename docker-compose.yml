@@ -31,6 +31,26 @@
         - "5433:5432"
       networks:
         - my-app-network
+    core_service:
+      container_name: core_service
+      build: ./back-end/core
+      restart: always
+      ports:
+        - "3000:3000"
+      depends_on:
+        - postgres
+      networks:
+        - my-app-network
+    chat_service:
+      container_name: chat_service
+      build: ./back-end/chat
+      restart: always
+      ports:
+        - "3001:3001"
+      depends_on:
+        - postgres
+      networks:
+        - my-app-network
 
 
   # Volumes
