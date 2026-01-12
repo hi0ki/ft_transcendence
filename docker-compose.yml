@@ -9,7 +9,7 @@
       networks:
         - my-app-network
       volumes:
-        - front-end-data:/app
+        - ./front-end:/app
         - /app/node_modules
 
     # Nginx Service
@@ -52,15 +52,6 @@
       networks:
         - my-app-network
 
-
-  # Volumes
-  volumes:
-    front-end-data:
-      driver: local
-      driver_opts:
-        type: none
-        o: bind
-        device: ./front-end   
   # Networks
   networks:
     my-app-network:
