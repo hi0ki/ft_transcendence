@@ -31,6 +31,12 @@
         - "5433:5432"
       networks:
         - my-app-network
+      environment:
+        - back-end/database/.env
+      volumes:
+        - /back-end/database/prisma:/prisma
+      #   - node_modules:back-end/database/node_modules
+
     core_service:
       container_name: core_service
       build: ./back-end/core

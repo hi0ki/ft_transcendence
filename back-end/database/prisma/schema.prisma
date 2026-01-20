@@ -30,3 +30,4 @@ model posts {
 	content			String
 	created_at    	DateTime  @default(now())
 }
+
