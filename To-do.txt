@@ -1,5 +1,5 @@
--DATABASE/prisma : create the schema
--create the directories
+-DATABASE/prisma : create the schema : ✅
+-create the directories : ✅
 -CI/CD : just CI
     CI/CD is something you code and configure to automate 
     checks and deployments using GitHub or similar platforms.
