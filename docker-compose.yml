@@ -1,17 +1,17 @@
   services:
     # Front-End Service
     front-end:
-      container_name: front-end
       build: ./front-end
+      container_name: front-end
       restart: always
       ports:
         - "5173:5173"
       networks:
         - my-app-network
-      volumes:
-        - ./front-end:/app
-        - /app/node_modules
-
+      # volumes:
+      #   - ./front-end:/app
+      #   - /app/node_modules
+      
     # Nginx Service
     nginx:
       container_name: nginx
@@ -34,7 +34,11 @@
 
     core_service:
       container_name: core_service
-      build: ./back-end/core
+      build:
+       context: back-end
+       dockerfile: Dockerfile
+       args:
+        - app_name=core
       restart: always
       ports:
         - "3000:3000"
@@ -47,7 +51,7 @@
       build: ./back-end/chat
       restart: always
       ports:
-        - "3001:3001"
+        - "3001:3000"
       depends_on:
         - postgres
       networks:
@@ -57,7 +61,7 @@
       build: ./back-end/auth
       restart: always
       ports:
-        - "3002:3002"
+        - "3002:3000"
       depends_on:
         - postgres
       networks:
