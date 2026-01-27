@@ -5,3 +5,5 @@
     checks and deployments using GitHub or similar platforms.
 
 -Move prisma to the service run first (AUTH)
+
+- crud prisma
