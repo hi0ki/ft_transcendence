@@ -6,7 +6,6 @@ ARG app_name
 
 WORKDIR /app
 
-#from app_name
 COPY ${app_name}/ /app
 
 RUN npm install
