@@ -2,9 +2,11 @@ FROM node:20-alpine
 
 RUN apk add bash
 
+ARG app_name
+
 WORKDIR /app
 
-COPY . .
+COPY ${app_name}/ /app
 
 RUN npm install
 
