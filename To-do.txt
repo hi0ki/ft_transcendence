@@ -6,4 +6,9 @@
 
 -Move prisma to the service run first (AUTH)
 
-- crud prisma
+######## to do today
+    - crud prisma
+    - user management
+    - CV ta3 hoffsaa
+    - test l CV's
+    - NestJS Architecture Overview
