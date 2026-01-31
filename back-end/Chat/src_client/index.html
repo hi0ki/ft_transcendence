@@ -1,4 +1,4 @@
-<!doctype html>
+<!-- <!doctype html>
 <html class="no-js" lang="">
 
 <head>
@@ -20,4 +20,45 @@
   <script src="./chat-socket.js"></script>
 </body>
 
+</html> -->
+
+
+
+
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat</title>
+</head>
+<body>
+  <div>
+    <strong>Your info:</strong> <span id="me">...</span>
+  </div>
+
+  <div style="display:flex; gap:20px; margin-top:10px;">
+    <div style="width:200px;">
+      <h3>Online Users</h3>
+      <ul id="users"></ul>
+    </div>
+
+    <div style="flex:1;">
+      <h3>Rooms</h3>
+      <ul id="rooms"></ul>
+
+      <hr />
+
+      <div id="roomArea" style="display:none;">
+        <h4 id="roomTitle"></h4>
+        <ul id="roomMessages"></ul>
+        <input id="roomInput" type="text" placeholder="Type message..." />
+        <button id="sendRoomBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="./chat-socket.js"></script>
+</body>
 </html>
