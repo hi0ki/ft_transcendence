@@ -6,9 +6,11 @@ ARG app_name
 
 WORKDIR /app
 
-COPY ${app_name}/ /app
+COPY ${app_name}/package*.json .
 
 RUN npm install
+
+COPY ${app_name}/ .
 
 EXPOSE 3000
 
