@@ -1,6 +1,6 @@
 FROM postgres:15-alpine
 
-RUN apk add bash
+RUN apk add bash npm
 
 ENV POSTGRES_USER=postgres
 ENV POSTGRES_PASSWORD=postgres

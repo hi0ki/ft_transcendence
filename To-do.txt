@@ -1,6 +1,15 @@
--DATABASE/prisma : create the schema
--create the directories
+-DATABASE/prisma : create the schema : ✅
+-create the directories : ✅
 -CI/CD : just CI
     CI/CD is something you code and configure to automate 
     checks and deployments using GitHub or similar platforms.
 
+<<<<<<< HEAD
+=======
+-Move prisma to the service run first (AUTH)
+
+######## to do today
+    - crud prisma
+    - user management
+    - NestJS Architecture Overview
+>>>>>>> 4f763dccc471c240ebeb5e7da1e041703eca5da7

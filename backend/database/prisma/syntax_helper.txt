@@ -1,0 +1,348 @@
+// ============================================
+// PRISMA SYNTAX GUIDE FOR BEGINNERS
+// ============================================
+
+// ============================================
+// 1. BASIC MODEL (TABLE)
+// ============================================
+
+model User {
+  id    Int    @id @default(autoincrement())
+  //↑   ↑      ↑   ↑
+  //│   │      │   └─ Auto-increment (1, 2, 3...)
+  //│   │      └─ This is the primary key
+  //│   └─ Type (integer)
+  //└─ Field name (column name)
+  
+  email String @unique
+  //    ↑      ↑
+  //    │      └─ Must be unique (no duplicates)
+  //    └─ Type (text)
+  
+  name  String?
+  //           ↑
+  //           └─ Question mark = optional (can be null)
+  
+  @@map("users")
+  // ↑
+  // └─ Table name in database (lowercase)
+}
+
+
+// ============================================
+// 2. FIELD TYPES (COMMON ONES)
+// ============================================
+
+model Example {
+  // Numbers
+  age       Int          // Whole number
+  price     Float        // Decimal number (19.99)
+  
+  // Text
+  name      String       // Any text
+  email     String       // Text
+  
+  // True/False
+  isActive  Boolean      // true or false
+  
+  // Dates
+  createdAt DateTime     // Date and time
+  birthDate DateTime     // Date
+  
+  // Other
+  id        String       // Can be text too
+  
+  @@map("examples")
+}
+
+// ============================================
+// 11. GENERATOR & DATASOURCE (TOP OF FILE)
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+  // ↑ Generates JavaScript/TypeScript code to use Prisma
+}
+
+datasource db {
+  provider = "postgresql"
+  // ↑ Which database (postgresql, mysql, sqlite, etc.)
+  
+  url = env("DATABASE_URL")
+  // ↑ Connection string from .env file
+}
+
+
+// ============================================
+// 12. READING THIS FILE
+// ============================================
+
+/*
+WORDS YOU'LL SEE:
+
+model       = Table (like "users" table)
+Int         = Integer/number
+String      = Text
+Boolean     = True/false
+DateTime    = Date and time
+@id         = Primary key (unique identifier)
+@unique     = No duplicates allowed
+@default    = Default value
+@relation   = Connection to another table
+?           = Optional (can be empty/null)
+[]          = Array/list (one-to-many)
+@@map       = Actual table name in database
+@@unique    = Combination must be unique
+
+SYMBOLS:
+@           = Attribute for single field
+@@          = Attribute for whole model/table
+?           = Optional/nullable
+[]          = Array/multiple
+*/
+
+// ============================================
+// 3. ATTRIBUTES (@ symbols)
+// ============================================
+
+model User {
+  id    Int    @id                           // Primary key
+  email String @unique                       // Must be unique
+  role  String @default("user")              // Default value
+  created DateTime @default(now())          // Default to current time
+  updated DateTime @updatedAt               // Auto-update timestamp
+  
+  @@map("users")                            // Table name
+  @@unique([email, username])               // Combo must be unique
+  @@index([email])                          // Speed up searches
+}
+
+
+// ============================================
+// 4. RELATIONSHIPS (FOREIGN KEYS)
+// ============================================
+
+// Pattern: ONE user has MANY posts
+
+model User {
+  id    Int    @id @default(autoincrement())
+  name  String
+  
+  posts Post[]  // ← User has many posts (array)
+  //    ↑
+  //    └─ Model name (singular, capitalized)
+  
+  @@map("users")
+}
+
+model Post {
+  id      Int    @id @default(autoincrement())
+  title   String
+  userId  Int    // ← Foreign key (points to User.id)
+  
+  user    User   @relation(fields: [userId], references: [id])
+  //      ↑                 ↑                  ↑
+  //      │                 │                  └─ Points to User.id
+  //      │                 └─ This field (userId)
+  //      └─ Model name
+  
+  @@map("posts")
+}
+
+
+// ============================================
+// 5. RELATIONSHIP EXPLANATION
+// ============================================
+
+/*
+@relation(
+  fields: [userId],      ← Which field here is the foreign key?
+  references: [id],      ← What does it point to in the other table?
+  onDelete: Cascade      ← What happens when parent is deleted?
+)
+
+onDelete options:
+- Cascade:  Delete this when parent is deleted
+- SetNull:  Set to null when parent is deleted
+- Restrict: Don't allow parent deletion if this exists
+*/
+
+
+// ============================================
+// 6. OPTIONAL vs REQUIRED
+// ============================================
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String              // Required (no ?)
+  name     String?             // Optional (has ?)
+  age      Int?                // Optional
+  
+  profile  Profile?            // Optional relation
+  posts    Post[]              // Array is always optional
+  
+  @@map("users")
+}
+
+
+// ============================================
+// 7. ONE-TO-ONE RELATIONSHIP
+// ============================================
+
+model User {
+  id      Int      @id @default(autoincrement())
+  email   String   @unique
+  
+  profile Profile?  // Optional one-to-one
+  
+  @@map("users")
+}
+
+model Profile {
+  id     Int    @id @default(autoincrement())
+  bio    String?
+  userId Int    @unique  // ← @unique makes it one-to-one!
+  
+  user   User   @relation(fields: [userId], references: [id])
+  
+  @@map("profiles")
+}
+
+
+// ============================================
+// 8. MANY-TO-MANY RELATIONSHIP
+// ============================================
+
+model User {
+  id    Int         @id @default(autoincrement())
+  name  String
+  
+  rooms UserRoom[]  // User in many rooms
+  
+  @@map("users")
+}
+
+model Room {
+  id    Int         @id @default(autoincrement())
+  name  String
+  
+  users UserRoom[]  // Room has many users
+  
+  @@map("rooms")
+}
+
+// Junction table (connects them)
+model UserRoom {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  roomId Int
+  
+  user   User @relation(fields: [userId], references: [id])
+  room   Room @relation(fields: [roomId], references: [id])
+  
+  @@unique([userId, roomId])  // Can't join same room twice
+  @@map("user_rooms")
+}
+
+
+// ============================================
+// 9. COMMON PATTERNS
+// ============================================
+
+// Pattern 1: User with timestamps
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+// Pattern 2: Soft delete (don't actually delete)
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  deletedAt DateTime? // If not null, user is "deleted"
+  
+  @@map("users")
+}
+
+// Pattern 3: Enum (limited choices)
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model User {
+  id   Int    @id @default(autoincrement())
+  role Role   @default(USER)  // Can only be USER, ADMIN, or MODERATOR
+  
+  @@map("users")
+}
+
+
+// ============================================
+// 10. COMPLETE EXAMPLE (CHAT APP)
+// ============================================
+
+model User {
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
+  username String    @unique
+  password String
+  avatar   String?
+  status   String    @default("offline")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  messages Message[]  // User has many messages
+  rooms    UserRoom[] // User in many rooms
+  
+  @@map("users")
+}
+
+model Room {
+  id        Int        @id @default(autoincrement())
+  name      String
+  type      String     @default("public")
+  createdAt DateTime   @default(now())
+  
+  // Relations
+  messages  Message[]  // Room has many messages
+  users     UserRoom[] // Room has many users
+  
+  @@map("rooms")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  roomId    Int?
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  
+  @@map("messages")
+}
+
+model UserRoom {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  roomId Int
+  role   String @default("member")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, roomId])
+  @@map("user_rooms")
+}
+
+
