@@ -5,8 +5,8 @@ set -eof pipefail
 cd /database
 
 until pg_isready; do
-  echo "Waiting for Postgres to start..."
-  sleep 2
+    echo "Waiting for Postgres to start..."
+    sleep 2
 done
 
 echo "Postgres started"

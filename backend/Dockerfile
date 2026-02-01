@@ -12,6 +12,4 @@ RUN npm install
 
 COPY ${app_name}/ .
 
-EXPOSE 3000
-
 CMD [ "npm" , "run", "start" ]
