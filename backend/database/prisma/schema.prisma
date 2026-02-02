@@ -9,10 +9,13 @@ datasource db {
 }
 
 model users {
-	id            Int       @id @default(autoincrement())
-	email         String    @unique
+	id            Int         @id @default(autoincrement())
+	email         String      @unique
 	passwordHash  String
-	created_at    DateTime  @default(now())
+	created_at    DateTime    @default(now())
+	posts         posts[]
+	comments      comments[]
+	reactions     reactions[]
 }
 
 // posts table with different types of posts
@@ -23,11 +26,78 @@ enum post_type {
 }
 
 model posts {
-	id         		Int       @id @default(autoincrement())
+	id         		Int         @id @default(autoincrement())
 	user_id    		Int
 	type			post_type
 	title			String
 	content			String
-	created_at    	DateTime  @default(now())
+	created_at    	DateTime    @default(now())
+	user			users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+	comments		comments[]
+	reactions		reactions[]
+
+	@@index([user_id])
+	@@index([created_at])
+}
+
+// Enum for reaction types
+enum reaction_type {
+	like
+	helpful
+	funny
+	insightful
+	celebrate
+}
+
+// Enum for target type (what the reaction is on)
+enum target_type {
+	post
+	comment
+}
+
+// Comments table with support for nested replies
+model comments {
+	id           Int         @id @default(autoincrement())
+	post_id      Int
+	user_id      Int
+	parent_id    Int?        // null for top-level comments, refers to parent comment for replies
+	content      String
+	is_deleted   Boolean     @default(false) // soft delete flag
+	created_at   DateTime    @default(now())
+	updated_at   DateTime    @updatedAt
+	
+	// Relations
+	post         posts       @relation(fields: [post_id], references: [id], onDelete: Cascade)
+	user         users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+	parent       comments?   @relation("CommentReplies", fields: [parent_id], references: [id], onDelete: Cascade)
+	replies      comments[]  @relation("CommentReplies")
+	reactions    reactions[]
+
+	@@index([post_id])
+	@@index([user_id])
+	@@index([parent_id])
+	@@index([created_at])
+}
+
+// Reactions table for both posts and comments
+model reactions {
+	id           Int            @id @default(autoincrement())
+	user_id      Int
+	post_id      Int?           // null if reacting to a comment
+	comment_id   Int?           // null if reacting to a post
+	type         reaction_type
+	created_at   DateTime       @default(now())
+	
+	// Relations
+	user         users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+	post         posts?         @relation(fields: [post_id], references: [id], onDelete: Cascade)
+	comment      comments?      @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+
+	// Unique constraints to prevent duplicate reactions
+	@@unique([user_id, post_id, type])      // One reaction type per user per post
+	@@unique([user_id, comment_id, type])   // One reaction type per user per comment
+	@@index([post_id])
+	@@index([comment_id])
+	@@index([user_id])
 }
 
