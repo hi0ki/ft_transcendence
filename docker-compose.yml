@@ -37,10 +37,10 @@
     core_service:
       container_name: core_service
       build:
-       context: backend
-       dockerfile: Dockerfile
-       args:
-        - app_name=core
+        context: backend
+        dockerfile: Dockerfile
+        args:
+          - app_name=core
       restart: always
       ports:
         - "3000:3000"
