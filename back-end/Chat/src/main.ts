@@ -7,8 +7,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS for HTTP requests
+  // Allow requests from browser (localhost:8080 via nginx) and direct access
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3001'],
     credentials: true,
   });
 
@@ -26,17 +27,17 @@ async function bootstrap() {
   // });
 
   // Serve static files from front-end
-const staticPath = join(__dirname, '../..', 'front-end/src/chat');
-app.useStaticAssets(staticPath);
+  const staticPath = join(__dirname, '../..', 'front-end/src/chat');
+  app.useStaticAssets(staticPath);
 
-// Serve index.html for all unmatched routes
-app.use((req, res, next) => {
-  if (!req.path.startsWith('/api') && !req.path.includes('.')) {
-    res.sendFile(join(staticPath, 'index.html'));
-  } else {
-    next();
-  }
-});
+  // Serve index.html for all unmatched routes
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api') && !req.path.includes('.')) {
+      res.sendFile(join(staticPath, 'index.html'));
+    } else {
+      next();
+    }
+  });
   await app.listen(3001, '0.0.0.0');
 }
 

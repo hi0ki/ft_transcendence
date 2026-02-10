@@ -1,4 +1,3 @@
-
 import {
   MessageBody,
   SubscribeMessage,
@@ -8,8 +7,10 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { randomUUID } from 'crypto';
 import { Server, Socket } from 'socket.io';
+import { ChatService } from './chat.service';
+import { Injectable } from '@nestjs/common';
+import { Message, Room } from './chat.interface';
 
 @WebSocketGateway({
   cors: {
@@ -17,182 +18,172 @@ import { Server, Socket } from 'socket.io';
     credentials: true,
   },
 })
+@Injectable()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
-  
-  private nextIndex = 1; // assign simple incrementing index
-  private users = new Map<string, number>(); // socketId -> index
-  
+
+  private nextIndex = 1;
+
+  constructor(private readonly chatService: ChatService) { }
+
   handleConnection(client: Socket) {
     const index = this.nextIndex++;
-    this.users.set(client.id, index);
+    const user = this.chatService.addUser(client.id, index);
+
     client.emit('welcome', { socketId: client.id, index });
     this.broadcastUserList();
+
+    console.log(`User connected: ${client.id} (index: ${index})`);
   }
-  
+
   handleDisconnect(client: Socket) {
-    this.users.delete(client.id);
+    this.chatService.removeUser(client.id);
     this.broadcastUserList();
+
+    console.log(`User disconnected: ${client.id}`);
   }
-  
+
   private broadcastUserList() {
-    const list = Array.from(this.users.entries()).map(([socketId, index]) => ({ socketId, index }));
-    this.server.emit('user_list', list);
+    const users = this.chatService.getAllUsers();
+    this.server.emit('user_list', users);
   }
-  
-  // Create a server-generated room and join both participants (if online)
+
+  // Create a room and join both participants
   @SubscribeMessage('create_room')
   async handleCreateRoom(
     @MessageBody() payload: { to: string; meta?: any },
-    @ConnectedSocket() client: Socket
-    ) {
-      const roomId = randomUUID();
-      await client.join(roomId);
-      
-      const participants = [{ socketId: client.id, index: this.users.get(client.id) }];
-      
-      const target = this.server.sockets.sockets.get(payload.to);
-      if (target) {
-        await target.join(roomId);
-        participants.push({ socketId: target.id, index: this.users.get(target.id) });
-        target.emit('room_created', { roomId, participants, createdBy: client.id, meta: payload.meta });
-      }
-      
-      client.emit('room_created', { roomId, participants, createdBy: client.id, meta: payload.meta });
-    }
-    
-    // Optionally let a client join an existing room by room id
-    @SubscribeMessage('join_room')
-    async handleJoinRoom(@MessageBody() payload: { roomId: string }, @ConnectedSocket() client: Socket) {
-      await client.join(payload.roomId);
-      client.emit('joined_room', { roomId: payload.roomId });
-    }
-    
-    @SubscribeMessage('leave_room')
-    async handleLeaveRoom(@MessageBody() payload: { roomId: string }, @ConnectedSocket() client: Socket) {
-      await client.leave(payload.roomId);
-      client.emit('left_room', { roomId: payload.roomId });
-    }
-    
-    // Send message to a room (only sockets that joined that room receive it)
-    @SubscribeMessage('room_message')
-    handleRoomMessage(
-      @MessageBody() payload: { roomId: string; message: string },
-      @ConnectedSocket() client: Socket
-      ) {
-        const fromIndex = this.users.get(client.id);
-        client.to(payload.roomId)
-        .emit('room_message', { roomId: payload.roomId, from: { socketId: client.id, index: fromIndex }, message: payload.message });
+    @ConnectedSocket() client: Socket,
+  ) {
+    const room = this.chatService.createRoom(client.id, payload.to, payload.meta);
+
+    // Join creator to room
+    await client.join(room.roomId);
+
+    // Join target user if online
+    if (payload.to) {
+      const targetSocket = this.server.sockets.sockets.get(payload.to);
+      if (targetSocket) {
+        await targetSocket.join(room.roomId);
+        targetSocket.emit('room_created', {
+          roomId: room.roomId,
+          participants: room.participants,
+          createdBy: client.id,
+          meta: payload.meta,
+        });
       }
     }
-    // import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-    // import { Server } from 'socket.io';
-    // @WebSocketGateway(80, {namespace: 'chat'})
-    
-    // export class ChatGateway{
-    //     @WebSocketServer()
-    //     server: Server;
-    //     @SubscribeMessage('message')//mot message liee au handleSubmitNewMessage in chat-socket.js n src_client
-    //     handleMessage(@MessageBody() message: string): void{
-    //         this.server.emit('message', message);
-    //     }  
-    // }
-    
-    /////####################################### global chat gateway with CORS configuration ########################################
-    // import { 
-    //   MessageBody, 
-    //   SubscribeMessage, 
-    //   WebSocketGateway, 
-    //   WebSocketServer,
-    //   ConnectedSocket 
-    // } from '@nestjs/websockets';
-    // import { Server, Socket } from 'socket.io';
-    
-    // @WebSocketGateway({
-    //   cors: {
-    //     origin: 'http://localhost:3001',
-    //     credentials: true,
-    //   },
-    // })
-    // export class ChatGateway {
-    //   @WebSocketServer()
-    //   server: Server;
-    
-    //   @SubscribeMessage('message')
-    //   handleMessage(
-    //     @MessageBody() data: { data: string },
-    //     @ConnectedSocket() client: Socket
-    //   ): void {
-    //     // Broadcast message to all connected clients
-    //     this.server.emit('message', data);
-    //   }
-    // }
-    
-    
-    
-    
-    
-    
-    // import { 
-    //   MessageBody, 
-    //   SubscribeMessage, 
-    //   WebSocketGateway, 
-    //   WebSocketServer,
-    //   ConnectedSocket 
-    // } from '@nestjs/websockets';
-    // import { Server, Socket } from 'socket.io';
-    
-    // @WebSocketGateway({
-    //   cors: {
-    //     origin: 'http://localhost:5173',
-    //     credentials: true
-    //   }
-    // })
-    // export class ChatGateway {
-    //   @WebSocketServer()
-    //   server: Server;
-    
-    //   @SubscribeMessage('message')
-    //   handleMessage(
-    //     @MessageBody() data: { data: string },
-    //     @ConnectedSocket() client: Socket
-    //   ): void {
-    //     // Émettre à tous les clients
-    //     this.server.emit('message', data);
-    //   }
-    // }
-    
-    // import { 
-    //   MessageBody, 
-    //   SubscribeMessage, 
-    //   WebSocketGateway, 
-    //   WebSocketServer,
-    //   ConnectedSocket 
-    // } from '@nestjs/websockets';
-    // import { Server, Socket } from 'socket.io';
-    
-    // @WebSocketGateway({
-    //   cors: {
-    //     origin: 'http://localhost:5173',
-    //     credentials: true
-    //   }
-    // })
-    // export class ChatGateway {
-    //   @WebSocketServer()
-    //   server: Server;
-    
-    //   @SubscribeMessage('message')
-    //   handleMessage(
-    //     @MessageBody() data: { data: string },
-    //     @ConnectedSocket() client: Socket
-    //   ): void {
-    //     // Broadcast to all clients
-    //     this.server.emit('message', data);
-    //   }
-    // }
-    
-    
-    
-    ////// ###################################### single chat room gateway without CORS configuration ########################################
-    
+
+    client.emit('room_created', {
+      roomId: room.roomId,
+      participants: room.participants,
+      createdBy: client.id,
+      meta: payload.meta,
+    });
+
+    return { success: true, room };
+  }
+
+  // Join an existing room
+  @SubscribeMessage('join_room')
+  async handleJoinRoom(
+    @MessageBody() payload: { roomId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const room = this.chatService.getRoom(payload.roomId);
+
+    if (!room) {
+      client.emit('error', { message: 'Room not found' });
+      return;
+    }
+
+    await client.join(payload.roomId);
+    this.chatService.addParticipantToRoom(payload.roomId, client.id);
+
+    client.emit('joined_room', { roomId: payload.roomId });
+
+    // Notify other participants
+    client.to(payload.roomId).emit('user_joined', {
+      roomId: payload.roomId,
+      user: this.chatService.getUser(client.id),
+    });
+  }
+
+  // Leave a room
+  @SubscribeMessage('leave_room')
+  async handleLeaveRoom(
+    @MessageBody() payload: { roomId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    await client.leave(payload.roomId);
+    this.chatService.removeParticipantFromRoom(payload.roomId, client.id);
+
+    client.emit('left_room', { roomId: payload.roomId });
+
+    // Notify other participants
+    client.to(payload.roomId).emit('user_left', {
+      roomId: payload.roomId,
+      user: this.chatService.getUser(client.id),
+    });
+  }
+
+  // Send message to a room
+  @SubscribeMessage('room_message')
+  handleRoomMessage(
+    @MessageBody() payload: { roomId: string; message: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const message = this.chatService.addMessage(
+      payload.roomId,
+      client.id,
+      payload.message,
+    );
+
+    if (!message) {
+      client.emit('error', { message: 'Failed to send message' });
+      return;
+    }
+
+    // Broadcast to all participants in the room (including sender)
+    this.server.to(payload.roomId).emit('room_message', message);
+
+    return { success: true, message };
+  }
+
+  // Public methods for controller to use
+  async joinSocketsToRoom(roomId: string, fromSocketId: string, toSocketId?: string) {
+    const fromSocket = this.server.sockets.sockets.get(fromSocketId);
+    if (fromSocket) {
+      await fromSocket.join(roomId);
+    }
+
+    if (toSocketId) {
+      const toSocket = this.server.sockets.sockets.get(toSocketId);
+      if (toSocket) {
+        await toSocket.join(roomId);
+      }
+    }
+  }
+
+  notifyRoomCreated(room: Room) {
+    room.participants.forEach((participant) => {
+      const socket = this.server.sockets.sockets.get(participant.socketId);
+      if (socket) {
+        socket.emit('room_created', {
+          roomId: room.roomId,
+          participants: room.participants,
+          createdBy: room.createdBy,
+          meta: room.meta,
+        });
+      }
+    });
+  }
+
+  broadcastMessage(message: Message) {
+    this.server.to(message.roomId).emit('room_message', message);
+  }
+
+  notifyRoomDeleted(roomId: string) {
+    this.server.to(roomId).emit('room_deleted', { roomId });
+  }
+}
