@@ -1,23 +1,21 @@
-FROM node:20-slim
-
-RUN apt update
-RUN apt-get update && apt-get install -y \
-	openssl \
-	libssl-dev \
-	ca-certificates \
-	netcat-openbsd \
-	postgresql-client \
-	&& rm -rf /var/lib/apt/lists/*
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json .
+# Prisma requirements
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat \
+    postgresql-client \
+    netcat-openbsd
+
+COPY package*.json ./
 
 RUN npm install
 
 COPY . .
 
-RUN chmod +x run-prisma.sh
-# run the script to generate prisma client and apply migrations
+# Generate Prisma client INSIDE Alpine
+RUN npx prisma generate
 
-CMD [ "sh", "run-prisma.sh" ]
+CMD ["sh", "run-prisma.sh"]

@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-npx prisma generate
-
 if [ -d "./prisma/migrations" ]; then
     echo "Applying Prisma migrations..."
     npx prisma migrate deploy
