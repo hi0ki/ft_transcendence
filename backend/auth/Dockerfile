@@ -15,7 +15,6 @@ RUN npm install
 
 COPY . .
 
-# Generate Prisma client INSIDE Alpine
 RUN npx prisma generate
 
 CMD ["sh", "run-prisma.sh"]
