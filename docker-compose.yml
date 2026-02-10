@@ -5,7 +5,7 @@
       container_name: frontend
       restart: always
       ports:
-        - "5173:5173"
+        - "5173:5173" # I will remove this port mapping later, as it's only for development and testing purposes
       networks:
         - my-app-network
       volumes:
@@ -29,7 +29,7 @@
       build: ./backend/database
       restart: always
       ports:
-        - "5433:5432"
+        - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
       networks:
         - my-app-network
 
@@ -43,9 +43,9 @@
           - app_name=core
       restart: always
       ports:
-        - "3000:3000"
+        - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
-        - postgres
+        - auth_service
       networks:
         - my-app-network
     chat_service:
@@ -57,21 +57,17 @@
           - app_name=chat
       restart: always
       ports:
-        - "3001:3000"
+        - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
-        - postgres
+        - auth_service
       networks:
         - my-app-network
     auth_service:
       container_name: auth_service
-      build:
-        context: backend
-        dockerfile: Dockerfile
-        args:
-          - app_name=auth
+      build: backend/auth
       restart: always
       ports:
-        - "3002:3000"
+        - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
         - postgres
       networks:
