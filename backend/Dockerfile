@@ -1,6 +1,6 @@
-FROM node:20-alpine
+FROM node:20-slim
 
-RUN apk add bash
+RUN apt update
 
 ARG app_name
 
