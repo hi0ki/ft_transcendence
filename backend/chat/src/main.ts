@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './chat.module';
+import { ChatModule } from './chat.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(ChatModule);
 
   // Enable CORS for HTTP requests
   app.enableCors({
