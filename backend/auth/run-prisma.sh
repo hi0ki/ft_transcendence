@@ -9,4 +9,4 @@ else
     npx prisma migrate dev --name init --create-only
 fi
 
-npm run start:dev
+npm run start
