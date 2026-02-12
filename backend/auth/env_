@@ -1,0 +1,4 @@
+DATABASE_URL="postgresql://postgres:postgres@postgres:5432/ft_transc"
+# DATABASE_URL="postgresql://postgres:postgres@localhost:5433/ft_transc"
+
+# npx prisma studio --url "postgresql://postgres:postgres@localhost:5433/ft_transc"
