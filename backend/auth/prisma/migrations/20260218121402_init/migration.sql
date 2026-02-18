@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('USER', 'ADMIN');
+
+-- CreateEnum
 CREATE TYPE "PostType" AS ENUM ('HELP', 'RESOURCE', 'MEME');
 
 -- CreateEnum
@@ -12,11 +15,12 @@ CREATE TYPE "FriendshipStatus" AS ENUM ('PENDING', 'ACCEPTED', 'BLOCKED');
 
 -- CreateTable
 CREATE TABLE "users" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT,
     "oauthProvider" TEXT,
     "oauthId" TEXT,
+    "role" "UserRole" NOT NULL DEFAULT 'USER',
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
@@ -24,7 +28,7 @@ CREATE TABLE "users" (
 
 -- CreateTable
 CREATE TABLE "profiles" (
-    "userId" BIGINT NOT NULL,
+    "userId" INTEGER NOT NULL,
     "username" TEXT NOT NULL,
     "fullName" TEXT,
     "avatarUrl" TEXT,
@@ -35,8 +39,8 @@ CREATE TABLE "profiles" (
 
 -- CreateTable
 CREATE TABLE "posts" (
-    "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "type" "PostType" NOT NULL,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
@@ -47,9 +51,9 @@ CREATE TABLE "posts" (
 
 -- CreateTable
 CREATE TABLE "comments" (
-    "id" BIGSERIAL NOT NULL,
-    "postId" BIGINT NOT NULL,
-    "userId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "postId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
     "content" TEXT NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -58,8 +62,8 @@ CREATE TABLE "comments" (
 
 -- CreateTable
 CREATE TABLE "likes" (
-    "userId" BIGINT NOT NULL,
-    "postId" BIGINT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "postId" INTEGER NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "likes_pkey" PRIMARY KEY ("userId","postId")
@@ -67,10 +71,10 @@ CREATE TABLE "likes" (
 
 -- CreateTable
 CREATE TABLE "notifications" (
-    "id" BIGSERIAL NOT NULL,
-    "userId" BIGINT NOT NULL,
-    "senderId" BIGINT,
-    "postId" BIGINT,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "senderId" INTEGER,
+    "postId" INTEGER,
     "type" "NotificationType" NOT NULL,
     "isRead" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -80,9 +84,9 @@ CREATE TABLE "notifications" (
 
 -- CreateTable
 CREATE TABLE "conversations" (
-    "id" BIGSERIAL NOT NULL,
-    "user1Id" BIGINT NOT NULL,
-    "user2Id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "user1Id" INTEGER NOT NULL,
+    "user2Id" INTEGER NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "conversations_pkey" PRIMARY KEY ("id")
@@ -90,9 +94,9 @@ CREATE TABLE "conversations" (
 
 -- CreateTable
 CREATE TABLE "messages" (
-    "id" BIGSERIAL NOT NULL,
-    "conversationId" BIGINT NOT NULL,
-    "senderId" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "conversationId" INTEGER NOT NULL,
+    "senderId" INTEGER NOT NULL,
     "type" "MessageType" NOT NULL,
     "content" TEXT,
     "fileUrl" TEXT,
@@ -104,8 +108,8 @@ CREATE TABLE "messages" (
 
 -- CreateTable
 CREATE TABLE "friendships" (
-    "userId" BIGINT NOT NULL,
-    "friendId" BIGINT NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "friendId" INTEGER NOT NULL,
     "status" "FriendshipStatus" NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

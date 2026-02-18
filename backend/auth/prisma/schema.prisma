@@ -43,7 +43,7 @@ enum FriendshipStatus {
 
 // models
 model User {
-	id            BigInt          @id @default(autoincrement()) @db.BigInt
+	id            Int          @id @default(autoincrement())
 	email         String          @unique
 	passwordHash  String?
 	oauthProvider String?
@@ -51,7 +51,7 @@ model User {
 	role		  UserRole		  @default(USER)
 	createdAt     DateTime        @default(now()) @db.Timestamptz(6)
 
-	profile               Profile
+	profile               Profile?
 	posts                 Post[]
 	comments              Comment[]
 	likes                 Like[]
@@ -67,7 +67,7 @@ model User {
 }
 
 model Profile {
-	userId    BigInt  @id @db.BigInt
+	userId    Int  @id
 	user      User    @relation(fields: [userId], references: [id])
 	username  String  @unique
 	fullName  String?
@@ -78,8 +78,8 @@ model Profile {
 }
 
 model Post {
-	id        BigInt     @id @default(autoincrement()) @db.BigInt
-	userId    BigInt     @db.BigInt
+	id        Int     @id @default(autoincrement())
+	userId    Int
 	user      User       @relation(fields: [userId], references: [id])
 	type      PostType
 	title     String
@@ -95,10 +95,10 @@ model Post {
 }
 
 model Comment {
-	id        BigInt   @id @default(autoincrement()) @db.BigInt
-	postId    BigInt   @db.BigInt
+	id        Int   @id @default(autoincrement())
+	postId    Int  
 	post      Post     @relation(fields: [postId], references: [id])
-	userId    BigInt   @db.BigInt
+	userId    Int  
 	author    User     @relation(fields: [userId], references: [id])
 	content   String
 	createdAt DateTime @default(now()) @db.Timestamptz(6)
@@ -109,8 +109,8 @@ model Comment {
 }
 
 model Like {
-	userId    BigInt   @db.BigInt
-	postId    BigInt   @db.BigInt
+	userId    Int  
+	postId    Int  
 	user      User     @relation(fields: [userId], references: [id])
 	post      Post     @relation(fields: [postId], references: [id])
 	createdAt DateTime @default(now()) @db.Timestamptz(6)
@@ -121,12 +121,12 @@ model Like {
 }
 
 model Notification {
-	id         BigInt           @id @default(autoincrement()) @db.BigInt
-	userId     BigInt           @db.BigInt        // who receives
+	id         Int           @id @default(autoincrement())
+	userId     Int                  // who receives
 	user       User             @relation(fields: [userId], references: [id])
-	senderId   BigInt?          @db.BigInt        // who triggered (nullable)
+	senderId   Int?                 // who triggered (nullable)
 	sender     User?            @relation("NotificationSender", fields: [senderId], references: [id])
-	postId     BigInt?          @db.BigInt
+	postId     Int?         
 	post       Post?            @relation(fields: [postId], references: [id])
 	type       NotificationType
 	isRead     Boolean          @default(false)
@@ -137,10 +137,10 @@ model Notification {
 }
 
 model Conversation {
-	id        BigInt    @id @default(autoincrement()) @db.BigInt
-	user1Id   BigInt    @db.BigInt
+	id        Int    @id @default(autoincrement())
+	user1Id   Int   
 	user1     User      @relation("ConversationUser1", fields: [user1Id], references: [id])
-	user2Id   BigInt    @db.BigInt
+	user2Id   Int   
 	user2     User      @relation("ConversationUser2", fields: [user2Id], references: [id])
 	createdAt DateTime  @default(now()) @db.Timestamptz(6)
 
@@ -153,10 +153,10 @@ model Conversation {
 }
 
 model Message {
-	id             BigInt      @id @default(autoincrement()) @db.BigInt
-	conversationId BigInt      @db.BigInt
+	id             Int      @id @default(autoincrement())
+	conversationId Int     
 	conversation   Conversation @relation(fields: [conversationId], references: [id])
-	senderId       BigInt      @db.BigInt
+	senderId       Int     
 	sender         User        @relation(fields: [senderId], references: [id])
 	type           MessageType
 	content        String?
@@ -170,8 +170,8 @@ model Message {
 }
 
 model Friendship {
-	userId    BigInt           @db.BigInt
-	friendId  BigInt           @db.BigInt
+	userId    Int          
+	friendId  Int          
 	user      User             @relation("UserFriendships", fields: [userId], references: [id])
 	friend    User             @relation("FriendOf", fields: [friendId], references: [id])
 	status    FriendshipStatus
