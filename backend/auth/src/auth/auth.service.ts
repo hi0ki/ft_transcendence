@@ -12,17 +12,17 @@ export class AuthService {
 
     async register(email :string, password :string) {
         const normalizedEmail = email.toLowerCase();
-        const check = await this.prisma.users.findUnique({where : {email : normalizedEmail}});
+        const check = await this.prisma.user.findUnique({where : {email : normalizedEmail}});
         if (check){
             throw new ConflictException('Email already exists');
         // throw new BadRequestException('Email already used');
         }
         const hashPassword =  await bcrypt.hash(password, 10);
-        const user = await this.prisma.users.create({
+        const user = await this.prisma.user.create({
             data :{
                 email : normalizedEmail,
                 passwordHash : hashPassword,
-                role: 'user',
+                role: 'USER',
             }
         });
         return {id : user.id, email : normalizedEmail};
@@ -31,7 +31,7 @@ export class AuthService {
     async login(email :string, password :string){
     //     //ghadi nchof la kan  l mail kayel donc mezyan ghadi ntcheki passworrd on logi normal
         const normalizedEmail = email.toLowerCase();
-        const user = await this.prisma.users.findUnique({where : {email : normalizedEmail}});
+        const user = await this.prisma.user.findUnique({where : {email : normalizedEmail}});
         if (user)
         {
             const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
