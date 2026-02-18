@@ -4,3 +4,7 @@
 # npx prisma studio --url "postgresql://postgres:postgres@localhost:5433/ft_transc"
 
 ## docker compose up  --build postgres  
+# npm run start 
+
+# npx prisma studio --url="postgresql://postgres:postgres@localhost:5433/ft_transc"
+# npx prisma studio

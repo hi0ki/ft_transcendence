@@ -38,7 +38,7 @@ export class AuthService {
             if (!isPasswordValid) {
               throw new UnauthorizedException('Wrong password');
             }
-            const token = this.jwtService.sign({ id: user.id, email: user.email});
+            const token = this.jwtService.sign({ id: user.id, email: user.email, role: user.role});
             return { access_token: token };
         }
         else {
