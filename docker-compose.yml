@@ -21,6 +21,9 @@
         - "8080:80"
       depends_on:
         - frontend
+        - auth_service
+        - chat_service
+        - core_service
       networks:
         - my-app-network
     # Database
