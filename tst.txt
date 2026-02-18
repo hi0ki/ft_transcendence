@@ -1,0 +1,364 @@
+total 48
+drwxr-xr-x  12 felhafid  candidates   384 Feb 18 19:07 .
+drwx------   9 felhafid  candidates   288 Feb 18 16:58 ..
+drwxr-xr-x  15 felhafid  candidates   480 Feb 18 16:07 .git
+-rw-r--r--   1 felhafid  candidates   574 Feb 14 16:37 About_DB.txt
+-rw-r--r--   1 felhafid  candidates   246 Feb 14 16:37 Makefile
+-rw-r--r--   1 felhafid  candidates   463 Feb 14 16:37 To-do.txt
+drwxr-xr-x   8 felhafid  candidates   256 Feb 14 16:40 backend
+-rw-r--r--   1 felhafid  candidates  2158 Feb 14 16:37 docker-compose.yml
+drwxr-xr-x  15 felhafid  candidates   480 Feb 18 19:06 frontend
+-rw-r--r--   1 felhafid  candidates   645 Feb 14 16:37 key_concepts.txt
+-rw-r--r--   1 felhafid  candidates   290 Feb 18 18:35 package.json
+-rw-r--r--   1 felhafid  candidates     0 Feb 18 19:07 tst.txt
+
+
+./backend:
+total 8
+drwxr-xr-x   8 felhafid  candidates  256 Feb 14 16:40 .
+drwxr-xr-x  12 felhafid  candidates  384 Feb 18 19:07 ..
+-rw-r--r--   1 felhafid  candidates  179 Feb 14 16:37 Dockerfile
+drwxr-xr-x  18 felhafid  candidates  576 Feb 18 19:06 auth
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 chat
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 core
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 database
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 nginx
+
+./backend/auth:
+total 504
+drwxr-xr-x  18 felhafid  candidates     576 Feb 18 19:06 .
+drwxr-xr-x   8 felhafid  candidates     256 Feb 14 16:40 ..
+-rw-r--r--   1 felhafid  candidates     175 Feb 18 18:59 .env
+-rw-r--r--   1 felhafid  candidates     663 Feb 14 16:37 .eslintrc.js
+-rw-r--r--   1 felhafid  candidates     700 Feb 14 16:37 .gitignore
+-rw-r--r--   1 felhafid  candidates      51 Feb 14 16:37 .prettierrc
+-rw-r--r--   1 felhafid  candidates    2632 Feb 14 16:37 CRUD_STEPS.md
+-rw-r--r--   1 felhafid  candidates     282 Feb 18 17:33 Dockerfile
+drwxr-xr-x  13 felhafid  candidates     416 Feb 18 16:23 dist
+-rw-r--r--   1 felhafid  candidates     424 Feb 18 14:58 env_
+-rw-r--r--   1 felhafid  candidates     171 Feb 14 16:37 nest-cli.json
+-rw-r--r--   1 felhafid  candidates  206071 Feb 18 16:20 package-lock.json
+-rw-r--r--   1 felhafid  candidates    2275 Feb 17 11:48 package.json
+drwxr-xr-x   5 felhafid  candidates     160 Feb 18 16:34 prisma
+-rwxr-xr-x   1 felhafid  candidates     234 Feb 14 16:37 run-prisma.sh
+drwxr-xr-x   8 felhafid  candidates     256 Feb 18 17:03 src
+-rw-r--r--   1 felhafid  candidates      97 Feb 14 16:37 tsconfig.build.json
+-rw-r--r--   1 felhafid  candidates     546 Feb 14 16:37 tsconfig.json
+
+./backend/auth/dist:
+total 360
+drwxr-xr-x  13 felhafid  candidates     416 Feb 18 16:23 .
+drwxr-xr-x  18 felhafid  candidates     576 Feb 18 19:06 ..
+-rw-r--r--   1 felhafid  candidates      35 Feb 18 16:23 app.module.d.ts
+-rw-r--r--   1 felhafid  candidates    1238 Feb 18 16:23 app.module.js
+-rw-r--r--   1 felhafid  candidates     333 Feb 18 16:23 app.module.js.map
+drwxr-xr-x  18 felhafid  candidates     576 Feb 18 16:23 auth
+-rw-r--r--   1 felhafid  candidates      11 Feb 18 16:23 main.d.ts
+-rw-r--r--   1 felhafid  candidates     550 Feb 18 16:23 main.js
+-rw-r--r--   1 felhafid  candidates     439 Feb 18 16:23 main.js.map
+drwxr-xr-x   8 felhafid  candidates     256 Feb 18 16:23 prisma
+drwxr-xr-x  12 felhafid  candidates     384 Feb 18 16:23 profiles
+-rw-r--r--   1 felhafid  candidates  156880 Feb 18 16:23 tsconfig.build.tsbuildinfo
+drwxr-xr-x  11 felhafid  candidates     352 Feb 18 16:23 users
+
+./backend/auth/dist/auth:
+total 120
+drwxr-xr-x  18 felhafid  candidates   576 Feb 18 16:23 .
+drwxr-xr-x  13 felhafid  candidates   416 Feb 18 16:23 ..
+-rw-r--r--   1 felhafid  candidates   411 Feb 18 16:23 auth.controller.d.ts
+-rw-r--r--   1 felhafid  candidates  2614 Feb 18 16:23 auth.controller.js
+-rw-r--r--   1 felhafid  candidates   881 Feb 18 16:23 auth.controller.js.map
+-rw-r--r--   1 felhafid  candidates   282 Feb 18 16:23 auth.guard.d.ts
+-rw-r--r--   1 felhafid  candidates  1969 Feb 18 16:23 auth.guard.js
+-rw-r--r--   1 felhafid  candidates   969 Feb 18 16:23 auth.guard.js.map
+-rw-r--r--   1 felhafid  candidates    36 Feb 18 16:23 auth.module.d.ts
+-rw-r--r--   1 felhafid  candidates  1739 Feb 18 16:23 auth.module.js
+-rw-r--r--   1 felhafid  candidates   692 Feb 18 16:23 auth.module.js.map
+-rw-r--r--   1 felhafid  candidates   445 Feb 18 16:23 auth.service.d.ts
+-rw-r--r--   1 felhafid  candidates  2755 Feb 18 16:23 auth.service.js
+-rw-r--r--   1 felhafid  candidates  1699 Feb 18 16:23 auth.service.js.map
+drwxr-xr-x   5 felhafid  candidates   160 Feb 18 16:23 dto
+-rw-r--r--   1 felhafid  candidates   102 Feb 18 16:23 roles.decorator.d.ts
+-rw-r--r--   1 felhafid  candidates   282 Feb 18 16:23 roles.decorator.js
+-rw-r--r--   1 felhafid  candidates   258 Feb 18 16:23 roles.decorator.js.map
+
+./backend/auth/dist/auth/dto:
+total 24
+drwxr-xr-x   5 felhafid  candidates   160 Feb 18 16:23 .
+drwxr-xr-x  18 felhafid  candidates   576 Feb 18 16:23 ..
+-rw-r--r--   1 felhafid  candidates    78 Feb 18 16:23 register.dto.d.ts
+-rw-r--r--   1 felhafid  candidates  1775 Feb 18 16:23 register.dto.js
+-rw-r--r--   1 felhafid  candidates   569 Feb 18 16:23 register.dto.js.map
+
+./backend/auth/dist/prisma:
+total 48
+drwxr-xr-x   8 felhafid  candidates   256 Feb 18 16:23 .
+drwxr-xr-x  13 felhafid  candidates   416 Feb 18 16:23 ..
+-rw-r--r--   1 felhafid  candidates    38 Feb 18 16:23 prisma.module.d.ts
+-rw-r--r--   1 felhafid  candidates  1106 Feb 18 16:23 prisma.module.js
+-rw-r--r--   1 felhafid  candidates   335 Feb 18 16:23 prisma.module.js.map
+-rw-r--r--   1 felhafid  candidates   285 Feb 18 16:23 prisma.service.d.ts
+-rw-r--r--   1 felhafid  candidates  1162 Feb 18 16:23 prisma.service.js
+-rw-r--r--   1 felhafid  candidates   411 Feb 18 16:23 prisma.service.js.map
+
+./backend/auth/dist/profiles:
+total 72
+drwxr-xr-x  12 felhafid  candidates  384 Feb 18 16:23 .
+drwxr-xr-x  13 felhafid  candidates  416 Feb 18 16:23 ..
+drwxr-xr-x   5 felhafid  candidates  160 Feb 18 16:23 dto
+-rw-r--r--   1 felhafid  candidates   44 Feb 18 16:23 profiles.controller.d.ts
+-rw-r--r--   1 felhafid  candidates  999 Feb 18 16:23 profiles.controller.js
+-rw-r--r--   1 felhafid  candidates  274 Feb 18 16:23 profiles.controller.js.map
+-rw-r--r--   1 felhafid  candidates   40 Feb 18 16:23 profiles.module.d.ts
+-rw-r--r--   1 felhafid  candidates  636 Feb 18 16:23 profiles.module.js
+-rw-r--r--   1 felhafid  candidates  352 Feb 18 16:23 profiles.module.js.map
+-rw-r--r--   1 felhafid  candidates   41 Feb 18 16:23 profiles.service.d.ts
+-rw-r--r--   1 felhafid  candidates  972 Feb 18 16:23 profiles.service.js
+-rw-r--r--   1 felhafid  candidates  258 Feb 18 16:23 profiles.service.js.map
+
+./backend/auth/dist/profiles/dto:
+total 24
+drwxr-xr-x   5 felhafid  candidates  160 Feb 18 16:23 .
+drwxr-xr-x  12 felhafid  candidates  384 Feb 18 16:23 ..
+-rw-r--r--   1 felhafid  candidates   74 Feb 18 16:23 update-profile.dto.d.ts
+-rw-r--r--   1 felhafid  candidates  230 Feb 18 16:23 update-profile.dto.js
+-rw-r--r--   1 felhafid  candidates  183 Feb 18 16:23 update-profile.dto.js.map
+
+./backend/auth/dist/users:
+total 72
+drwxr-xr-x  11 felhafid  candidates   352 Feb 18 16:23 .
+drwxr-xr-x  13 felhafid  candidates   416 Feb 18 16:23 ..
+-rw-r--r--   1 felhafid  candidates   239 Feb 18 16:23 users.controller.d.ts
+-rw-r--r--   1 felhafid  candidates  1641 Feb 18 16:23 users.controller.js
+-rw-r--r--   1 felhafid  candidates   452 Feb 18 16:23 users.controller.js.map
+-rw-r--r--   1 felhafid  candidates    37 Feb 18 16:23 users.module.d.ts
+-rw-r--r--   1 felhafid  candidates  1268 Feb 18 16:23 users.module.js
+-rw-r--r--   1 felhafid  candidates   390 Feb 18 16:23 users.module.js.map
+-rw-r--r--   1 felhafid  candidates   238 Feb 18 16:23 users.service.d.ts
+-rw-r--r--   1 felhafid  candidates  1496 Feb 18 16:23 users.service.js
+-rw-r--r--   1 felhafid  candidates   492 Feb 18 16:23 users.service.js.map
+
+./backend/auth/prisma:
+total 40
+drwxr-xr-x   5 felhafid  candidates   160 Feb 18 16:34 .
+drwxr-xr-x  18 felhafid  candidates   576 Feb 18 19:06 ..
+drwxr-xr-x   4 felhafid  candidates   128 Feb 18 16:09 migrations
+-rw-r--r--   1 felhafid  candidates  4705 Feb 18 14:58 schema.prisma
+-rw-r--r--   1 felhafid  candidates  9026 Feb 14 16:37 syntax_helper.txt
+
+./backend/auth/prisma/migrations:
+total 8
+drwxr-xr-x  4 felhafid  candidates  128 Feb 18 16:09 .
+drwxr-xr-x  5 felhafid  candidates  160 Feb 18 16:34 ..
+drwxr-xr-x  3 felhafid  candidates   96 Feb 18 16:09 20260218160906_init
+-rw-r--r--  1 felhafid  candidates  126 Feb 18 16:09 migration_lock.toml
+
+./backend/auth/prisma/migrations/20260218160906_init:
+total 16
+drwxr-xr-x  3 felhafid  candidates    96 Feb 18 16:09 .
+drwxr-xr-x  4 felhafid  candidates   128 Feb 18 16:09 ..
+-rw-r--r--  1 felhafid  candidates  6741 Feb 18 16:09 migration.sql
+
+./backend/auth/src:
+total 16
+drwxr-xr-x   8 felhafid  candidates  256 Feb 18 17:03 .
+drwxr-xr-x  18 felhafid  candidates  576 Feb 18 19:06 ..
+-rw-r--r--   1 felhafid  candidates  305 Feb 14 17:17 app.module.ts
+drwxr-xr-x   8 felhafid  candidates  256 Feb 18 14:58 auth
+-rw-r--r--   1 felhafid  candidates  416 Feb 17 16:22 main.ts
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 prisma
+drwxr-xr-x   6 felhafid  candidates  192 Feb 18 17:03 profiles
+drwxr-xr-x   5 felhafid  candidates  160 Feb 18 14:58 users
+
+./backend/auth/src/auth:
+total 40
+drwxr-xr-x  8 felhafid  candidates   256 Feb 18 14:58 .
+drwxr-xr-x  8 felhafid  candidates   256 Feb 18 17:03 ..
+-rw-r--r--  1 felhafid  candidates   659 Feb 17 13:12 auth.controller.ts
+-rw-r--r--  1 felhafid  candidates  1338 Feb 18 14:58 auth.guard.ts
+-rw-r--r--  1 felhafid  candidates   802 Feb 18 14:58 auth.module.ts
+-rw-r--r--  1 felhafid  candidates  1844 Feb 18 16:25 auth.service.ts
+drwxr-xr-x  3 felhafid  candidates    96 Feb 17 11:51 dto
+-rw-r--r--  1 felhafid  candidates   494 Feb 18 14:58 roles.decorator.ts
+
+./backend/auth/src/auth/dto:
+total 8
+drwxr-xr-x  3 felhafid  candidates   96 Feb 17 11:51 .
+drwxr-xr-x  8 felhafid  candidates  256 Feb 18 14:58 ..
+-rw-r--r--  1 felhafid  candidates  584 Feb 17 16:28 register.dto.ts
+
+./backend/auth/src/prisma:
+total 16
+drwxr-xr-x  4 felhafid  candidates  128 Feb 14 16:37 .
+drwxr-xr-x  8 felhafid  candidates  256 Feb 18 17:03 ..
+-rw-r--r--  1 felhafid  candidates  190 Feb 14 16:37 prisma.module.ts
+-rw-r--r--  1 felhafid  candidates  366 Feb 14 16:37 prisma.service.ts
+
+./backend/auth/src/profiles:
+total 24
+drwxr-xr-x  6 felhafid  candidates   192 Feb 18 17:03 .
+drwxr-xr-x  8 felhafid  candidates   256 Feb 18 17:03 ..
+drwxr-xr-x  3 felhafid  candidates    96 Feb 18 17:03 dto
+-rw-r--r--  1 felhafid  candidates   746 Feb 18 19:02 profiles.controller.ts
+-rw-r--r--  1 felhafid  candidates   394 Feb 18 19:02 profiles.module.ts
+-rw-r--r--  1 felhafid  candidates  1232 Feb 18 19:02 profiles.service.ts
+
+./backend/auth/src/profiles/dto:
+total 8
+drwxr-xr-x  3 felhafid  candidates   96 Feb 18 17:03 .
+drwxr-xr-x  6 felhafid  candidates  192 Feb 18 17:03 ..
+-rw-r--r--  1 felhafid  candidates  365 Feb 18 19:02 update-profile.dto.ts
+
+./backend/auth/src/users:
+total 24
+drwxr-xr-x  5 felhafid  candidates  160 Feb 18 14:58 .
+drwxr-xr-x  8 felhafid  candidates  256 Feb 18 17:03 ..
+-rw-r--r--  1 felhafid  candidates  290 Feb 14 16:37 users.controller.ts
+-rw-r--r--  1 felhafid  candidates  328 Feb 14 16:37 users.module.ts
+-rw-r--r--  1 felhafid  candidates  371 Feb 18 14:58 users.service.ts
+
+./backend/chat:
+total 752
+drwxr-xr-x  13 felhafid  candidates     416 Feb 14 16:37 .
+drwxr-xr-x   8 felhafid  candidates     256 Feb 14 16:40 ..
+-rw-r--r--   1 felhafid  candidates     663 Feb 14 16:37 .eslintrc.js
+-rw-r--r--   1 felhafid  candidates     686 Feb 14 16:37 .gitignore
+-rw-r--r--   1 felhafid  candidates      51 Feb 14 16:37 .prettierrc
+-rw-r--r--   1 felhafid  candidates    5205 Feb 14 16:37 README.md
+-rw-r--r--   1 felhafid  candidates     171 Feb 14 16:37 nest-cli.json
+-rw-r--r--   1 felhafid  candidates  345361 Feb 14 16:37 package-lock.json
+-rw-r--r--   1 felhafid  candidates    1940 Feb 14 16:37 package.json
+drwxr-xr-x   7 felhafid  candidates     224 Feb 14 16:37 src
+drwxr-xr-x   4 felhafid  candidates     128 Feb 14 16:37 test
+-rw-r--r--   1 felhafid  candidates      97 Feb 14 16:37 tsconfig.build.json
+-rw-r--r--   1 felhafid  candidates     546 Feb 14 16:37 tsconfig.json
+
+./backend/chat/src:
+total 40
+drwxr-xr-x   7 felhafid  candidates  224 Feb 14 16:37 .
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 ..
+-rw-r--r--   1 felhafid  candidates  617 Feb 14 16:37 app.controller.spec.ts
+-rw-r--r--   1 felhafid  candidates  274 Feb 14 16:37 app.controller.ts
+-rw-r--r--   1 felhafid  candidates  249 Feb 14 16:37 app.module.ts
+-rw-r--r--   1 felhafid  candidates  151 Feb 14 16:37 app.service.ts
+-rw-r--r--   1 felhafid  candidates  219 Feb 14 16:37 main.ts
+
+./backend/chat/test:
+total 16
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 .
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 ..
+-rw-r--r--   1 felhafid  candidates  628 Feb 14 16:37 app.e2e-spec.ts
+-rw-r--r--   1 felhafid  candidates  183 Feb 14 16:37 jest-e2e.json
+
+./backend/core:
+total 752
+drwxr-xr-x  13 felhafid  candidates     416 Feb 14 16:37 .
+drwxr-xr-x   8 felhafid  candidates     256 Feb 14 16:40 ..
+-rw-r--r--   1 felhafid  candidates     663 Feb 14 16:37 .eslintrc.js
+-rw-r--r--   1 felhafid  candidates     686 Feb 14 16:37 .gitignore
+-rw-r--r--   1 felhafid  candidates      51 Feb 14 16:37 .prettierrc
+-rw-r--r--   1 felhafid  candidates    5205 Feb 14 16:37 README.md
+-rw-r--r--   1 felhafid  candidates     171 Feb 14 16:37 nest-cli.json
+-rw-r--r--   1 felhafid  candidates  345361 Feb 14 16:37 package-lock.json
+-rw-r--r--   1 felhafid  candidates    1940 Feb 14 16:37 package.json
+drwxr-xr-x   7 felhafid  candidates     224 Feb 14 16:37 src
+drwxr-xr-x   4 felhafid  candidates     128 Feb 14 16:37 test
+-rw-r--r--   1 felhafid  candidates      97 Feb 14 16:37 tsconfig.build.json
+-rw-r--r--   1 felhafid  candidates     546 Feb 14 16:37 tsconfig.json
+
+./backend/core/src:
+total 40
+drwxr-xr-x   7 felhafid  candidates  224 Feb 14 16:37 .
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 ..
+-rw-r--r--   1 felhafid  candidates  617 Feb 14 16:37 app.controller.spec.ts
+-rw-r--r--   1 felhafid  candidates  274 Feb 14 16:37 app.controller.ts
+-rw-r--r--   1 felhafid  candidates  249 Feb 14 16:37 app.module.ts
+-rw-r--r--   1 felhafid  candidates  151 Feb 14 16:37 app.service.ts
+-rw-r--r--   1 felhafid  candidates  219 Feb 14 16:37 main.ts
+
+./backend/core/test:
+total 16
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 .
+drwxr-xr-x  13 felhafid  candidates  416 Feb 14 16:37 ..
+-rw-r--r--   1 felhafid  candidates  630 Feb 14 16:37 app.e2e-spec.ts
+-rw-r--r--   1 felhafid  candidates  183 Feb 14 16:37 jest-e2e.json
+
+./backend/database:
+total 16
+drwxr-xr-x  4 felhafid  candidates   128 Feb 14 16:37 .
+drwxr-xr-x  8 felhafid  candidates   256 Feb 14 16:40 ..
+-rw-r--r--  1 felhafid  candidates  1489 Feb 14 16:37 DB_CMD.txt
+-rw-r--r--  1 felhafid  candidates   147 Feb 14 16:37 Dockerfile
+
+./backend/nginx:
+total 16
+drwxr-xr-x  4 felhafid  candidates  128 Feb 14 16:37 .
+drwxr-xr-x  8 felhafid  candidates  256 Feb 14 16:40 ..
+-rw-r--r--  1 felhafid  candidates  136 Feb 14 16:37 Dockerfile
+-rw-r--r--  1 felhafid  candidates  511 Feb 14 16:37 nginx.conf
+
+./frontend:
+total 80
+drwxr-xr-x  15 felhafid  candidates   480 Feb 18 19:06 .
+drwxr-xr-x  12 felhafid  candidates   384 Feb 18 19:07 ..
+-rw-r--r--   1 felhafid  candidates   246 Feb 14 16:37 .gitignore
+drwxr-xr-x   3 felhafid  candidates    96 Feb 14 16:37 .vite
+-rw-r--r--   1 felhafid  candidates   128 Feb 14 16:37 Dockerfile
+-rw-r--r--   1 felhafid  candidates  2555 Feb 14 16:37 README.md
+-rw-r--r--   1 felhafid  candidates   616 Feb 14 16:37 eslint.config.js
+-rw-r--r--   1 felhafid  candidates   356 Feb 14 16:37 index.html
+-rw-r--r--   1 felhafid  candidates   744 Feb 18 16:49 package.json
+drwxr-xr-x   3 felhafid  candidates    96 Feb 14 16:37 public
+drwxr-xr-x   9 felhafid  candidates   288 Feb 18 18:57 src
+-rw-r--r--   1 felhafid  candidates   732 Feb 14 16:37 tsconfig.app.json
+-rw-r--r--   1 felhafid  candidates   119 Feb 14 16:37 tsconfig.json
+-rw-r--r--   1 felhafid  candidates   653 Feb 14 16:37 tsconfig.node.json
+-rw-r--r--   1 felhafid  candidates   294 Feb 14 16:37 vite.config.ts
+
+./frontend/.vite:
+total 0
+drwxr-xr-x   3 felhafid  candidates   96 Feb 14 16:37 .
+drwxr-xr-x  15 felhafid  candidates  480 Feb 18 19:06 ..
+drwxr-xr-x   4 felhafid  candidates  128 Feb 14 16:37 deps
+
+./frontend/.vite/deps:
+total 16
+drwxr-xr-x  4 felhafid  candidates  128 Feb 14 16:37 .
+drwxr-xr-x  3 felhafid  candidates   96 Feb 14 16:37 ..
+-rw-r--r--  1 felhafid  candidates  146 Feb 14 16:37 _metadata.json
+-rw-r--r--  1 felhafid  candidates   23 Feb 14 16:37 package.json
+
+./frontend/public:
+total 8
+drwxr-xr-x   3 felhafid  candidates    96 Feb 14 16:37 .
+drwxr-xr-x  15 felhafid  candidates   480 Feb 18 19:06 ..
+-rw-r--r--   1 felhafid  candidates  1497 Feb 14 16:37 vite.svg
+
+./frontend/src:
+total 32
+drwxr-xr-x   9 felhafid  candidates   288 Feb 18 18:57 .
+drwxr-xr-x  15 felhafid  candidates   480 Feb 18 19:06 ..
+-rw-r--r--   1 felhafid  candidates   606 Feb 14 16:37 App.css
+-rw-r--r--   1 felhafid  candidates   470 Feb 18 18:36 App.tsx
+drwxr-xr-x   3 felhafid  candidates    96 Feb 14 16:37 assets
+drwxr-xr-x   2 felhafid  candidates    64 Feb 18 18:57 auth
+-rw-r--r--   1 felhafid  candidates  1154 Feb 14 16:37 index.css
+-rw-r--r--   1 felhafid  candidates   266 Feb 18 18:54 main.tsx
+drwxr-xr-x   3 felhafid  candidates    96 Feb 15 17:39 services
+
+./frontend/src/assets:
+total 16
+drwxr-xr-x  3 felhafid  candidates    96 Feb 14 16:37 .
+drwxr-xr-x  9 felhafid  candidates   288 Feb 18 18:57 ..
+-rw-r--r--  1 felhafid  candidates  4126 Feb 14 16:37 react.svg
+
+./frontend/src/auth:
+total 0
+drwxr-xr-x  2 felhafid  candidates   64 Feb 18 18:57 .
+drwxr-xr-x  9 felhafid  candidates  288 Feb 18 18:57 ..
+
+./frontend/src/services:
+total 8
+drwxr-xr-x  3 felhafid  candidates   96 Feb 15 17:39 .
+drwxr-xr-x  9 felhafid  candidates  288 Feb 18 18:57 ..
+-rw-r--r--  1 felhafid  candidates  764 Feb 15 18:46 api.tsx
