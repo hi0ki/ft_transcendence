@@ -1,4 +1,4 @@
-import { Controller , Get, Post, Body, Param, Put, ParseIntPipe } from '@nestjs/common';
+import { Controller , Get, Post, Body, Param, Put, ParseIntPipe, Delete } from '@nestjs/common';
 import { ReactionsService } from './reactions.service';
 import { CreateReactionDto } from './dto/create-reaction.dto';
 import { UpdateReactionDto } from './dto/update-reaction.dto';
@@ -17,7 +17,7 @@ export class ReactionsController {
         return this.reactionsService.update(updateReactionDto);
     }
 
-    @Post('delete')
+    @Delete()
     delete(@Body() { userId, postId }: { userId: number; postId: number }) {
         return this.reactionsService.delete(userId, postId);
     }
