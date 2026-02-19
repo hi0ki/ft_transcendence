@@ -35,6 +35,15 @@ enum MessageType {
 	OTHER
 }
 
+enum ReactionType {
+	LIKE
+	LOVE
+	HAHA
+	WOW
+	SAD
+	ANGRY
+}
+
 enum FriendshipStatus {
 	PENDING
 	ACCEPTED
@@ -110,7 +119,8 @@ model Comment {
 
 model Like {
 	userId    Int  
-	postId    Int  
+	postId    Int
+	type	  ReactionType
 	user      User     @relation(fields: [userId], references: [id])
 	post      Post     @relation(fields: [postId], references: [id])
 	createdAt DateTime @default(now()) @db.Timestamptz(6)
