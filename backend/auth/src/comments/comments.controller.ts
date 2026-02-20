@@ -13,7 +13,7 @@ export class CommentsController {
         return this.commentsService.findAllByPost(postId);
     }
 
-    @Get("posts/count/:postId")
+    @Get("posts/:postId/count")
     countCmntsByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.commentsService.countCmntsByPost(postId);
     }
