@@ -5,6 +5,7 @@ import { CommentsModule } from './comments/comments.module';
 import { ReactionsService } from './reactions/reactions.service';
 import { ReactionsController } from './reactions/reactions.controller';
 import { ReactionsModule } from './reactions/reactions.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ReactionsModule } from './reactions/reactions.module';
     UsersModule,
     CommentsModule,
     ReactionsModule,
+    ChatModule,
   ],
   providers: [ReactionsService],
   controllers: [ReactionsController],
