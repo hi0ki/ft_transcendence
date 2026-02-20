@@ -1,4 +1,4 @@
-import { Injectable , ConflictException , UnauthorizedException, NotFoundException} from '@nestjs/common';
+import { Injectable , ConflictException , UnauthorizedException} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -9,14 +9,16 @@ export class AuthService {
     constructor(private prisma :PrismaService,
         private jwtService :JwtService){}
 
-
     async register(email :string, password :string) {
         const normalizedEmail = email.toLowerCase();
+        console.log("111111");
         const check = await this.prisma.user.findUnique({where : {email : normalizedEmail}});
         if (check){
             throw new ConflictException('Email already exists');
         // throw new BadRequestException('Email already used');
         }
+        console.log("2222");
+
         const hashPassword =  await bcrypt.hash(password, 10);
         const user = await this.prisma.user.create({
             data :{
@@ -25,6 +27,17 @@ export class AuthService {
                 role: 'USER',
             }
         });
+        const username = normalizedEmail.split('@')[0]; // Example: "john1"
+        const profile = await this.prisma.profile.create({
+            data: {
+                userId: user.id,
+                username: username,
+                fullName: null,
+                avatarUrl: null,
+                bio: null,
+            }
+        });
+        console.log("Creating user with profile...");
         return {id : user.id, email : normalizedEmail};
     }
 
@@ -42,7 +55,7 @@ export class AuthService {
             return { access_token: token };
         }
         else {
-            throw new NotFoundException('User not found');
+            throw new UnauthorizedException('Invalid credentials');
         }
     }
 }

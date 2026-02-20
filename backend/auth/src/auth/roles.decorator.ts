@@ -1,16 +1,18 @@
+// import { SetMetadata } from '@nestjs/common';
+// //Metadata is just hidden data we can later read (for example, in a guard).
+// import { UserRole } from '@prisma/client';
+// //SetMetadata is a NestJS function that attaches metadata to a class or method.
+
+// export const Roles = (...roles: UserRole[]) => {
+//   return SetMetadata('roles', roles);
+// };
+// export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
+
+
 import { SetMetadata } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 
-export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
+export const ROLES_KEY = 'roles';
 
-/*@Get('delete-user/:id')
-@UseGuards(AuthGuard('jwt')) // authentication
-async deleteUser(@Req() req, @Param('id') id: number) {
-  if (req.user.role !== 'ADMIN') {
-    return { message: 'Access denied: Only admins can delete users' };
-  }
-
-  // now do the deletion
-  await this.prisma.user.delete({ where: { id } });
-  return { message: 'User deleted successfully' };
-}
-*/
+export const Roles = (...roles: UserRole[]) =>
+  SetMetadata(ROLES_KEY, roles);

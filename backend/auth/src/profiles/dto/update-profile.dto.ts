@@ -1,20 +1,20 @@
-// import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
-// export class UpdateProfileDto{
+export class UpdateProfileDto{
    
-//     @IsOptional()
-//     @IsString()
-//     username ?:String;
+    @IsOptional()
+    @IsString()
+    username ?:string;
 
-//     @IsOptional()
-//     @IsString()
-//     fullName ?:String;
+    @IsOptional()
+    @IsString()
+    fullName ?:string;
 
-//     @IsOptional()
-//     @IsString()
-//     avatarUrl ?:String;
+    @IsOptional()
+    @IsString()
+    avatarUrl ?:string;
 
-//     @IsOptional()
-//     @IsString()
-//     bio ?:String;
-// }
+    @IsOptional()
+    @IsString()
+    bio ?:string;
+}

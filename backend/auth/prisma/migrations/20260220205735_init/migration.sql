@@ -11,6 +11,9 @@ CREATE TYPE "NotificationType" AS ENUM ('COMMENT', 'LIKE', 'MESSAGE', 'FRIEND_RE
 CREATE TYPE "MessageType" AS ENUM ('TEXT', 'IMAGE', 'FILE', 'VOICE', 'OTHER');
 
 -- CreateEnum
+CREATE TYPE "ReactionType" AS ENUM ('LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY');
+
+-- CreateEnum
 CREATE TYPE "FriendshipStatus" AS ENUM ('PENDING', 'ACCEPTED', 'BLOCKED');
 
 -- CreateTable
@@ -64,6 +67,7 @@ CREATE TABLE "comments" (
 CREATE TABLE "likes" (
     "userId" INTEGER NOT NULL,
     "postId" INTEGER NOT NULL,
+    "type" "ReactionType" NOT NULL,
     "createdAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "likes_pkey" PRIMARY KEY ("userId","postId")

@@ -1,12 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 //CanActive is an interface so ifyou implement it you MUST write this method. CanActive
 export class AuthGuard implements CanActivate{
-    constructor(private jwtService: JwtService) {}
+    constructor(private jwtService: JwtService,
+        private configService: ConfigService) {}
 
-    canActivate(context: ExecutionContext): boolean {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers['authorization'];
         if (!authHeader) {
@@ -17,7 +19,11 @@ export class AuthGuard implements CanActivate{
             throw new UnauthorizedException('Invalid token format');
         }
         try {
-            const payload = this.jwtService.verify(token);
+            const secret = this.configService.get<string>('JWT_SECRET');
+            if (!secret) {
+                throw new UnauthorizedException('JWT secret not configured');
+              }        
+            const payload = await this.jwtService.verifyAsync(token, { secret });
             request.user = payload; // save user data
             return true;
           } catch (err) {
@@ -41,3 +47,15 @@ export class AuthGuard implements CanActivate{
 ADMIN → full access.
 
 MODERATOR → limited admin access.*/
+
+
+
+
+
+//CanActivate
+// This is an interface in NestJS.
+// Any guard must implement this interface.
+
+//ExecutionContext
+
+// Represents the context of the current request.
