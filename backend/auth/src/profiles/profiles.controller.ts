@@ -24,7 +24,7 @@
 
 import { Controller, Get, Patch, UseGuards, Req, Body } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../guards/auth.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('profiles')
