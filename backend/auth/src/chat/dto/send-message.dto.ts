@@ -1,10 +1,14 @@
 import { IsNotEmpty, IsInt, IsString } from "class-validator";
 import { MessageType } from "@prisma/client";
 
-export class UpdateMessageDto {
+export class SendMessageDto {
     @IsInt()
     @IsNotEmpty()
-    messageId: number;
+    conversationId: number;
+
+    @IsInt()
+    @IsNotEmpty()
+    senderId: number;
 
     @IsString()
     @IsNotEmpty()

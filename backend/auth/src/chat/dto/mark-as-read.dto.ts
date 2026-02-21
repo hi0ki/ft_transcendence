@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsInt } from "class-validator";
 
-export class CreateConversationDto {
+export class MarkAsReadDto {
     @IsInt()
     @IsNotEmpty()
-    userId1: number;
+    conversationId: number;
 
     @IsInt()
     @IsNotEmpty()
-    userId2: number;
+    userId: number;
 }
