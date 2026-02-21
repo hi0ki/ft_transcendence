@@ -1,0 +1,80 @@
+  services:
+    # frontend Service
+    frontend:
+      build: ./frontend
+      container_name: frontend
+      restart: always
+      ports:
+        - "5173:5173" # I will remove this port mapping later, as it's only for development and testing purposes
+      networks:
+        - my-app-network
+      volumes:
+        - ./frontend:/app:Z
+        - /app/node_modules
+      
+    # Nginx Service
+    nginx:
+      container_name: nginx
+      build: ./backend/nginx
+      restart: always
+      ports:
+        - "8080:80"
+      depends_on:
+        - frontend
+      networks:
+        - my-app-network
+    # Database
+    postgres:
+      container_name: postgres
+      build: ./backend/database
+      restart: always
+      ports:
+        - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
+      networks:
+        - my-app-network
+
+    # backend Services
+    core_service:
+      container_name: core_service
+      build:
+        context: backend
+        dockerfile: Dockerfile
+        args:
+          - app_name=core
+      restart: always
+      ports:
+        - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+      depends_on:
+        - auth_service
+      networks:
+        - my-app-network
+    chat_service:
+      container_name: chat_service
+      build:
+        context: backend
+        dockerfile: Dockerfile
+        args:
+          - app_name=chat
+      restart: always
+      ports:
+        - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+      depends_on:
+        - auth_service
+      networks:
+        - my-app-network
+    auth_service:
+      container_name: auth_service
+      build: backend/auth
+      restart: always
+      ports:
+        - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+      depends_on:
+        - postgres
+      networks:
+        - my-app-network
+
+  # Networks
+  networks:
+    my-app-network:
+      name: my-app-network
+      driver: bridge

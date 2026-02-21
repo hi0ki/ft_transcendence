@@ -1,0 +1,24 @@
+
+❌ Never manually edit the database
+✅ Always change schema.prisma
+✅ Always generate migrations
+
+# CMD
+❌ migrate dev → LOCAL ONLY
+✅ migrate deploy → PRODUCTION ONLY / remote database
+
+------------
+schema.prisma → blueprint
+
+migrations/ → history
+
+CI → checks everything is valid
+
+CD → applies migrations + runs app
+
+Docker → guarantees same environment
+
+# summary
+    - CI/CD automates checking and deploying your app, 
+        and Prisma migrations make sure the database safely 
+        follows your code in every environment.
