@@ -1,13 +1,14 @@
 #!/bin/sh
 set -e
 
-if [ -d "./prisma/migrations" ]; then
+if [ -d "./prisma/migrations" ] && [ "$(ls -A ./prisma/migrations)" ]; then
     echo "Applying Prisma migrations..."
     npx prisma migrate deploy
 else
-    echo "No migrations found"
-    npx prisma migrate dev --name init
-
+    echo "No migrations found, pushing schema..."
+    npx prisma db push
 fi
 
-npm run start:dev
+npx prisma generate
+
+npm run start

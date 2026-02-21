@@ -1,364 +1,209 @@
 /* ========================================
-   Navbar - Dark Sidebar Navigation
+   Sidebar - Modern Dark Navigation
    ======================================== */
 
-.navbar {
-    width: 240px;
-    min-width: 240px;
+:root {
+    --sidebar-bg: #0f121d;
+    --sidebar-border: rgba(255, 255, 255, 0.05);
+    --nav-item-color: rgba(255, 255, 255, 0.5);
+    --nav-item-hover-bg: rgba(255, 255, 255, 0.03);
+    --nav-item-active-bg: #00a8e8;
+    --nav-item-active-shadow: 0 4px 15px rgba(0, 168, 232, 0.4);
+    --badge-bg: #00a8e8;
+    --user-card-bg: #1a1e2e;
+}
+
+.sidebar {
+    width: 260px;
     height: 100vh;
-    background: #0a0e1a;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
     display: flex;
     flex-direction: column;
-    padding: 0;
+    padding: 24px 16px;
+    box-sizing: border-box;
     position: sticky;
     top: 0;
-    left: 0;
-    z-index: 100;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    overflow-y: auto;
-    overflow-x: hidden;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Hide scrollbar */
-.navbar::-webkit-scrollbar {
-    width: 0;
-}
-
-/* ---- Brand / Logo ---- */
-.navbar-brand {
+/* Header / Brand */
+.sidebar-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 24px 20px 20px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--sidebar-border);
+    margin-bottom: 24px;
 }
 
-.navbar-logo {
-    width: 40px;
-    height: 40px;
+.brand-logo .logo-box {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     border-radius: 12px;
-    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    color: white;
 }
 
-.navbar-logo-icon {
-    font-size: 20px;
-    filter: grayscale(1) brightness(10);
-}
-
-.navbar-brand-text {
+.brand-text {
     display: flex;
     flex-direction: column;
 }
 
-.navbar-brand-name {
-    font-size: 1rem;
+.brand-title {
+    font-size: 1.1rem;
     font-weight: 700;
-    color: #00d4ff;
-    letter-spacing: 0.2px;
-    line-height: 1.2;
-}
-
-.navbar-brand-tagline {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.35);
-    letter-spacing: 0.3px;
-}
-
-/* ---- Navigation Menu ---- */
-.navbar-menu {
-    list-style: none;
+    color: #e2e8f0;
     margin: 0;
-    padding: 8px 12px;
+}
+
+.brand-tagline {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Navigation */
+.sidebar-nav {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 8px;
 }
 
-.navbar-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    font-family: inherit;
-    position: relative;
-}
-
-.navbar-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.navbar-item--active {
-    background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3);
-}
-
-.navbar-item--active:hover {
-    background: linear-gradient(135deg, #00c4e8 0%, #0087c6 100%);
-    color: #fff;
-}
-
-.navbar-item-icon {
-    font-size: 1.15rem;
-    width: 24px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.navbar-item-label {
-    flex: 1;
-    white-space: nowrap;
-}
-
-.navbar-item-badge {
-    background: #00d4ff;
-    color: #0a0e1a;
-    min-width: 20px;
-    height: 20px;
-    border-radius: 10px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 6px;
-}
-
-.navbar-item--active .navbar-item-badge {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
-}
-
-/* ---- User Profile (Bottom) ---- */
-.navbar-user {
+.nav-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 20px;
-    margin-top: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: var(--nav-item-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    transition: background 0.2s;
+    width: 100%;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
-.navbar-user:hover {
-    background: rgba(255, 255, 255, 0.04);
+.nav-item:hover {
+    background-color: var(--nav-item-hover-bg);
+    color: white;
 }
 
-.navbar-user-avatar {
+.nav-item--active {
+    background-color: var(--nav-item-active-bg);
+    color: white !important;
+    box-shadow: var(--nav-item-active-shadow);
+}
+
+.nav-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+}
+
+.nav-item-label {
+    flex: 1;
+    text-align: left;
+}
+
+.nav-item-badge {
+    background-color: var(--badge-bg);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    min-width: 18px;
+    text-align: center;
+    border: 2px solid var(--sidebar-bg);
+}
+
+.nav-item--active .nav-item-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: transparent;
+}
+
+/* Footer / User Profile */
+.sidebar-footer {
+    padding-top: 24px;
+    border-top: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--user-card-bg);
+    padding: 10px 14px;
+    border-radius: 14px;
+    flex: 1;
+    margin-right: 8px;
+    overflow: hidden;
+}
+
+.user-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.9rem;
+    overflow: hidden;
+    background: #2d3748;
     flex-shrink: 0;
 }
 
-.navbar-user-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.navbar-user-name {
-    color: #fff;
-    font-size: 0.85rem;
+.user-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.user-name {
+    font-size: 0.9rem;
     font-weight: 600;
+    color: #f7fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.navbar-user-status {
-    font-size: 0.7rem;
-    color: #4caf50;
+.user-handle {
+    font-size: 0.75rem;
+    color: #718096;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ---- Mobile Toggle Button (hamburger) ---- */
-.navbar-mobile-toggle {
-    display: none;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 200;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+.logout-btn {
+    background: transparent;
     border: none;
-    background: #0a0e1a;
+    color: #718096;
     cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
-.hamburger {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 22px;
-    align-items: center;
-}
-
-.hamburger span {
-    display: block;
-    width: 100%;
-    height: 2px;
-    background: #00d4ff;
-    border-radius: 2px;
-    transition: all 0.3s ease;
-}
-
-.hamburger.open span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-}
-
-.hamburger.open span:nth-child(2) {
-    opacity: 0;
-}
-
-.hamburger.open span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
-}
-
-/* ---- Mobile Overlay ---- */
-.navbar-overlay {
-    display: none;
-}
-
-/* ========================================
-   Responsive Breakpoints
-   ======================================== */
-
-/* Tablet: collapse to icon-only sidebar */
-@media (max-width: 1024px) {
-    .navbar {
-        width: 72px;
-        min-width: 72px;
-        align-items: center;
-    }
-
-    .navbar-brand {
-        padding: 20px 0 16px;
-        justify-content: center;
-    }
-
-    .navbar-brand-text {
-        display: none;
-    }
-
-    .navbar-menu {
-        padding: 8px;
-        align-items: center;
-    }
-
-    .navbar-item {
-        justify-content: center;
-        padding: 12px;
-        width: 48px;
-        gap: 0;
-    }
-
-    .navbar-item-label {
-        display: none;
-    }
-
-    .navbar-item-badge {
-        position: absolute;
-        top: 4px;
-        right: 2px;
-        min-width: 16px;
-        height: 16px;
-        font-size: 0.6rem;
-        padding: 0 4px;
-    }
-
-    .navbar-user {
-        justify-content: center;
-        padding: 12px;
-    }
-
-    .navbar-user-info {
-        display: none;
-    }
-}
-
-/* Mobile: off-canvas sidebar */
-@media (max-width: 768px) {
-    .navbar-mobile-toggle {
-        display: flex;
-    }
-
-    .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 260px;
-        min-width: 260px;
-        transform: translateX(-100%);
-        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .navbar--open {
-        transform: translateX(0);
-    }
-
-    /* Restore full labels on mobile when open */
-    .navbar--open .navbar-brand-text {
-        display: flex;
-    }
-
-    .navbar--open .navbar-item {
-        width: 100%;
-        justify-content: flex-start;
-        gap: 14px;
-    }
-
-    .navbar--open .navbar-item-label {
-        display: inline;
-    }
-
-    .navbar--open .navbar-item-badge {
-        position: static;
-        min-width: 20px;
-        height: 20px;
-        font-size: 0.7rem;
-        padding: 0 6px;
-    }
-
-    .navbar--open .navbar-user-info {
-        display: flex;
-    }
-
-    .navbar-overlay {
-        display: block;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 99;
-        backdrop-filter: blur(2px);
-    }
+.logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
 }
