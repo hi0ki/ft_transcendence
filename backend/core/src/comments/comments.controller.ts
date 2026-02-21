@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Delete, Put, UseGuards } from '@nestjs/common';
+import {
+    Body, Controller, Get, Param, ParseIntPipe,
+    Post, Delete, Put, Query, UseGuards,
+} from '@nestjs/common';
 import { CommentsService } from './comments.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -21,19 +22,29 @@ export class CommentsController {
 
     @Post()
     @UseGuards(AuthGuard)
-    create(@CurrentUser() user: { id: number }, @Body() createCommentDto: CreateCommentDto) {
-        return this.commentsService.create(user.id, createCommentDto);
+    create(
+        @CurrentUser() user: { id: number },
+        @Body() body: { postId: number; content: string },
+    ) {
+        return this.commentsService.create(user.id, body);
     }
 
     @Put('update')
     @UseGuards(AuthGuard)
-    update(@CurrentUser() user: { id: number }, @Body() updateCommentDto: UpdateCommentDto) {
-        return this.commentsService.update(user.id, updateCommentDto);
+    update(
+        @CurrentUser() user: { id: number },
+        @Body() body: { commentId: number; postId: number; content: string },
+    ) {
+        return this.commentsService.update(user.id, body);
     }
 
     @Delete(':id')
     @UseGuards(AuthGuard)
-    delete(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) commentId: number) {
-        return this.commentsService.delete(user.id, commentId);
+    delete(
+        @CurrentUser() user: { id: number },
+        @Param('id', ParseIntPipe) commentId: number,
+        @Query('postId', ParseIntPipe) postId: number,
+    ) {
+        return this.commentsService.delete(user.id, commentId, postId);
     }
 }

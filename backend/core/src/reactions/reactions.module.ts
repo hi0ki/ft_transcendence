@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { ReactionsController } from './reactions.controller';
 import { ReactionsService } from './reactions.service';
-import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [HttpModule],
   controllers: [ReactionsController],
   providers: [ReactionsService],
 })

@@ -1,98 +1,100 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
+import { Injectable, HttpException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class CommentsService {
+    private readonly authUrl: string;
 
-  constructor(private prisma: PrismaService) {}
-
-  // Create a new comment
-  async create(userId: number, createCommentDto: CreateCommentDto)
-  {
-    return this.prisma.comment.create({
-      data: {
-        postId: createCommentDto.postId,
-        userId: userId,
-        content: createCommentDto.content,
-      },
-      include: {
-        author: {
-          select: {
-            profile: {
-              select: {
-                username: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  // update a comment by its ID (only the owner can update)
-  async update(userId: number, updateCommentDto: UpdateCommentDto)
-  {
-    const comment = await this.prisma.comment.findUnique({
-      where: { id: updateCommentDto.commentId },
-    });
-    if (!comment) {
-      throw new NotFoundException('Comment not found');
+    constructor(private readonly http: HttpService) {
+        this.authUrl = process.env.AUTH_SERVICE_URL || 'http://auth_service:3000';
     }
-    if (comment.userId !== userId) {
-      throw new ForbiddenException('You can only edit your own comments');
-    }
-    return this.prisma.comment.update({
-      where: { id: updateCommentDto.commentId },
-      data: { content: updateCommentDto.content },
-    });
-  }
 
-  // Get all comments for a specific post
-  async findAllByPost(postId: number)
-  {
-    return this.prisma.comment.findMany({
-      where: { postId },
-      include: {
-        author: {
-          select:{
-            profile: {
-              select: {
-                username: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  // delete a comment by its ID (only the owner can delete)
-  async delete(userId: number, commentId: number)
-  {
-    const comment = await this.prisma.comment.findUnique({
-      where: { id: commentId },
-    });
-    if (!comment) {
-      throw new NotFoundException('Comment not found');
+    async findAllByPost(postId: number) {
+        const { data } = await firstValueFrom(
+            this.http.get(`${this.authUrl}/comments/post/${postId}`),
+        );
+        return data;
     }
-    if (comment.userId !== userId) {
-      throw new ForbiddenException('You can only delete your own comments');
-    }
-    return this.prisma.comment.delete({
-      where: { id: commentId },
-    });
-  }
 
-  // count the number of comments for a specific post
-  async countByPost(postId: number)
-  {
-    return this.prisma.comment.count({
-        where: { postId },
-      });
-  }
+    async countByPost(postId: number) {
+        const { data } = await firstValueFrom(
+            this.http.get(`${this.authUrl}/comments/posts/${postId}/count`),
+        );
+        return data;
+    }
+
+    async create(userId: number, body: { postId: number; content: string }) {
+        try {
+            const { data } = await firstValueFrom(
+                this.http.post(`${this.authUrl}/comments`, {
+                    postId: body.postId,
+                    userId,
+                    content: body.content,
+                }),
+            );
+            return data;
+        } catch (err) {
+            throw new HttpException(
+                err.response?.data || 'Failed to create comment',
+                err.response?.status || 500,
+            );
+        }
+    }
+
+    async update(
+        userId: number,
+        body: { commentId: number; postId: number; content: string },
+    ) {
+        // Ownership check: fetch all comments for the post, find ours
+        await this.verifyOwnership(body.commentId, body.postId, userId);
+
+        try {
+            const { data } = await firstValueFrom(
+                this.http.put(`${this.authUrl}/comments/update`, {
+                    commentId: body.commentId,
+                    userId,
+                    content: body.content,
+                }),
+            );
+            return data;
+        } catch (err) {
+            throw new HttpException(
+                err.response?.data || 'Failed to update comment',
+                err.response?.status || 500,
+            );
+        }
+    }
+
+    async delete(userId: number, commentId: number, postId: number) {
+        // Ownership check
+        await this.verifyOwnership(commentId, postId, userId);
+
+        try {
+            const { data } = await firstValueFrom(
+                this.http.delete(`${this.authUrl}/comments/${commentId}`),
+            );
+            return data;
+        } catch (err) {
+            throw new HttpException(
+                err.response?.data || 'Failed to delete comment',
+                err.response?.status || 500,
+            );
+        }
+    }
+
+    /**
+     * Fetches all comments for a post from auth service,
+     * finds the target comment, and verifies the requesting user owns it.
+     */
+    private async verifyOwnership(commentId: number, postId: number, userId: number) {
+        const comments = await this.findAllByPost(postId);
+        const comment = comments?.find?.((c: any) => c.id === commentId);
+        if (!comment) {
+            throw new HttpException('Comment not found', 404);
+        }
+        if (comment.userId !== userId) {
+            throw new HttpException('You can only modify your own comments', 403);
+        }
+    }
 }

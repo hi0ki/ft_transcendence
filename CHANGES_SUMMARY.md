@@ -1,5 +1,5 @@
 # Comments & Reactions — Backend Implementation Summary
-
+auth_service:3000/
 ## Service: `backend/core/`
 
 All code lives inside `backend/core/src/`. No existing files were modified except `app.module.ts`.
