@@ -8,12 +8,12 @@ export class PostsService
 	constructor(private prisma: PrismaService) {}
 
 	createPost(data: 
-		{
-			user_id: number;
-			type: 'help' | 'resource' | 'meme';
-			title: string;
-			content: string;
-		})
+	{
+		user_id: number;
+		type: 'help' | 'resource' | 'meme';
+		title: string;
+		content: string;
+	})
 	{
 		return this.prisma.posts.create({data, });
 	}
@@ -29,5 +29,9 @@ export class PostsService
 	async remove(id: number) 
 	{
 		return this.prisma.posts.delete({ where: { id }, });
+	}
+	async getOne(id: number) 
+	{
+		return this.prisma.posts.findUnique({where: { id },});
 	}
 }

@@ -9,17 +9,14 @@ export class PostsService
 
 	async createPost(data: any)
 	{
-		const response = await firstValueFrom(
-			this.http.post('http://auth_service:3000/posts', data)
+		const response = await firstValueFrom(this.http.post('http://auth_service:3000/posts', data)
 		);
 		return response.data;
 	}
 
 	async getAllPosts()
 	{
-		const response = await firstValueFrom(
-			this.http.get('http://auth_service:3000/posts')
-		);
+		const response = await firstValueFrom(this.http.get('http://auth_service:3000/posts'));
 		return response.data;
 	}
 
@@ -29,9 +26,15 @@ export class PostsService
 		return response.data;
 	}
 
-	async remove(id: string)
+	async remove(id: number)
 	{
 		const response = await firstValueFrom(this.http.delete(`http://auth_service:3000/posts/${id}`), );
+		return response.data;
+	}
+
+	async getOne(id: number)
+	{
+		const response = await firstValueFrom(this.http.get(`http://auth_service:3000/posts/${id}`));
 		return response.data;
 	}
 }

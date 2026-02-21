@@ -14,6 +14,12 @@ export class PostsController {
 		return this.postsService.createPost(body);
 	}
 
+	@Get(':id')
+	getOne(@Param('id', ParseIntPipe) id: number)
+	{
+		return this.postsService.getOne(id);
+	}
+
 	@Get()
 	getAll() 
 	{
@@ -30,4 +36,6 @@ export class PostsController {
 	{
 		return this.postsService.remove(+id);
 	}
+
+
 }

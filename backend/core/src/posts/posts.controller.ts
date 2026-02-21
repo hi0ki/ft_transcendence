@@ -13,6 +13,13 @@ export class PostsController
 	{
 		return this.postsService.createPost(createPostDto);
 	}
+
+	@Get(':id')
+	getOne(@Param('id', ParseIntPipe) id: number)
+	{
+		return this.postsService.getOne(id);
+	}
+
 	@Get()
 	getAllPosts()
 	{
@@ -26,10 +33,18 @@ export class PostsController
 	}
 
 	@Delete(':id')
-	remove(@Param('id') id: string)
+	remove(@Param('id', ParseIntPipe) id: number)
 	{
 		return this.postsService.remove(id);
 	}
+
+	// @Delete(':id')
+	// remove(@Param('id') id: string)
+	// {
+	// 	return this.postsService.remove(id);
+	// }
+
+
 }
 
 
