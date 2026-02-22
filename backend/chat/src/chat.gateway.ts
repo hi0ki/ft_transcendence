@@ -186,6 +186,70 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
+    @SubscribeMessage('update_message')
+    async handleUpdateMessage(
+        @MessageBody() data: { conversationId: number; messageId: number; content: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            const currentUser = this.chatService.getConnectedUser(client.id);
+            if (!currentUser) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+
+            const updatedMessage = await this.chatService.updateMessageInDB(
+                data.messageId,
+                currentUser.userId,
+                data.content,
+            );
+
+            const roomName = `conversation_${data.conversationId}`;
+            this.server.to(roomName).emit('message_updated', updatedMessage);
+            this.logger.log(`Message ${data.messageId} updated by user ${currentUser.userId}`);
+        } catch (error) {
+            this.logger.error(`Update message error: ${error.message}`);
+            client.emit('error', { message: error.message });
+        }
+    }
+
+    @SubscribeMessage('delete_message')
+    async handleDeleteMessage(
+        @MessageBody() data: { conversationId: number; messageId: number; deleteType?: string },
+        @ConnectedSocket() client: Socket,
+    ) {
+        try {
+            const currentUser = this.chatService.getConnectedUser(client.id);
+            if (!currentUser) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+
+            const deleteType = data.deleteType || 'FOR_ALL';
+            await this.chatService.deleteMessageFromDB(data.messageId, currentUser.userId, deleteType);
+
+            if (deleteType === 'FOR_ALL') {
+                const roomName = `conversation_${data.conversationId}`;
+                this.server.to(roomName).emit('message_deleted', {
+                    messageId: data.messageId,
+                    conversationId: data.conversationId,
+                    deleteType: 'FOR_ALL'
+                });
+            } else {
+                // FOR_ME: only notify the sender
+                client.emit('message_deleted', {
+                    messageId: data.messageId,
+                    conversationId: data.conversationId,
+                    deleteType: 'FOR_ME'
+                });
+            }
+            this.logger.log(`Message ${data.messageId} deleted (${deleteType}) by user ${currentUser.userId}`);
+        } catch (error) {
+            this.logger.error(`Delete message error: ${error.message}`);
+            client.emit('error', { message: error.message });
+        }
+    }
+
     private broadcastOnlineUsers() {
         const onlineUserIds = this.chatService.getOnlineUserIds();
         this.server.emit('online_users', onlineUserIds);

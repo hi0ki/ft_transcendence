@@ -104,6 +104,36 @@ const ChatApp: React.FC = () => {
             );
         });
 
+        socketService.onMessageUpdated((message: DBMessage) => {
+            if (activeConversationRef.current?.id === message.conversationId) {
+                setActiveMessages(prev => prev.map(m => m.id === message.id ? message : m));
+            }
+            // Update last message in sidebar if needed
+            setConversations(prev =>
+                prev.map(conv =>
+                    conv.id === message.conversationId && conv.lastMessage?.id === message.id
+                        ? { ...conv, lastMessage: message }
+                        : conv
+                )
+            );
+        });
+
+        socketService.onMessageDeleted((data: { messageId: number; conversationId: number; deleteType: string }) => {
+            if (activeConversationRef.current?.id === data.conversationId) {
+                setActiveMessages(prev => prev.filter(m => m.id !== data.messageId));
+            }
+            // Update sidebar (clear last message if it was the deleted one)
+            if (data.deleteType === 'FOR_ALL') {
+                setConversations(prev =>
+                    prev.map(conv =>
+                        conv.id === data.conversationId && conv.lastMessage?.id === data.messageId
+                            ? { ...conv, lastMessage: null }
+                            : conv
+                    )
+                );
+            }
+        });
+
         return () => { socketService.disconnect(); };
     }, []);
 
@@ -114,7 +144,7 @@ const ChatApp: React.FC = () => {
         );
         if (existingConv) {
             setActiveConversation(existingConv);
-            const messages = await chatAPI.getConversationMessages(existingConv.id);
+            const messages = await chatAPI.getConversationMessages(existingConv.id, currentUserId);
             setActiveMessages(messages);
             if (connected) socketService.joinRoom(existingConv.id);
             return;
@@ -131,7 +161,7 @@ const ChatApp: React.FC = () => {
                     return [conv, ...prev];
                 });
                 setActiveConversation(conv);
-                const messages = await chatAPI.getConversationMessages(conv.id);
+                const messages = await chatAPI.getConversationMessages(conv.id, currentUserId);
                 setActiveMessages(messages);
             } catch (error) {
                 console.error('Failed to create conversation via REST:', error);
@@ -141,7 +171,7 @@ const ChatApp: React.FC = () => {
 
     const handleConversationClick = async (conversation: DBConversation) => {
         setActiveConversation(conversation);
-        const messages = await chatAPI.getConversationMessages(conversation.id);
+        const messages = await chatAPI.getConversationMessages(conversation.id, currentUserId || undefined);
         setActiveMessages(messages);
         if (connected) socketService.joinRoom(conversation.id);
     };
@@ -159,6 +189,34 @@ const ChatApp: React.FC = () => {
                 ));
             } catch (error) {
                 console.error('Failed to send message via REST:', error);
+            }
+        }
+    };
+
+    const handleUpdateMessage = async (messageId: number, content: string) => {
+        if (!activeConversation) return;
+        if (connected) {
+            socketService.updateMessage(activeConversation.id, messageId, content);
+        } else {
+            try {
+                const updatedMsg = await chatAPI.updateMessage(messageId, currentUserId!, content);
+                setActiveMessages(prev => prev.map(m => m.id === messageId ? updatedMsg : m));
+            } catch (error) {
+                console.error('Failed to update message via REST:', error);
+            }
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: number, deleteType: 'FOR_ME' | 'FOR_ALL' = 'FOR_ALL') => {
+        if (!activeConversation) return;
+        if (connected) {
+            socketService.deleteMessage(activeConversation.id, messageId, deleteType);
+        } else {
+            try {
+                await chatAPI.deleteMessage(messageId, currentUserId!, deleteType);
+                setActiveMessages(prev => prev.filter(m => m.id !== messageId));
+            } catch (error) {
+                console.error('Failed to delete message via REST:', error);
             }
         }
     };
@@ -227,15 +285,6 @@ const ChatApp: React.FC = () => {
                             activeConversationId={activeConversation?.id}
                             onConversationClick={handleConversationClick}
                         />
-
-                        {!searchQuery && users.length > conversations.length + 1 && (
-                            <UserList
-                                users={users.filter(u => u.id !== currentUserId && !conversations.some(c => c.user1.id === u.id || c.user2.id === u.id))}
-                                currentUserId={currentUserId}
-                                onlineUserIds={onlineUserIds}
-                                onUserClick={handleUserClick}
-                            />
-                        )}
                     </div>
                 </div>
 
@@ -246,6 +295,8 @@ const ChatApp: React.FC = () => {
                             messages={activeMessages}
                             currentUserId={currentUserId}
                             onSendMessage={handleSendMessage}
+                            onUpdateMessage={handleUpdateMessage}
+                            onDeleteMessage={handleDeleteMessage}
                         />
                     ) : (
                         <div className="chat-empty">

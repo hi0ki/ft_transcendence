@@ -7,6 +7,8 @@ interface ChatRoomProps {
     messages: DBMessage[];
     currentUserId: number | null;
     onSendMessage: (message: string) => void;
+    onUpdateMessage: (messageId: number, content: string) => void;
+    onDeleteMessage: (messageId: number, type: 'FOR_ME' | 'FOR_ALL') => void;
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({
@@ -14,8 +16,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     messages,
     currentUserId,
     onSendMessage,
+    onUpdateMessage,
+    onDeleteMessage,
 }) => {
     const [inputMessage, setInputMessage] = useState('');
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [editContent, setEditContent] = useState('');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -30,6 +37,40 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             onSendMessage(inputMessage);
             setInputMessage('');
         }
+    };
+
+    const handleEditStart = (message: DBMessage) => {
+        setEditingMessageId(message.id);
+        setEditContent(message.content);
+    };
+
+    const handleEditCancel = () => {
+        setEditingMessageId(null);
+        setEditContent('');
+    };
+
+    const handleEditSave = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingMessageId && editContent.trim()) {
+            onUpdateMessage(editingMessageId, editContent);
+            setEditingMessageId(null);
+            setEditContent('');
+        }
+    };
+
+    const handleDeleteClick = (messageId: number) => {
+        setShowDeleteConfirm(messageId);
+    };
+
+    const confirmDelete = (type: 'FOR_ME' | 'FOR_ALL') => {
+        if (showDeleteConfirm) {
+            onDeleteMessage(showDeleteConfirm, type);
+            setShowDeleteConfirm(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(null);
     };
 
     const getOtherUser = () => {
@@ -78,13 +119,50 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                         const isOwn = message.senderId === currentUserId;
                         const prevMessage = index > 0 ? messages[index - 1] : null;
                         const showTime = !prevMessage || (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() > 300000); // 5 mins gap
+                        const isEditing = editingMessageId === message.id;
 
                         return (
                             <div key={message.id}>
                                 {showTime && <div style={{ textAlign: 'center', margin: '16px 0 8px', fontSize: '0.7rem', color: '#64748b' }}>{formatTime(message.createdAt)}</div>}
                                 <div className={`msg ${isOwn ? 'msg--own' : 'msg--other'}`}>
-                                    <div className="msg-bubble">{message.content}</div>
-                                    {!showTime && <span className="msg-time">{formatTime(message.createdAt)}</span>}
+                                    {isEditing ? (
+                                        <form className="msg-edit-form" onSubmit={handleEditSave}>
+                                            <input
+                                                className="msg-edit-input"
+                                                value={editContent}
+                                                onChange={(e) => setEditContent(e.target.value)}
+                                                autoFocus
+                                            />
+                                            <div className="msg-edit-actions">
+                                                <button type="submit" className="msg-edit-btn msg-edit-btn--save">Save</button>
+                                                <button type="button" className="msg-edit-btn msg-edit-btn--cancel" onClick={handleEditCancel}>Cancel</button>
+                                            </div>
+                                        </form>
+                                    ) : showDeleteConfirm === message.id ? (
+                                        <div className="msg-delete-choices">
+                                            <p style={{ margin: '0 0 8px', fontSize: '0.85rem' }}>Delete message?</p>
+                                            <div className="delete-actions">
+                                                <button className="delete-me-btn" onClick={() => confirmDelete('FOR_ME')}>Delete for me</button>
+                                                {isOwn && (
+                                                    <button className="delete-all-btn" onClick={() => confirmDelete('FOR_ALL')}>Delete for everyone</button>
+                                                )}
+                                                <button className="cancel-btn" onClick={cancelDelete} style={{ background: 'transparent', border: '1px solid #ccc', color: '#ccc' }}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="msg-bubble">
+                                                {message.content}
+                                                <div className="msg-actions">
+                                                    {isOwn && (
+                                                        <button className="msg-action-btn" onClick={() => handleEditStart(message)} title="Edit">✎</button>
+                                                    )}
+                                                    <button className="msg-action-btn" onClick={() => handleDeleteClick(message.id)} title="Delete">🗑</button>
+                                                </div>
+                                            </div>
+                                            {!showTime && <span className="msg-time">{formatTime(message.createdAt)}</span>}
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         );

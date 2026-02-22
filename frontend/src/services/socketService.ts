@@ -115,6 +115,14 @@ class SocketService {
         this.emit('room_message', { conversationId, message });
     }
 
+    updateMessage(conversationId: number, messageId: number, content: string) {
+        this.emit('update_message', { conversationId, messageId, content });
+    }
+
+    deleteMessage(conversationId: number, messageId: number, deleteType: string = 'FOR_ALL') {
+        this.emit('delete_message', { conversationId, messageId, deleteType });
+    }
+
     onOnlineUsers(callback: (userIds: number[]) => void) {
         this.on('online_users', callback);
     }
@@ -125,6 +133,14 @@ class SocketService {
 
     onRoomMessage(callback: (message: DBMessage) => void) {
         this.on('room_message', callback);
+    }
+
+    onMessageUpdated(callback: (message: DBMessage) => void) {
+        this.on('message_updated', callback);
+    }
+
+    onMessageDeleted(callback: (data: { messageId: number; conversationId: number; deleteType: string }) => void) {
+        this.on('message_deleted', callback);
     }
 
     onJoinedRoom(callback: (data: { conversationId: number }) => void) {

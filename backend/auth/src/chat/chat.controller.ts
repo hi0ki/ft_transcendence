@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
@@ -36,13 +36,22 @@ export class ChatController {
     }
 
     @Get('conversation/:conversationId/messages')
-    getConversationMessages(@Param('conversationId', ParseIntPipe) conversationId: number) {
-        return this.chatService.getConversationMessages(conversationId);
+    getConversationMessages(
+        @Param('conversationId', ParseIntPipe) conversationId: number,
+        @Query('userId') userId?: string
+    ) {
+        return this.chatService.getConversationMessages(conversationId, userId ? parseInt(userId) : undefined);
     }
 
     @Put('message')
-    updateMessage(@Body() updateMessageDto: UpdateMessageDto) {
-        return this.chatService.updateMessage(updateMessageDto);
+    updateMessage(@Body() body: any) {
+        const { userId, ...updateMessageDto } = body;
+        return this.chatService.updateMessage(userId, updateMessageDto);
+    }
+
+    @Post('message/delete') // Using POST or DELETE depending on frontend preference, sticking to POST for easier body passing if needed
+    deleteMessage(@Body() body: { messageId: number, userId: number, deleteType?: string }) {
+        return this.chatService.deleteMessage(body.messageId, body.userId, body.deleteType || 'FOR_ALL');
     }
 
     @Get('user/:userId/conversations')

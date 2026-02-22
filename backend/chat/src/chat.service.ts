@@ -110,4 +110,36 @@ export class ChatService {
             throw error;
         }
     }
+
+    async updateMessageInDB(messageId: number, userId: number, content: string): Promise<DBMessage> {
+        try {
+            const response = await firstValueFrom(
+                this.httpService.put(`${this.AUTH_SERVICE_URL}/chat/message`, {
+                    messageId,
+                    userId,
+                    content,
+                    type: 'TEXT',
+                })
+            );
+            return response.data;
+        } catch (error) {
+            this.logger.error(`Failed to update message in DB: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async deleteMessageFromDB(messageId: number, userId: number, deleteType: string = 'FOR_ALL'): Promise<void> {
+        try {
+            await firstValueFrom(
+                this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/message/delete`, {
+                    messageId,
+                    userId,
+                    deleteType,
+                })
+            );
+        } catch (error) {
+            this.logger.error(`Failed to delete message from DB: ${error.message}`);
+            throw error;
+        }
+    }
 }

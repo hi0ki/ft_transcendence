@@ -172,6 +172,7 @@ model Message {
 	content        String?
 	fileUrl        String?
 	isRead         Boolean     @default(false)
+	deletedFor     Int[]       @default([])
 	createdAt      DateTime    @default(now()) @db.Timestamptz(6)
 
 	@@index([conversationId])

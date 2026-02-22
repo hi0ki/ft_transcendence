@@ -32,6 +32,7 @@ export interface DBMessage {
     content: string;
     type: string;
     isRead: boolean;
+    deletedFor: number[];
     createdAt: string;
     sender?: DBUser;
 }
@@ -76,39 +77,26 @@ class ChatAPI {
     }
 
     // Get messages for a conversation
-    async getConversationMessages(conversationId: number): Promise<DBMessage[]> {
-        const response = await fetch(`${this.BASE}/conversation/${conversationId}/messages`, {
+    async getConversationMessages(conversationId: number, userId?: number): Promise<DBMessage[]> {
+        const url = userId
+            ? `${this.BASE}/conversation/${conversationId}/messages?userId=${userId}`
+            : `${this.BASE}/conversation/${conversationId}/messages`;
+
+        const response = await fetch(url, {
             headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to fetch messages');
         return response.json();
     }
 
-    // Find or create a conversation between two users
-    async findOrCreateConversation(userId1: number, userId2: number): Promise<DBConversation> {
-        const response = await fetch(`${this.BASE}/conversation/find-or-create`, {
+    // ... update deleteMessage ...
+    async deleteMessage(messageId: number, userId: number, deleteType: string = 'FOR_ALL'): Promise<void> {
+        const response = await fetch(`${this.BASE}/message/delete`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ userId1, userId2 }),
+            body: JSON.stringify({ messageId, userId, deleteType }),
         });
-        if (!response.ok) throw new Error('Failed to create conversation');
-        return response.json();
-    }
-
-    // Send a message via REST (backup — normally we use WebSocket)
-    async sendMessage(conversationId: number, senderId: number, content: string): Promise<DBMessage> {
-        const response = await fetch(`${this.BASE}/new-message`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-                conversationId,
-                senderId,
-                content,
-                type: 'TEXT',
-            }),
-        });
-        if (!response.ok) throw new Error('Failed to send message');
-        return response.json();
+        if (!response.ok) throw new Error('Failed to delete message');
     }
 }
 

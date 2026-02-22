@@ -102,9 +102,17 @@ export class ChatService {
     }
 
 
-    async getConversationMessages(conversationId: number) {
+    async getConversationMessages(conversationId: number, userId?: number) {
+        const where: any = { conversationId };
+
+        if (userId && !isNaN(userId)) {
+            where.NOT = {
+                deletedFor: { has: userId },
+            };
+        }
+
         return this.prisma.message.findMany({
-            where: { conversationId },
+            where,
             orderBy: { createdAt: 'asc' },
             include: {
                 sender: {
@@ -162,13 +170,14 @@ export class ChatService {
         });
 
         return conversations.map((conversation) => {
-            // Count unread messages (messages not sent by this user that are unread)
+            // Filter messages for types where we only want visible ones (like lastMessage preview)
+            const visibleMessages = conversation.messages.filter(m => !m.deletedFor.includes(userId));
             return {
                 id: conversation.id,
                 user1: conversation.user1,
                 user2: conversation.user2,
                 createdAt: conversation.createdAt,
-                lastMessage: conversation.messages[0] || null,
+                lastMessage: visibleMessages[0] || null,
             };
         });
     }
@@ -206,7 +215,19 @@ export class ChatService {
     }
 
 
-    async updateMessage(updateMessageDto: UpdateMessageDto) {
+    async updateMessage(userId: number, updateMessageDto: UpdateMessageDto) {
+        const message = await this.prisma.message.findUnique({
+            where: { id: updateMessageDto.messageId },
+        });
+
+        if (!message) {
+            throw new Error('Message not found');
+        }
+
+        if (message.senderId !== userId) {
+            throw new Error('You can only update your own messages');
+        }
+
         return this.prisma.message.update({
             where: { id: updateMessageDto.messageId },
             data: {
@@ -216,10 +237,35 @@ export class ChatService {
         });
     }
 
-    async deletemessage(messageId: number) {
-        return this.prisma.message.delete({
+    async deleteMessage(messageId: number, userId: number, type: string = 'FOR_ALL') {
+        const message = await this.prisma.message.findUnique({
             where: { id: messageId },
         });
+
+        if (!message) {
+            throw new Error('Message not found');
+        }
+
+        if (type === 'FOR_ALL') {
+            if (message.senderId !== userId) {
+                throw new Error('You can only delete your own messages for everyone');
+            }
+            return this.prisma.message.delete({
+                where: { id: messageId },
+            });
+        } else {
+            // FOR_ME
+            const deletedFor = message.deletedFor || [];
+            if (!deletedFor.includes(userId)) {
+                deletedFor.push(userId);
+            }
+            return this.prisma.message.update({
+                where: { id: messageId },
+                data: {
+                    deletedFor: { set: deletedFor },
+                },
+            });
+        }
     }
 
     async markAsRead(markAsReadDto: MarkAsReadDto) {
