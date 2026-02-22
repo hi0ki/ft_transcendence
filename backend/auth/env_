@@ -1,6 +1,11 @@
 # DATABASE_URL="postgresql://postgres:postgres@postgres:5432/ft_transc"
 # DATABASE_URL="postgresql://postgres:postgres@localhost:5433/ft_transc"
 # JWT_SECRET="super_secret_key"
+
+
+
+# cmds
+
 # npx prisma studio --url "postgresql://postgres:postgres@localhost:5433/ft_transc"
 
 ## docker compose up  --build postgres  
