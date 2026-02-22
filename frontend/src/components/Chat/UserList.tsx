@@ -1,42 +1,51 @@
 import React from 'react';
-import type { User } from '../../services/chatApi';
+import type { DBUser } from '../../services/chatApi';
+import { getAvatarUrl } from '../../utils/avatarUtils';
 
 interface UserListProps {
-    users: User[];
-    currentUserId?: string;
-    onUserClick: (user: User) => void;
+    users: DBUser[];
+    currentUserId: number | null;
+    onlineUserIds: number[];
+    onUserClick: (user: DBUser) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ users, currentUserId, onUserClick }) => {
-    const otherUsers = users.filter((u) => u.socketId !== currentUserId);
+const UserList: React.FC<UserListProps> = ({ users, currentUserId, onlineUserIds, onUserClick }) => {
+    const otherUsers = users.filter((u) => u.id !== currentUserId);
+
+    const getUserDisplayName = (user: DBUser): string => {
+        return user.profile?.username || user.email.split('@')[0];
+    };
+
+    const isOnline = (userId: number): boolean => {
+        return onlineUserIds.includes(userId);
+    };
 
     if (otherUsers.length === 0) return null;
 
     return (
-        <div className="userlist">
-            <h4 className="userlist-title">Online Users ({otherUsers.length})</h4>
-            {otherUsers.map((user) => {
-                const name = user.username || `User ${user.index}`;
-                return (
-                    <div
-                        key={user.socketId}
-                        className="userlist-item"
-                        onClick={() => onUserClick(user)}
-                    >
-                        <div className="userlist-avatar">
-                            <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
-                                alt={name}
-                            />
-                            <span className="userlist-online-dot"></span>
-                        </div>
-                        <div className="userlist-info">
-                            <span className="userlist-name">{name}</span>
-                            <span className="userlist-status">Online</span>
+        <div style={{ paddingBottom: '10px' }}>
+            {otherUsers.map((user) => (
+                <div
+                    key={user.id}
+                    className="userlist-item"
+                    style={{ margin: '4px 0' }}
+                    onClick={() => onUserClick(user)}
+                >
+                    <div className="userlist-avatar">
+                        <img
+                            src={getAvatarUrl(user.profile?.avatarUrl, getUserDisplayName(user))}
+                            alt={getUserDisplayName(user)}
+                        />
+                        {isOnline(user.id) && <span className="userlist-online-dot" />}
+                    </div>
+                    <div>
+                        <div className="userlist-name">{getUserDisplayName(user)}</div>
+                        <div className="userlist-status" style={!isOnline(user.id) ? { color: '#64748b' } : {}}>
+                            {isOnline(user.id) ? 'Online' : 'Offline'}
                         </div>
                     </div>
-                );
-            })}
+                </div>
+            ))}
         </div>
     );
 };

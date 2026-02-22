@@ -7,13 +7,64 @@ import { MarkAsReadDto } from './dto/mark-as-read.dto';
 
 @Injectable()
 export class ChatService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
+
+    // Get all users with their profiles (for the chat user list)
+    async getAllUsersWithProfiles() {
+        return this.prisma.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                profile: {
+                    select: {
+                        username: true,
+                        fullName: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        });
+    }
+
+    // Get a single user with profile
+    async getUserWithProfile(userId: number) {
+        return this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                profile: {
+                    select: {
+                        username: true,
+                        fullName: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        });
+    }
 
     async createConversation(createConversationDto: CreateConversationDto) {
         const conversation = await this.prisma.conversation.create({
             data: {
                 user1Id: createConversationDto.userId1,
                 user2Id: createConversationDto.userId2,
+            },
+            include: {
+                user1: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+                user2: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
             },
         });
         return conversation;
@@ -27,6 +78,22 @@ export class ChatService {
                     { user1Id: userId2, user2Id: userId1 },
                 ],
             },
+            include: {
+                user1: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+                user2: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+            },
         });
         if (!conversation) {
             conversation = await this.createConversation({ userId1, userId2 });
@@ -34,16 +101,25 @@ export class ChatService {
         return conversation;
     }
 
-    
+
     async getConversationMessages(conversationId: number) {
         return this.prisma.message.findMany({
             where: { conversationId },
             orderBy: { createdAt: 'asc' },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+            },
         });
     }
 
-// get conversations of a user for sidebar (like Instagram),
-// with the last message in each conversation
+    // get conversations of a user for sidebar (like Instagram),
+    // with the last message in each conversation
     async getUserConversations(userId: number) {
         const conversations = await this.prisma.conversation.findMany({
             where: {
@@ -53,9 +129,31 @@ export class ChatService {
                 ],
             },
             include: {
+                user1: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, fullName: true, avatarUrl: true } },
+                    },
+                },
+                user2: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, fullName: true, avatarUrl: true } },
+                    },
+                },
                 messages: {
                     orderBy: { createdAt: 'desc' },
                     take: 1, // only last message
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                profile: { select: { username: true } },
+                            },
+                        },
+                    },
                 },
             },
             orderBy: {
@@ -63,10 +161,27 @@ export class ChatService {
             },
         });
 
-        return conversations.map((conversation) => ({
-            conversationId: conversation.id,
-            lastMessage: conversation.messages[0] || null,
-        }));
+        return conversations.map((conversation) => {
+            // Count unread messages (messages not sent by this user that are unread)
+            return {
+                id: conversation.id,
+                user1: conversation.user1,
+                user2: conversation.user2,
+                createdAt: conversation.createdAt,
+                lastMessage: conversation.messages[0] || null,
+            };
+        });
+    }
+
+    // Get unread count for a conversation
+    async getUnreadCount(conversationId: number, userId: number) {
+        return this.prisma.message.count({
+            where: {
+                conversationId,
+                senderId: { not: userId },
+                isRead: false,
+            },
+        });
     }
 
 
@@ -77,6 +192,15 @@ export class ChatService {
                 senderId: sendMessageDto.senderId,
                 content: sendMessageDto.content,
                 type: sendMessageDto.type,
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
             },
         });
     }

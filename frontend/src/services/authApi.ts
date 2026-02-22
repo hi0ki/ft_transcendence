@@ -95,6 +95,21 @@ class AuthAPI {
         }
     }
 
+    // Get current user's profile
+    async getProfile(): Promise<any> {
+        const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
+            headers: {
+                Authorization: `Bearer ${this.getToken()}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch profile');
+        }
+
+        return response.json();
+    }
+
     // Logout — clear stored data
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);

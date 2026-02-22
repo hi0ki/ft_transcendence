@@ -1,88 +1,93 @@
 import React from 'react';
-import type { Room } from '../../services/chatApi';
+import type { DBConversation } from '../../services/chatApi';
+import { getAvatarUrl } from '../../utils/avatarUtils';
 
 interface ChatListProps {
-    rooms: Room[];
-    currentUserId?: string;
-    activeRoomId?: string;
-    onRoomClick: (room: Room) => void;
-    searchQuery?: string;
+    conversations: DBConversation[];
+    currentUserId: number | null;
+    onlineUserIds: number[];
+    activeConversationId?: number;
+    onConversationClick: (conversation: DBConversation) => void;
 }
 
 const ChatList: React.FC<ChatListProps> = ({
-    rooms,
+    conversations,
     currentUserId,
-    activeRoomId,
-    onRoomClick,
-    searchQuery = '',
+    onlineUserIds,
+    activeConversationId,
+    onConversationClick,
 }) => {
-    const getOtherParticipant = (room: Room) =>
-        room.participants.find((p) => p.socketId !== currentUserId);
-
-    const getLastMessage = (room: Room) => {
-        if (room.messages.length === 0) return 'No messages yet';
-        return room.messages[room.messages.length - 1].content;
+    const getOtherUser = (conversation: DBConversation) => {
+        return conversation.user1.id === currentUserId ? conversation.user2 : conversation.user1;
     };
 
-    const getTimeAgo = (room: Room) => {
-        if (room.messages.length === 0) return '';
-        const lastMsg = room.messages[room.messages.length - 1];
-        const diff = Date.now() - new Date(lastMsg.timestamp).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'now';
-        if (mins < 60) return `${mins}m ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours}h ago`;
-        return `${Math.floor(hours / 24)}d ago`;
+    const getDisplayName = (conversation: DBConversation): string => {
+        const other = getOtherUser(conversation);
+        return other.profile?.username || other.email.split('@')[0];
     };
 
-    const getName = (room: Room) => {
-        const other = getOtherParticipant(room);
-        return other?.username || `User ${other?.index || '?'}`;
+    const isOnline = (userId: number): boolean => {
+        return onlineUserIds.includes(userId);
     };
 
-    const filteredRooms = rooms.filter((room) => {
-        if (!searchQuery) return true;
-        const name = getName(room).toLowerCase();
-        return name.includes(searchQuery.toLowerCase());
-    });
+    const getLastMessagePreview = (conversation: DBConversation): string => {
+        if (!conversation.lastMessage) return 'No messages yet';
+        const content = conversation.lastMessage.content || '';
+        return content.length > 40 ? content.substring(0, 40) + '...' : content;
+    };
 
-    if (filteredRooms.length === 0 && rooms.length === 0) return null;
+    const formatTime = (dateStr: string): string => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    if (conversations.length === 0) return null;
 
     return (
         <div className="chatlist">
-            {filteredRooms.length === 0 ? (
-                <div className="chatlist-empty">No conversations found</div>
-            ) : (
-                filteredRooms.map((room) => {
-                    const isActive = room.roomId === activeRoomId;
-                    const name = getName(room);
-                    const initial = name.charAt(0).toUpperCase();
+            {conversations.map((conversation) => {
+                const isActive = conversation.id === activeConversationId;
+                const other = getOtherUser(conversation);
 
-                    return (
-                        <div
-                            key={room.roomId}
-                            className={`chatlist-item ${isActive ? 'chatlist-item--active' : ''}`}
-                            onClick={() => onRoomClick(room)}
-                        >
-                            <div className="chatlist-avatar">
-                                <img
-                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
-                                    alt={name}
-                                />
-                                <span className="chatlist-online-dot"></span>
-                            </div>
-                            <div className="chatlist-info">
-                                <div className="chatlist-top">
-                                    <span className="chatlist-name">{name}</span>
-                                    <span className="chatlist-time">{getTimeAgo(room)}</span>
-                                </div>
-                                <p className="chatlist-preview">{getLastMessage(room)}</p>
-                            </div>
+                return (
+                    <div
+                        key={conversation.id}
+                        className={`chatlist-item ${isActive ? 'chatlist-item--active' : ''}`}
+                        onClick={() => onConversationClick(conversation)}
+                    >
+                        <div className="chatlist-avatar">
+                            <img
+                                src={getAvatarUrl(other.profile?.avatarUrl, getDisplayName(conversation))}
+                                alt={getDisplayName(conversation)}
+                            />
+                            {isOnline(other.id) && <span className="chatlist-online-dot" />}
                         </div>
-                    );
-                })
-            )}
+                        <div className="chatlist-info">
+                            <div className="chatlist-top">
+                                <span className="chatlist-name">{getDisplayName(conversation)}</span>
+                                {conversation.lastMessage && (
+                                    <span className="chatlist-time">
+                                        {formatTime(conversation.lastMessage.createdAt)}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="chatlist-preview">
+                                {getLastMessagePreview(conversation)}
+                            </p>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 };

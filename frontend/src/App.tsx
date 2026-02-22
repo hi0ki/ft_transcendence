@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import ChatApp from './components/Chat/ChatApp'
@@ -30,6 +31,15 @@ function RegisterPage() {
 
 function ChatPage() {
   const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (authAPI.isAuthenticated()) {
+      authAPI.getProfile()
+        .then(profile => setUserProfile(profile))
+        .catch(err => console.error('Error fetching profile:', err));
+    }
+  }, []);
 
   if (!authAPI.isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -45,7 +55,8 @@ function ChatPage() {
   return (
     <div className="app-layout">
       <Navbar
-        username={user?.email?.split('@')[0] || 'User'}
+        username={userProfile?.username || user?.email?.split('@')[0] || 'User'}
+        avatarUrl={userProfile?.avatarUrl}
         onLogout={handleLogout}
       />
       <div className="app-content">
@@ -64,7 +75,6 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/chat" element={<ChatPage />} />
-        {/* Default redirect: if authed go to chat, else login */}
         <Route
           path="*"
           element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />}

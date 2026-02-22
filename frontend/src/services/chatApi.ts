@@ -1,100 +1,113 @@
-// Use environment variable if set, otherwise use window.location.origin for production
-// This ensures the frontend connects through nginx reverse proxy
+// Chat API service — connects to auth service REST endpoints for DB-backed chat
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-export interface User {
-    socketId: string;
-    index: number;
-    username?: string;
+// Helper to get auth token
+function getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
 }
 
-export interface Message {
-    id: string;
-    roomId: string;
-    from: User;
+// ─── Types matching the DB schema ───
+
+export interface UserProfile {
+    username: string;
+    fullName?: string;
+    avatarUrl?: string;
+}
+
+export interface DBUser {
+    id: number;
+    email: string;
+    profile?: UserProfile | null;
+}
+
+export interface DBMessage {
+    id: number;
+    conversationId: number;
+    senderId: number;
     content: string;
-    timestamp: Date;
-    type: 'text' | 'system';
+    type: string;
+    isRead: boolean;
+    createdAt: string;
+    sender?: DBUser;
 }
 
-export interface Room {
-    roomId: string;
-    participants: User[];
-    messages: Message[];
-    createdAt: Date;
-    createdBy: string;
-    meta?: any;
+export interface DBConversation {
+    id: number;
+    user1: DBUser;
+    user2: DBUser;
+    createdAt: string;
+    lastMessage?: DBMessage | null;
 }
 
 class ChatAPI {
-    // Get all online users
-    async getUsers(): Promise<User[]> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/users`);
+    // All endpoints use /api/ prefix to route through nginx to auth_service
+    private readonly BASE = `${API_BASE_URL}/api/chat`;
+
+    // Get all registered users with their profiles
+    async getUsers(): Promise<DBUser[]> {
+        const response = await fetch(`${this.BASE}/users`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
         return response.json();
     }
 
-    // Get all rooms
-    async getAllRooms(): Promise<Room[]> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms`);
+    // Get a single user with profile
+    async getUser(userId: number): Promise<DBUser> {
+        const response = await fetch(`${this.BASE}/users/${userId}`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch user');
         return response.json();
     }
 
-    // Get rooms for a specific user
-    async getUserRooms(socketId: string): Promise<Room[]> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/user/${socketId}`);
+    // Get all conversations for a user
+    async getUserConversations(userId: number): Promise<DBConversation[]> {
+        const response = await fetch(`${this.BASE}/user/${userId}/conversations`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch conversations');
         return response.json();
     }
 
-    // Get specific room
-    async getRoom(roomId: string): Promise<Room> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}`);
+    // Get messages for a conversation
+    async getConversationMessages(conversationId: number): Promise<DBMessage[]> {
+        const response = await fetch(`${this.BASE}/conversation/${conversationId}/messages`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to fetch messages');
         return response.json();
     }
 
-    // Get room participants
-    async getRoomParticipants(roomId: string): Promise<User[]> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}/participants`);
-        return response.json();
-    }
-
-    // Get messages for a room
-    async getMessages(roomId: string, limit?: number): Promise<Message[]> {
-        const url = limit
-            ? `${API_BASE_URL}/api/chat/messages/${roomId}?limit=${limit}`
-            : `${API_BASE_URL}/api/chat/messages/${roomId}`;
-        const response = await fetch(url);
-        return response.json();
-    }
-
-    // Create a new room
-    async createRoom(from: string, to?: string, meta?: any): Promise<Room> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms`, {
+    // Find or create a conversation between two users
+    async findOrCreateConversation(userId1: number, userId2: number): Promise<DBConversation> {
+        const response = await fetch(`${this.BASE}/conversation/find-or-create`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ from, to, meta }),
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ userId1, userId2 }),
         });
+        if (!response.ok) throw new Error('Failed to create conversation');
         return response.json();
     }
 
-    // Send a message via REST
-    async sendMessage(roomId: string, message: string): Promise<Message> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/messages`, {
+    // Send a message via REST (backup — normally we use WebSocket)
+    async sendMessage(conversationId: number, senderId: number, content: string): Promise<DBMessage> {
+        const response = await fetch(`${this.BASE}/new-message`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ roomId, message }),
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                conversationId,
+                senderId,
+                content,
+                type: 'TEXT',
+            }),
         });
-        return response.json();
-    }
-
-    // Delete a room
-    async deleteRoom(roomId: string): Promise<{ success: boolean; roomId: string }> {
-        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}`, {
-            method: 'DELETE',
-        });
+        if (!response.ok) throw new Error('Failed to send message');
         return response.json();
     }
 }

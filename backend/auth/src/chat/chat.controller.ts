@@ -6,7 +6,19 @@ import { MarkAsReadDto } from './dto/mark-as-read.dto';
 
 @Controller('chat')
 export class ChatController {
-    constructor(private readonly chatService: ChatService) {}
+    constructor(private readonly chatService: ChatService) { }
+
+    // Get all users with profiles (for the user list in chat)
+    @Get('users')
+    getAllUsers() {
+        return this.chatService.getAllUsersWithProfiles();
+    }
+
+    // Get a single user with profile
+    @Get('users/:userId')
+    getUser(@Param('userId', ParseIntPipe) userId: number) {
+        return this.chatService.getUserWithProfile(userId);
+    }
 
     @Post('conversation')
     createConversation(@Body() createConversationDto: { userId1: number, userId2: number }) {

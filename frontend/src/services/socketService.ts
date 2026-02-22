@@ -1,26 +1,42 @@
 import { io, Socket } from 'socket.io-client';
-import type { Message, User } from './chatApi';
+import type { DBMessage } from './chatApi';
 
-// Use environment variable if set, otherwise use window.location.origin for production
-// This ensures the frontend connects through nginx reverse proxy
 const SOCKET_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 class SocketService {
     private socket: Socket | null = null;
     private listeners: Map<string, Function[]> = new Map();
 
-    connect(): Promise<{ socketId: string; index: number }> {
-        return new Promise((resolve) => {
+    connect(): Promise<{ socketId: string; userId: number; email: string; username?: string }> {
+        return new Promise((resolve, reject) => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                reject(new Error('No auth token found'));
+                return;
+            }
+
+            // Timeout: resolve even if welcome isn't received
+            const timeout = setTimeout(() => {
+                console.warn('Socket: welcome event timed out, but socket may still be connected');
+                if (this.socket?.connected) {
+                    resolve({ socketId: this.socket.id || '', userId: 0, email: '', username: '' });
+                } else {
+                    reject(new Error('Socket connection timed out'));
+                }
+            }, 5000);
+
             this.socket = io(SOCKET_URL, {
                 transports: ['websocket'],
                 autoConnect: true,
+                auth: { token },
             });
 
             this.socket.on('connect', () => {
                 console.log('Socket connected:', this.socket?.id);
             });
 
-            this.socket.on('welcome', (data: { socketId: string; index: number }) => {
+            this.socket.on('welcome', (data: { socketId: string; userId: number; email: string; username?: string }) => {
+                clearTimeout(timeout);
                 console.log('Welcome received:', data);
                 resolve(data);
             });
@@ -31,6 +47,14 @@ class SocketService {
 
             this.socket.on('error', (error: any) => {
                 console.error('Socket error:', error);
+                clearTimeout(timeout);
+                reject(error);
+            });
+
+            this.socket.on('connect_error', (error: any) => {
+                console.error('Socket connect_error:', error.message);
+                clearTimeout(timeout);
+                reject(error);
             });
         });
     }
@@ -50,13 +74,11 @@ class SocketService {
         return this.socket?.id;
     }
 
-    // Event listeners
     on(event: string, callback: Function) {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
         }
         this.listeners.get(event)?.push(callback);
-
         if (this.socket) {
             this.socket.on(event, (...args: any[]) => callback(...args));
         }
@@ -66,73 +88,51 @@ class SocketService {
         if (callback) {
             const listeners = this.listeners.get(event) || [];
             const index = listeners.indexOf(callback);
-            if (index > -1) {
-                listeners.splice(index, 1);
-            }
+            if (index > -1) listeners.splice(index, 1);
         } else {
             this.listeners.delete(event);
         }
-
-        if (this.socket) {
-            this.socket.off(event);
-        }
+        if (this.socket) this.socket.off(event);
     }
 
-    // Emit events
     emit(event: string, data?: any) {
-        if (this.socket) {
-            this.socket.emit(event, data);
-        }
+        if (this.socket) this.socket.emit(event, data);
     }
 
-    // Room operations
-    createRoom(to: string, meta?: any) {
-        this.emit('create_room', { to, meta });
+    createRoom(targetUserId: number) {
+        this.emit('create_room', { targetUserId });
     }
 
-    joinRoom(roomId: string) {
-        this.emit('join_room', { roomId });
+    joinRoom(conversationId: number) {
+        this.emit('join_room', { conversationId });
     }
 
-    leaveRoom(roomId: string) {
-        this.emit('leave_room', { roomId });
+    leaveRoom(conversationId: number) {
+        this.emit('leave_room', { conversationId });
     }
 
-    sendMessage(roomId: string, message: string) {
-        this.emit('room_message', { roomId, message });
+    sendMessage(conversationId: number, message: string) {
+        this.emit('room_message', { conversationId, message });
     }
 
-    // Listeners for specific events
-    onUserList(callback: (users: User[]) => void) {
-        this.on('user_list', callback);
+    onOnlineUsers(callback: (userIds: number[]) => void) {
+        this.on('online_users', callback);
     }
 
-    onRoomCreated(callback: (data: { roomId: string; participants: User[]; createdBy: string; meta?: any }) => void) {
+    onRoomCreated(callback: (data: { conversationId: number; conversation: any }) => void) {
         this.on('room_created', callback);
     }
 
-    onRoomMessage(callback: (message: Message) => void) {
+    onRoomMessage(callback: (message: DBMessage) => void) {
         this.on('room_message', callback);
     }
 
-    onJoinedRoom(callback: (data: { roomId: string }) => void) {
+    onJoinedRoom(callback: (data: { conversationId: number }) => void) {
         this.on('joined_room', callback);
     }
 
-    onLeftRoom(callback: (data: { roomId: string }) => void) {
+    onLeftRoom(callback: (data: { conversationId: number }) => void) {
         this.on('left_room', callback);
-    }
-
-    onUserJoined(callback: (data: { roomId: string; user: User }) => void) {
-        this.on('user_joined', callback);
-    }
-
-    onUserLeft(callback: (data: { roomId: string; user: User }) => void) {
-        this.on('user_left', callback);
-    }
-
-    onRoomDeleted(callback: (data: { roomId: string }) => void) {
-        this.on('room_deleted', callback);
     }
 }
 

@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
+import { Logger } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
     cors: {
@@ -20,103 +22,172 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
+    private readonly logger = new Logger(ChatGateway.name);
+    private readonly JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key';
+
     constructor(private readonly chatService: ChatService) { }
 
-    handleConnection(client: Socket) {
-        console.log(`Client connected: ${client.id}`);
+    async handleConnection(client: Socket) {
+        try {
+            // Extract JWT token from handshake
+            const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '');
 
-        // Add user to the system
-        const user = this.chatService.addUser(client.id);
+            if (!token) {
+                this.logger.warn(`Client ${client.id} connected without token — disconnecting`);
+                client.emit('error', { message: 'Authentication required' });
+                client.disconnect();
+                return;
+            }
 
-        // Send welcome message to the connected client
-        client.emit('welcome', { socketId: user.socketId, index: user.index });
+            // Decode JWT to get user info
+            const payload: any = jwt.verify(token, this.JWT_SECRET);
+            const userId = payload.id || payload.sub;
+            const email = payload.email;
+            const username = payload.username;
 
-        // Broadcast updated user list to all clients
-        this.broadcastUserList();
+            if (!userId) {
+                this.logger.warn(`Client ${client.id} token has no userId — disconnecting`);
+                client.emit('error', { message: 'Invalid token' });
+                client.disconnect();
+                return;
+            }
+
+            // Register connected user
+            const user = this.chatService.addConnectedUser(client.id, userId, email, username);
+
+            // Send welcome with user info
+            client.emit('welcome', {
+                socketId: client.id,
+                userId: user.userId,
+                email: user.email,
+                username: user.username,
+            });
+
+            // Broadcast updated online users list
+            this.broadcastOnlineUsers();
+
+        } catch (error) {
+            this.logger.error(`Client ${client.id} auth failed: ${error.message}`);
+            client.emit('error', { message: 'Authentication failed' });
+            client.disconnect();
+        }
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`);
-
-        // Remove user from the system
-        this.chatService.removeUser(client.id);
-
-        // Broadcast updated user list to all clients
-        this.broadcastUserList();
+        const user = this.chatService.removeConnectedUser(client.id);
+        if (user) {
+            this.broadcastOnlineUsers();
+        }
     }
 
     @SubscribeMessage('create_room')
-    handleCreateRoom(
-        @MessageBody() data: { to: string; meta?: any },
+    async handleCreateRoom(
+        @MessageBody() data: { targetUserId: number },
         @ConnectedSocket() client: Socket,
     ) {
         try {
-            const room = this.chatService.createRoom(client.id, data.to, data.meta);
-
-            // Join both users to the room
-            client.join(room.roomId);
-            const toSocket = this.server.sockets.sockets.get(data.to);
-            if (toSocket) {
-                toSocket.join(room.roomId);
+            const currentUser = this.chatService.getConnectedUser(client.id);
+            if (!currentUser) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
             }
 
-            // Notify both participants about the new room
-            this.server.to(room.roomId).emit('room_created', {
-                roomId: room.roomId,
-                participants: room.participants,
-                createdBy: room.createdBy,
-                meta: room.meta,
+            // Find or create conversation in DB
+            const conversation = await this.chatService.findOrCreateConversation(
+                currentUser.userId,
+                data.targetUserId,
+            );
+
+            // Join both users to a socket.io room (using conversation DB ID)
+            const roomName = `conversation_${conversation.id}`;
+            client.join(roomName);
+
+            // If the other user is online, join them to the room too
+            const targetSocketId = this.chatService.getSocketIdForUser(data.targetUserId);
+            if (targetSocketId) {
+                const targetSocket = this.server.sockets.sockets.get(targetSocketId);
+                if (targetSocket) {
+                    targetSocket.join(roomName);
+                }
+            }
+
+            // Notify the creator about the room
+            client.emit('room_created', {
+                conversationId: conversation.id,
+                conversation,
             });
 
-            console.log(`Room created: ${room.roomId}`);
+            // Also notify the target user if online
+            if (targetSocketId) {
+                this.server.to(targetSocketId).emit('room_created', {
+                    conversationId: conversation.id,
+                    conversation,
+                });
+            }
+
+            this.logger.log(`Conversation ${conversation.id} created/found between users ${currentUser.userId} and ${data.targetUserId}`);
         } catch (error) {
+            this.logger.error(`Create room error: ${error.message}`);
             client.emit('error', { message: error.message });
         }
     }
 
     @SubscribeMessage('join_room')
     handleJoinRoom(
-        @MessageBody() data: { roomId: string },
+        @MessageBody() data: { conversationId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        client.join(data.roomId);
-        client.emit('joined_room', { roomId: data.roomId });
-        console.log(`Client ${client.id} joined room ${data.roomId}`);
+        const roomName = `conversation_${data.conversationId}`;
+        client.join(roomName);
+        client.emit('joined_room', { conversationId: data.conversationId });
+        this.logger.log(`Client ${client.id} joined conversation ${data.conversationId}`);
     }
 
     @SubscribeMessage('leave_room')
     handleLeaveRoom(
-        @MessageBody() data: { roomId: string },
+        @MessageBody() data: { conversationId: number },
         @ConnectedSocket() client: Socket,
     ) {
-        client.leave(data.roomId);
-        client.emit('left_room', { roomId: data.roomId });
-        console.log(`Client ${client.id} left room ${data.roomId}`);
+        const roomName = `conversation_${data.conversationId}`;
+        client.leave(roomName);
+        client.emit('left_room', { conversationId: data.conversationId });
     }
 
     @SubscribeMessage('room_message')
-    handleRoomMessage(
-        @MessageBody() data: { roomId: string; message: string },
+    async handleRoomMessage(
+        @MessageBody() data: { conversationId: number; message: string },
         @ConnectedSocket() client: Socket,
     ) {
         try {
-            const message = this.chatService.addMessage(
-                data.roomId,
-                client.id,
+            const currentUser = this.chatService.getConnectedUser(client.id);
+            if (!currentUser) {
+                client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+
+            // Persist message to database via auth_service
+            const savedMessage = await this.chatService.sendMessageToDB(
+                data.conversationId,
+                currentUser.userId,
                 data.message,
             );
 
-            // Broadcast message to all participants in the room
-            this.server.to(data.roomId).emit('room_message', message);
+            // Broadcast to all participants in the room
+            const roomName = `conversation_${data.conversationId}`;
+            this.server.to(roomName).emit('room_message', savedMessage);
 
-            console.log(`Message sent to room ${data.roomId}: ${data.message}`);
+            // Also emit to sender in case they haven't joined the room yet
+            client.emit('room_message', savedMessage);
+
+            this.logger.log(`Message sent to conversation ${data.conversationId} by user ${currentUser.userId}`);
         } catch (error) {
+            this.logger.error(`Send message error: ${error.message}`);
             client.emit('error', { message: error.message });
         }
     }
 
-    private broadcastUserList() {
-        const users = this.chatService.getAllUsers();
-        this.server.emit('user_list', users);
+    private broadcastOnlineUsers() {
+        const onlineUserIds = this.chatService.getOnlineUserIds();
+        this.server.emit('online_users', onlineUserIds);
     }
 }

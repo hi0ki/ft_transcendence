@@ -1,33 +1,35 @@
-export interface User {
+export interface ConnectedUser {
     socketId: string;
-    index: number;
+    userId: number;
+    email: string;
     username?: string;
 }
 
-export interface Message {
-    id: string;
-    roomId: string;
-    from: User;
+export interface DBUser {
+    id: number;
+    email: string;
+    profile?: {
+        username: string;
+        fullName?: string;
+        avatarUrl?: string;
+    };
+}
+
+export interface DBConversation {
+    id: number;
+    user1: DBUser;
+    user2: DBUser;
+    createdAt: string;
+    lastMessage?: DBMessage | null;
+}
+
+export interface DBMessage {
+    id: number;
+    conversationId: number;
+    senderId: number;
     content: string;
-    timestamp: Date;
-    type: 'text' | 'system';
-}
-
-export interface Room {
-    roomId: string;
-    participants: User[];
-    messages: Message[];
-    createdAt: Date;
-    createdBy: string;
-    meta?: any;
-}
-
-export interface CreateRoomDto {
-    to: string;
-    meta?: any;
-}
-
-export interface SendMessageDto {
-    roomId: string;
-    message: string;
+    type: string;
+    isRead: boolean;
+    createdAt: string;
+    sender?: DBUser;
 }

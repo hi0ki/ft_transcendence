@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getAvatarUrl } from '../../utils/avatarUtils';
 import './Navbar.css';
 
 interface NavItemProps {
@@ -27,10 +28,11 @@ const NavItem = ({ label, icon, badge, isActive, onClick }: NavItemProps) => (
 
 interface NavbarProps {
     username: string;
+    avatarUrl?: string;
     onLogout: () => void;
 }
 
-function Navbar({ username, onLogout }: NavbarProps) {
+function Navbar({ username, avatarUrl, onLogout }: NavbarProps) {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -76,7 +78,10 @@ function Navbar({ username, onLogout }: NavbarProps) {
             <div className="sidebar-footer">
                 <div className="user-profile">
                     <div className="user-avatar">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`} alt="avatar" />
+                        <img
+                            src={getAvatarUrl(avatarUrl, username)}
+                            alt="avatar"
+                        />
                     </div>
                     <div className="user-details">
                         <span className="user-name">{username}</span>
@@ -103,4 +108,3 @@ const UserIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="non
 const SettingsIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
 
 export default Navbar;
-

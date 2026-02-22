@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socketService } from '../../services/socketService';
 import { chatAPI } from '../../services/chatApi';
-import type { User, Room, Message } from '../../services/chatApi';
+import { authAPI } from '../../services/authApi';
+import type { DBUser, DBConversation, DBMessage } from '../../services/chatApi';
 import UserList from './UserList';
 import ChatList from './ChatList';
 import ChatRoom from './ChatRoom';
@@ -9,123 +10,178 @@ import './Chat.css';
 
 const ChatApp: React.FC = () => {
     const [connected, setConnected] = useState(false);
-    const [currentUser, setCurrentUser] = useState<{ socketId: string; index: number } | null>(null);
-    const [users, setUsers] = useState<User[]>([]);
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [activeRoom, setActiveRoom] = useState<Room | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [users, setUsers] = useState<DBUser[]>([]);
+    const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
+    const [conversations, setConversations] = useState<DBConversation[]>([]);
+    const [activeConversation, setActiveConversation] = useState<DBConversation | null>(null);
+    const [activeMessages, setActiveMessages] = useState<DBMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const currentUserRef = useRef(currentUser);
-    useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+    const currentUserIdRef = useRef(currentUserId);
+    const activeConversationRef = useRef(activeConversation);
+
+    useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
+    useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
 
     useEffect(() => {
+        const authUser = authAPI.getCurrentUser();
+        if (!authUser) {
+            console.error('No auth user found - not logged in');
+            setLoading(false);
+            return;
+        }
+        setCurrentUserId(authUser.id);
+
+        const loadData = async () => {
+            try {
+                const allUsers = await chatAPI.getUsers();
+                setUsers(allUsers);
+            } catch (error) {
+                console.error('Failed to load users:', error);
+            }
+
+            try {
+                const userConversations = await chatAPI.getUserConversations(authUser.id);
+                setConversations(userConversations);
+            } catch (error) {
+                console.error('Failed to load conversations:', error);
+            }
+
+            setLoading(false);
+        };
+
+        loadData();
+
         const connectSocket = async () => {
             try {
-                const userData = await socketService.connect();
-                setCurrentUser(userData);
+                const socketData = await socketService.connect();
                 setConnected(true);
-                await loadRooms(userData.socketId);
-                setLoading(false);
+                console.log('Socket connected as:', socketData);
             } catch (error) {
-                console.error('Failed to connect:', error);
-                setLoading(false);
+                console.warn('Socket connection failed, using REST fallback:', error);
             }
         };
 
         connectSocket();
 
-        socketService.onUserList((userList: User[]) => setUsers(userList));
+        socketService.onOnlineUsers((userIds: number[]) => {
+            setOnlineUserIds(userIds);
+        });
 
         socketService.onRoomCreated(async (data) => {
-            if (currentUserRef.current) {
-                const userRooms = await chatAPI.getUserRooms(currentUserRef.current.socketId);
-                const roomsWithMessages = await Promise.all(
-                    userRooms.map(async (room) => {
-                        const messages = await chatAPI.getMessages(room.roomId);
-                        return { ...room, messages };
-                    })
-                );
-                setRooms(roomsWithMessages);
-                const newRoom = roomsWithMessages.find((r) => r.roomId === data.roomId);
-                if (newRoom) setActiveRoom(newRoom);
+            const userId = currentUserIdRef.current;
+            if (userId) {
+                const updatedConversations = await chatAPI.getUserConversations(userId);
+                setConversations(updatedConversations);
+                const newConv = updatedConversations.find(c => c.id === data.conversationId);
+                if (newConv) {
+                    setActiveConversation(newConv);
+                    const messages = await chatAPI.getConversationMessages(newConv.id);
+                    setActiveMessages(messages);
+                    socketService.joinRoom(newConv.id);
+                }
             }
         });
 
-        socketService.onRoomMessage((message: Message) => {
-            setRooms((prevRooms) => prevRooms.map((room) =>
-                room.roomId === message.roomId
-                    ? { ...room, messages: [...room.messages, message] }
-                    : room
-            ));
-            setActiveRoom((prev) => {
-                if (!prev || prev.roomId !== message.roomId) return prev;
-                return { ...prev, messages: [...prev.messages, message] };
-            });
-        });
-
-        socketService.onRoomDeleted((data) => {
-            setRooms((prev) => prev.filter((r) => r.roomId !== data.roomId));
-            setActiveRoom((prev) => prev?.roomId === data.roomId ? null : prev);
+        socketService.onRoomMessage((message: DBMessage) => {
+            if (activeConversationRef.current?.id === message.conversationId) {
+                setActiveMessages(prev => {
+                    if (prev.some(m => m.id === message.id)) return prev;
+                    return [...prev, message];
+                });
+            }
+            // Update conversation list with the new last message
+            setConversations(prev =>
+                prev.map(conv =>
+                    conv.id === message.conversationId ? { ...conv, lastMessage: message } : conv
+                ).sort((a, b) => {
+                    const timeA = new Date(a.lastMessage?.createdAt || a.createdAt).getTime();
+                    const timeB = new Date(b.lastMessage?.createdAt || b.createdAt).getTime();
+                    return timeB - timeA;
+                })
+            );
         });
 
         return () => { socketService.disconnect(); };
     }, []);
 
-    const loadRooms = async (socketId: string) => {
-        try {
-            const userRooms = await chatAPI.getUserRooms(socketId);
-            const roomsWithMessages = await Promise.all(
-                userRooms.map(async (room) => {
-                    const messages = await chatAPI.getMessages(room.roomId);
-                    return { ...room, messages };
-                })
-            );
-            setRooms(roomsWithMessages);
-        } catch (error) {
-            console.error('Failed to load rooms:', error);
-        }
-    };
-
-    const handleUserClick = async (user: User) => {
-        if (!currentUser) return;
-        const existingRoom = rooms.find((room) =>
-            room.participants.some((p) => p.socketId === user.socketId)
+    const handleUserClick = async (user: DBUser) => {
+        if (!currentUserId) return;
+        const existingConv = conversations.find(conv =>
+            conv.user1.id === user.id || conv.user2.id === user.id
         );
-        if (existingRoom) { setActiveRoom(existingRoom); return; }
-        socketService.createRoom(user.socketId);
-    };
+        if (existingConv) {
+            setActiveConversation(existingConv);
+            const messages = await chatAPI.getConversationMessages(existingConv.id);
+            setActiveMessages(messages);
+            if (connected) socketService.joinRoom(existingConv.id);
+            return;
+        }
 
-    const handleRoomClick = async (room: Room) => {
-        try {
-            const messages = await chatAPI.getMessages(room.roomId);
-            setActiveRoom({ ...room, messages });
-        } catch (error) {
-            console.error('Failed to load room:', error);
+        if (connected) {
+            socketService.createRoom(user.id);
+        } else {
+            try {
+                const conv = await chatAPI.findOrCreateConversation(currentUserId, user.id);
+                setConversations(prev => {
+                    const exists = prev.some(c => c.id === conv.id);
+                    if (exists) return prev;
+                    return [conv, ...prev];
+                });
+                setActiveConversation(conv);
+                const messages = await chatAPI.getConversationMessages(conv.id);
+                setActiveMessages(messages);
+            } catch (error) {
+                console.error('Failed to create conversation via REST:', error);
+            }
         }
     };
 
-    const handleSendMessage = (message: string) => {
-        if (!activeRoom || !currentUser) return;
-        socketService.sendMessage(activeRoom.roomId, message);
+    const handleConversationClick = async (conversation: DBConversation) => {
+        setActiveConversation(conversation);
+        const messages = await chatAPI.getConversationMessages(conversation.id);
+        setActiveMessages(messages);
+        if (connected) socketService.joinRoom(conversation.id);
     };
+
+    const handleSendMessage = async (message: string) => {
+        if (!activeConversation || !currentUserId) return;
+        if (connected) {
+            socketService.sendMessage(activeConversation.id, message);
+        } else {
+            try {
+                const savedMsg = await chatAPI.sendMessage(activeConversation.id, currentUserId, message);
+                setActiveMessages(prev => [...prev, savedMsg]);
+                setConversations(prev => prev.map(c =>
+                    c.id === activeConversation.id ? { ...c, lastMessage: savedMsg } : c
+                ));
+            } catch (error) {
+                console.error('Failed to send message via REST:', error);
+            }
+        }
+    };
+
+    // Filtered lists
+    const filteredUsers = users.filter(u =>
+        u.id !== currentUserId &&
+        (u.profile?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    const filteredConversations = conversations.filter(conv => {
+        const other = conv.user1.id === currentUserId ? conv.user2 : conv.user1;
+        const name = other.profile?.username || other.email;
+        return name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
     if (loading) {
         return (
-            <div className="chat-app chat-app--loading">
-                <div className="chat-loading">
-                    <div className="chat-loading-spinner"></div>
-                    <span>Connecting to chat...</span>
-                </div>
-            </div>
-        );
-    }
-
-    if (!connected) {
-        return (
-            <div className="chat-app chat-app--error">
-                <div className="chat-error-box">
-                    Failed to connect to chat server. Please refresh.
+            <div className="chat-layout-wrapper">
+                <div className="chat-global-header">
+                    <h1>Messages</h1>
+                    <p>Loading your chats...</p>
                 </div>
             </div>
         );
@@ -133,16 +189,15 @@ const ChatApp: React.FC = () => {
 
     return (
         <div className="chat-layout-wrapper">
-            <header className="chat-global-header">
+            <div className="chat-global-header">
                 <h1>Messages</h1>
                 <p>Chat with your peers</p>
-            </header>
+            </div>
 
             <div className="chat-app-container">
-                {/* Left Card — Conversations */}
                 <div className="chat-card chat-card--left">
                     <div className="chat-search">
-                        <svg className="chat-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                        <span className="chat-search-icon">🔍</span>
                         <input
                             type="text"
                             placeholder="Search conversations..."
@@ -152,37 +207,51 @@ const ChatApp: React.FC = () => {
                     </div>
 
                     <div className="chat-conversations">
+                        {/* 
+                            Show search results for both users and conversations.
+                            If not searching, prioritize conversations.
+                        */}
+                        {searchQuery && filteredUsers.length > 0 && (
+                            <UserList
+                                users={filteredUsers}
+                                currentUserId={currentUserId}
+                                onlineUserIds={onlineUserIds}
+                                onUserClick={handleUserClick}
+                            />
+                        )}
+
                         <ChatList
-                            rooms={rooms}
-                            currentUserId={currentUser?.socketId}
-                            activeRoomId={activeRoom?.roomId}
-                            onRoomClick={handleRoomClick}
-                            searchQuery={searchQuery}
+                            conversations={filteredConversations}
+                            currentUserId={currentUserId}
+                            onlineUserIds={onlineUserIds}
+                            activeConversationId={activeConversation?.id}
+                            onConversationClick={handleConversationClick}
                         />
-                        <UserList
-                            users={users}
-                            currentUserId={currentUser?.socketId}
-                            onUserClick={handleUserClick}
-                        />
+
+                        {!searchQuery && users.length > conversations.length + 1 && (
+                            <UserList
+                                users={users.filter(u => u.id !== currentUserId && !conversations.some(c => c.user1.id === u.id || c.user2.id === u.id))}
+                                currentUserId={currentUserId}
+                                onlineUserIds={onlineUserIds}
+                                onUserClick={handleUserClick}
+                            />
+                        )}
                     </div>
                 </div>
 
-                {/* Right Card — Chat Area */}
                 <div className="chat-card chat-card--right">
-                    {activeRoom ? (
+                    {activeConversation ? (
                         <ChatRoom
-                            roomId={activeRoom.roomId}
-                            messages={activeRoom.messages}
-                            participants={activeRoom.participants}
-                            currentUserId={currentUser?.socketId}
+                            conversation={activeConversation}
+                            messages={activeMessages}
+                            currentUserId={currentUserId}
                             onSendMessage={handleSendMessage}
                         />
                     ) : (
                         <div className="chat-empty">
-                            <div className="chat-empty-content">
-                                <div className="chat-empty-icon">💬</div>
-                                <h2>Welcome to Messages</h2>
-                                <p>Select a conversation or click on online user to start chatting</p>
+                            <div style={{ textAlign: 'center' }}>
+                                <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Select a conversation</p>
+                                <p style={{ fontSize: '0.9rem', color: '#64748b' }}>or click on a user to start chatting</p>
                             </div>
                         </div>
                     )}

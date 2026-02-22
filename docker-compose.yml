@@ -59,6 +59,8 @@
         args:
           - app_name=chat
       restart: always
+      environment:
+        - JWT_SECRET=super_secret_key
       ports:
         - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:

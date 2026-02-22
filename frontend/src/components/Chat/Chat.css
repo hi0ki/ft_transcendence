@@ -438,6 +438,32 @@
     border-radius: 50%;
 }
 
+.chat-badge {
+    background: #00d4ff;
+    color: #0a0e1a;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+}
+
+.chat-time {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.user-status.offline {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.user-status.offline::before {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 .userlist-name {
     font-weight: 600;
     font-size: 0.85rem;
