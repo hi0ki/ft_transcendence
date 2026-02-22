@@ -29,46 +29,46 @@ export interface Room {
 class ChatAPI {
     // Get all online users
     async getUsers(): Promise<User[]> {
-        const response = await fetch(`${API_BASE_URL}/chat/users`);
+        const response = await fetch(`${API_BASE_URL}/api/chat/users`);
         return response.json();
     }
 
     // Get all rooms
     async getAllRooms(): Promise<Room[]> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms`);
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms`);
         return response.json();
     }
 
     // Get rooms for a specific user
     async getUserRooms(socketId: string): Promise<Room[]> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms/user/${socketId}`);
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/user/${socketId}`);
         return response.json();
     }
 
     // Get specific room
     async getRoom(roomId: string): Promise<Room> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms/${roomId}`);
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}`);
         return response.json();
     }
 
     // Get room participants
     async getRoomParticipants(roomId: string): Promise<User[]> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms/${roomId}/participants`);
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}/participants`);
         return response.json();
     }
 
     // Get messages for a room
     async getMessages(roomId: string, limit?: number): Promise<Message[]> {
         const url = limit
-            ? `${API_BASE_URL}/chat/messages/${roomId}?limit=${limit}`
-            : `${API_BASE_URL}/chat/messages/${roomId}`;
+            ? `${API_BASE_URL}/api/chat/messages/${roomId}?limit=${limit}`
+            : `${API_BASE_URL}/api/chat/messages/${roomId}`;
         const response = await fetch(url);
         return response.json();
     }
 
     // Create a new room
     async createRoom(from: string, to?: string, meta?: any): Promise<Room> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms`, {
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ class ChatAPI {
 
     // Send a message via REST
     async sendMessage(roomId: string, message: string): Promise<Message> {
-        const response = await fetch(`${API_BASE_URL}/chat/messages`, {
+        const response = await fetch(`${API_BASE_URL}/api/chat/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ class ChatAPI {
 
     // Delete a room
     async deleteRoom(roomId: string): Promise<{ success: boolean; roomId: string }> {
-        const response = await fetch(`${API_BASE_URL}/chat/rooms/${roomId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/chat/rooms/${roomId}`, {
             method: 'DELETE',
         });
         return response.json();

@@ -14,22 +14,17 @@ const ChatApp: React.FC = () => {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [activeRoom, setActiveRoom] = useState<Room | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Use ref to access latest currentUser in event handlers
     const currentUserRef = useRef(currentUser);
-    useEffect(() => {
-        currentUserRef.current = currentUser;
-    }, [currentUser]);
+    useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
     useEffect(() => {
-        // Connect to socket
         const connectSocket = async () => {
             try {
                 const userData = await socketService.connect();
                 setCurrentUser(userData);
                 setConnected(true);
-
-                // Load initial data
                 await loadRooms(userData.socketId);
                 setLoading(false);
             } catch (error) {
@@ -40,88 +35,52 @@ const ChatApp: React.FC = () => {
 
         connectSocket();
 
-        // Set up event listeners
-        socketService.onUserList((userList: User[]) => {
-            console.log('User list updated:', userList);
-            setUsers(userList);
-        });
+        socketService.onUserList((userList: User[]) => setUsers(userList));
 
         socketService.onRoomCreated(async (data) => {
-            console.log('Room created event received:', data);
-
-            // Reload rooms to get the new room
             if (currentUserRef.current) {
                 const userRooms = await chatAPI.getUserRooms(currentUserRef.current.socketId);
-
-                // Load messages for each room
                 const roomsWithMessages = await Promise.all(
                     userRooms.map(async (room) => {
                         const messages = await chatAPI.getMessages(room.roomId);
                         return { ...room, messages };
                     })
                 );
-
                 setRooms(roomsWithMessages);
-
-                // Automatically open the newly created room
                 const newRoom = roomsWithMessages.find((r) => r.roomId === data.roomId);
-                if (newRoom) {
-                    console.log('Opening newly created room:', newRoom);
-                    setActiveRoom(newRoom);
-                }
+                if (newRoom) setActiveRoom(newRoom);
             }
         });
 
         socketService.onRoomMessage((message: Message) => {
-            console.log('Message received:', message);
-
-            // Update rooms with new message
-            setRooms((prevRooms) => {
-                return prevRooms.map((room) => {
-                    if (room.roomId === message.roomId) {
-                        return {
-                            ...room,
-                            messages: [...room.messages, message],
-                        };
-                    }
-                    return room;
-                });
-            });
-
-            // Update active room if it's the current one
+            setRooms((prevRooms) => prevRooms.map((room) =>
+                room.roomId === message.roomId
+                    ? { ...room, messages: [...room.messages, message] }
+                    : room
+            ));
             setActiveRoom((prev) => {
                 if (!prev || prev.roomId !== message.roomId) return prev;
-                return {
-                    ...prev,
-                    messages: [...prev.messages, message],
-                };
+                return { ...prev, messages: [...prev.messages, message] };
             });
         });
 
         socketService.onRoomDeleted((data) => {
-            setRooms((prevRooms) => prevRooms.filter((r) => r.roomId !== data.roomId));
-            if (activeRoom?.roomId === data.roomId) {
-                setActiveRoom(null);
-            }
+            setRooms((prev) => prev.filter((r) => r.roomId !== data.roomId));
+            setActiveRoom((prev) => prev?.roomId === data.roomId ? null : prev);
         });
 
-        return () => {
-            socketService.disconnect();
-        };
+        return () => { socketService.disconnect(); };
     }, []);
 
     const loadRooms = async (socketId: string) => {
         try {
             const userRooms = await chatAPI.getUserRooms(socketId);
-
-            // Load messages for each room
             const roomsWithMessages = await Promise.all(
                 userRooms.map(async (room) => {
                     const messages = await chatAPI.getMessages(room.roomId);
                     return { ...room, messages };
                 })
             );
-
             setRooms(roomsWithMessages);
         } catch (error) {
             console.error('Failed to load rooms:', error);
@@ -129,116 +88,105 @@ const ChatApp: React.FC = () => {
     };
 
     const handleUserClick = async (user: User) => {
-        if (!currentUser) {
-            console.error('No current user');
-            return;
-        }
-
-        console.log('User clicked:', user);
-
-        // Check if room already exists with this user
+        if (!currentUser) return;
         const existingRoom = rooms.find((room) =>
             room.participants.some((p) => p.socketId === user.socketId)
         );
-
-        if (existingRoom) {
-            console.log('Opening existing room:', existingRoom);
-            setActiveRoom(existingRoom);
-            return;
-        }
-
-        // Create new room via WebSocket
-        console.log('Creating new room with user:', user.socketId);
+        if (existingRoom) { setActiveRoom(existingRoom); return; }
         socketService.createRoom(user.socketId);
-        // The room will be added and opened via the onRoomCreated event
     };
 
     const handleRoomClick = async (room: Room) => {
         try {
-            // Load fresh messages
             const messages = await chatAPI.getMessages(room.roomId);
-            const updatedRoom = { ...room, messages };
-            setActiveRoom(updatedRoom);
+            setActiveRoom({ ...room, messages });
         } catch (error) {
             console.error('Failed to load room:', error);
         }
     };
 
     const handleSendMessage = (message: string) => {
-        if (!activeRoom || !currentUser) {
-            console.error('Cannot send message: no active room or current user');
-            return;
-        }
-
-        console.log('Sending message:', message, 'to room:', activeRoom.roomId);
-        // Send via WebSocket for real-time delivery
+        if (!activeRoom || !currentUser) return;
         socketService.sendMessage(activeRoom.roomId, message);
     };
 
     if (loading) {
         return (
-            <div className="chat-app loading">
-                <div className="loading-spinner">Connecting to chat...</div>
+            <div className="chat-app chat-app--loading">
+                <div className="chat-loading">
+                    <div className="chat-loading-spinner"></div>
+                    <span>Connecting to chat...</span>
+                </div>
             </div>
         );
     }
 
     if (!connected) {
         return (
-            <div className="chat-app error">
-                <div className="error-message">
-                    Failed to connect to chat server. Please refresh the page.
+            <div className="chat-app chat-app--error">
+                <div className="chat-error-box">
+                    Failed to connect to chat server. Please refresh.
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="chat-app">
-            <div className="chat-sidebar">
-                <div className="chat-header-main">
-                    <h1>Chat</h1>
-                    <div className="user-badge">
-                        {currentUser && `User ${currentUser.index}`}
+        <div className="chat-layout-wrapper">
+            <header className="chat-global-header">
+                <h1>Messages</h1>
+                <p>Chat with your peers</p>
+            </header>
+
+            <div className="chat-app-container">
+                {/* Left Card — Conversations */}
+                <div className="chat-card chat-card--left">
+                    <div className="chat-search">
+                        <svg className="chat-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                        <input
+                            type="text"
+                            placeholder="Search conversations..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="chat-conversations">
+                        <ChatList
+                            rooms={rooms}
+                            currentUserId={currentUser?.socketId}
+                            activeRoomId={activeRoom?.roomId}
+                            onRoomClick={handleRoomClick}
+                            searchQuery={searchQuery}
+                        />
+                        <UserList
+                            users={users}
+                            currentUserId={currentUser?.socketId}
+                            onUserClick={handleUserClick}
+                        />
                     </div>
                 </div>
 
-                <div className="sidebar-section">
-                    <UserList
-                        users={users}
-                        currentUserId={currentUser?.socketId}
-                        onUserClick={handleUserClick}
-                    />
-                </div>
-
-                <div className="sidebar-section">
-                    <ChatList
-                        rooms={rooms}
-                        currentUserId={currentUser?.socketId}
-                        activeRoomId={activeRoom?.roomId}
-                        onRoomClick={handleRoomClick}
-                    />
-                </div>
-            </div>
-
-            <div className="chat-main">
-                {activeRoom ? (
-                    <ChatRoom
-                        roomId={activeRoom.roomId}
-                        messages={activeRoom.messages}
-                        participants={activeRoom.participants}
-                        currentUserId={currentUser?.socketId}
-                        onSendMessage={handleSendMessage}
-                    />
-                ) : (
-                    <div className="no-active-chat">
-                        <div className="welcome-message">
-                            <h2>Welcome to Chat!</h2>
-                            <p>Click on a user to start chatting</p>
-                            <p className="hint">💡 Open another browser tab to see multiple users</p>
+                {/* Right Card — Chat Area */}
+                <div className="chat-card chat-card--right">
+                    {activeRoom ? (
+                        <ChatRoom
+                            roomId={activeRoom.roomId}
+                            messages={activeRoom.messages}
+                            participants={activeRoom.participants}
+                            currentUserId={currentUser?.socketId}
+                            onSendMessage={handleSendMessage}
+                        />
+                    ) : (
+                        <div className="chat-empty">
+                            <div className="chat-empty-content">
+                                <div className="chat-empty-icon">💬</div>
+                                <h2>Welcome to Messages</h2>
+                                <p>Select a conversation or click on online user to start chatting</p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
