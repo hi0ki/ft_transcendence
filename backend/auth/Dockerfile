@@ -15,6 +15,4 @@ RUN npm install
 
 COPY . .
 
-RUN npx prisma generate
-
 CMD ["sh", "run-prisma.sh"]
