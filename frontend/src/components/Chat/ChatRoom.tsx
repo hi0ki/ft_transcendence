@@ -23,13 +23,44 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editContent, setEditContent] = useState('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [emojiCategory, setEmojiCategory] = useState('smileys');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const emojiData: Record<string, { icon: string; emojis: string[] }> = {
+        smileys: { icon: '😊', emojis: ['😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '🥰', '😘', '😗', '😙', '😚', '🙂', '🤗', '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '🥴', '😠', '😡', '🤬'] },
+        gestures: { icon: '👋', emojis: ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '💪', '🦾', '🖕'] },
+        hearts: { icon: '❤️', emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '♥️', '🫶'] },
+        animals: { icon: '🐱', emojis: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🙈', '🙉', '🙊', '🐔', '🐧', '🐦', '🦅', '🦆', '🦉', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜'] },
+        food: { icon: '🍕', emojis: ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑', '🍕', '🍔', '🍟', '🌭', '🍿', '🧁', '🍩', '🍪', '🎂', '🍰', '🧇', '🥞', '🍫', '☕', '🍵', '🧃', '🍺', '🥤'] },
+        objects: { icon: '⚡', emojis: ['⚡', '🔥', '✨', '🌟', '💫', '💥', '💢', '💦', '💨', '🎉', '🎊', '🎈', '🎁', '🏆', '🥇', '🎯', '🎮', '🎲', '🔔', '🎵', '🎶', '💡', '📱', '💻', '⌨️', '🖥️', '📷', '🎬', '🔑', '🔒', '💰', '💎', '🚀', '✈️', '🌈'] }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     useEffect(() => { scrollToBottom(); }, [messages]);
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        };
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showEmojiPicker]);
+
+    const handleEmojiSelect = (emoji: string) => {
+        setInputMessage(prev => prev + emoji);
+        inputRef.current?.focus();
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,9 +93,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         setShowDeleteConfirm(messageId);
     };
 
-    const confirmDelete = (type: 'FOR_ME' | 'FOR_ALL') => {
-        if (showDeleteConfirm) {
-            onDeleteMessage(showDeleteConfirm, type);
+    const confirmDelete = () => {
+        if (showDeleteConfirm !== null) {
+            const msg = messages.find(m => m.id === showDeleteConfirm);
+            const isOwn = msg?.senderId === currentUserId;
+            onDeleteMessage(showDeleteConfirm, isOwn ? 'FOR_ALL' : 'FOR_ME');
             setShowDeleteConfirm(null);
         }
     };
@@ -140,12 +173,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                                         </form>
                                     ) : showDeleteConfirm === message.id ? (
                                         <div className="msg-delete-choices">
-                                            <p style={{ margin: '0 0 8px', fontSize: '0.85rem' }}>Delete message?</p>
+                                            <p style={{ margin: '0 0 8px', fontSize: '0.85rem' }}>Delete this message?</p>
                                             <div className="delete-actions">
-                                                <button className="delete-me-btn" onClick={() => confirmDelete('FOR_ME')}>Delete for me</button>
-                                                {isOwn && (
-                                                    <button className="delete-all-btn" onClick={() => confirmDelete('FOR_ALL')}>Delete for everyone</button>
-                                                )}
+                                                <button className="delete-all-btn" onClick={() => confirmDelete()}>Confirm</button>
                                                 <button className="cancel-btn" onClick={cancelDelete} style={{ background: 'transparent', border: '1px solid #ccc', color: '#ccc' }}>Cancel</button>
                                             </div>
                                         </div>
@@ -171,21 +201,58 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input - matching the pill shape with icons at the end */}
-            <form className="chatroom-input" onSubmit={handleSubmit}>
-                <button type="button" className="chatroom-emoji-btn" style={{ fontSize: '1.2rem', padding: '0 10px' }}>😊</button>
-                <input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    style={{ borderRadius: '20px', paddingLeft: '15px' }}
-                    autoFocus
-                />
-                <button type="submit" className="chatroom-send-btn" style={{ marginLeft: '10px' }}>
-                    <span style={{ transform: 'rotate(-45deg)', display: 'inline-block', marginBottom: '2px' }}>➤</span>
-                </button>
-            </form>
+            {/* Input */}
+            <div className="chatroom-input-wrapper">
+                {showEmojiPicker && (
+                    <div className="emoji-picker" ref={emojiPickerRef}>
+                        <div className="emoji-picker-tabs">
+                            {Object.entries(emojiData).map(([key, { icon }]) => (
+                                <button
+                                    key={key}
+                                    className={`emoji-tab ${emojiCategory === key ? 'emoji-tab--active' : ''}`}
+                                    onClick={() => setEmojiCategory(key)}
+                                    title={key}
+                                >
+                                    {icon}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="emoji-picker-grid">
+                            {emojiData[emojiCategory].emojis.map((emoji, i) => (
+                                <button
+                                    key={i}
+                                    className="emoji-item"
+                                    onClick={() => handleEmojiSelect(emoji)}
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <form className="chatroom-input" onSubmit={handleSubmit}>
+                    <button
+                        type="button"
+                        className={`chatroom-emoji-btn ${showEmojiPicker ? 'chatroom-emoji-btn--active' : ''}`}
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        style={{ fontSize: '1.2rem', padding: '0 10px' }}
+                    >
+                        😊
+                    </button>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        placeholder="Type a message..."
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        style={{ borderRadius: '20px', paddingLeft: '15px' }}
+                        autoFocus
+                    />
+                    <button type="submit" className="chatroom-send-btn" style={{ marginLeft: '10px' }}>
+                        <span style={{ transform: 'rotate(-45deg)', display: 'inline-block', marginBottom: '2px' }}>➤</span>
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
