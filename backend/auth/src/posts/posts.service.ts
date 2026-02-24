@@ -9,29 +9,29 @@ export class PostsService
 
 	createPost(data: 
 	{
-		user_id: number;
-		type: 'help' | 'resource' | 'meme';
+		userId: number;
+		type: 'HELP' | 'RESOURCE' | 'MEME';
 		title: string;
 		content: string;
 	})
 	{
-		return this.prisma.posts.create({data, });
+		return this.prisma.post.create({data, });
 	}
 
 	getAllPosts() 
 	{
-		return this.prisma.posts.findMany();
+		return this.prisma.post.findMany();
 	}
 	async update(id: number, dto: UpdatePostDto) 
 	{
-		return this.prisma.posts.update({ where: { id }, data: dto,});
+		return this.prisma.post.update({ where: { id }, data: dto,});
 	}
 	async remove(id: number) 
 	{
-		return this.prisma.posts.delete({ where: { id }, });
+		return this.prisma.post.delete({ where: { id }, });
 	}
 	async getOne(id: number) 
 	{
-		return this.prisma.posts.findUnique({where: { id },});
+		return this.prisma.post.findUnique({where: { id },});
 	}
 }

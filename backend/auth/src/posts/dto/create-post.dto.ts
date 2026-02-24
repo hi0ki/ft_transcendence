@@ -3,10 +3,10 @@ import { IsInt, IsString, IsNotEmpty, IsIn } from 'class-validator';
 export class CreatePostDto 
 {
 	@IsInt()
-	user_id: number;
+	userId: number;
 
-	@IsIn(['help', 'resource', 'meme'])
-	type: 'help' | 'resource' | 'meme';
+	@IsIn(['HELP', 'RESOURCE', 'MEME'])
+	type: 'HELP' | 'RESOURCE' | 'MEME';
 
 	@IsString()
 	@IsNotEmpty()

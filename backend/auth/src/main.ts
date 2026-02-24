@@ -1,19 +1,10 @@
-<<<<<<< HEAD
 import 'reflect-metadata'
-=======
->>>>>>> origin/master
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-<<<<<<< HEAD
-  // app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalPipes
-  (
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, }),
-=======
 
   // Enable CORS for frontend
   app.enableCors({
@@ -27,7 +18,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       stopAtFirstError: true,
     }),
->>>>>>> origin/master
   );
   await app.listen(3000, "0.0.0.0");
 }

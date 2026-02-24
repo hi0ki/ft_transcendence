@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import PostsPage from "./posts/PostsPage";
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<PostsPage />} />
-      </Routes>
-    </BrowserRouter>
-=======
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import ChatApp from './components/Chat/ChatApp'
@@ -102,7 +90,6 @@ function App() {
         />
       </Routes>
     </Router>
->>>>>>> origin/master
   );
 }
 
