@@ -11,13 +11,11 @@ export class AuthService {
 
     async register(email :string, password :string) {
         const normalizedEmail = email.toLowerCase();
-        console.log("111111");
         const check = await this.prisma.user.findUnique({where : {email : normalizedEmail}});
         if (check){
             throw new ConflictException('Email already exists');
         // throw new BadRequestException('Email already used');
         }
-        console.log("2222");
 
         const hashPassword =  await bcrypt.hash(password, 10);
         const user = await this.prisma.user.create({
@@ -58,4 +56,45 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
     }
+
+
+    async Create42User(data: { fortyTwoId: string; email: string; username: string; avatar: string;}) 
+    {
+        let user = await this.prisma.user.findFirst({
+            where: {
+                oauthProvider: '42',
+                oauthId:       String(data.fortyTwoId),
+            }
+        });
+    
+        if (!user) {
+            user = await this.prisma.user.create({
+                data: {
+                    email:         data.email,
+                    oauthProvider: '42',
+                    oauthId:       String(data.fortyTwoId),
+                    passwordHash:  null,
+                    role:          'USER',
+                }
+            });
+
+            await this.prisma.profile.create({
+                data: {
+                    userId:    user.id,
+                    username:  data.username,
+                    avatarUrl: data.avatar,
+                    fullName:  null,
+                    bio:       null,
+                }
+            });
+        }
+    
+        const token = this.jwtService.sign({
+            id:    user.id,
+            email: user.email,
+            role:  user.role,
+        });
+        return { access_token: token };
+    }
 }
+

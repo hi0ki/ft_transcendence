@@ -5,10 +5,13 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthGuard } from '../guards/auth.guard';
+// import { PassportModule } from '@nestjs/passport'; 
+// import { FortyTwoStrategy } from './strategies/42.strategy'; 
 
 @Module({
     imports : [ ConfigModule,
         PrismaModule,
+        // PassportModule,
         JwtModule.registerAsync({  
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -18,7 +21,7 @@ import { AuthGuard } from '../guards/auth.guard';
               }),
         })],
     controllers : [AuthController],
-    providers : [AuthService, AuthGuard],
+    providers : [AuthService, AuthGuard], //, FortyTwoStrategy
     exports: [JwtModule, AuthGuard] //, AuthGuard
 })
 export class AuthModule {}
