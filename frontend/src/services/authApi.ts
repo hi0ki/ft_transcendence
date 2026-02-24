@@ -18,16 +18,15 @@ export interface LoginResponse {
 export interface RegisterResponse {
     id: number;
     email: string;
-    username: string;
 }
 
 class AuthAPI {
     // Register a new user
-    async register(email: string, password: string, username: string): Promise<RegisterResponse> {
+    async register(email: string, password: string): Promise<RegisterResponse> {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, username }),
+            body: JSON.stringify({ email, password }),
         });
 
         if (!response.ok) {

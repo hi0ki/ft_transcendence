@@ -4,6 +4,7 @@ import ChatApp from './components/Chat/ChatApp'
 import Navbar from './components/Navbar/Navbar'
 import Login from './components/Auth/Login'
 import SignUp from './components/Auth/SignUp'
+import AuthCallback from './components/Auth/AuthCallback'
 import './App.css'
 
 function LoginPage() {
@@ -73,6 +74,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/callback" element={<AuthCallback />} />
 
         {/* Protected Routes */}
         <Route path="/home" element={<ChatPage />} />
