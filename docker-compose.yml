@@ -37,20 +37,20 @@
         - my-app-network
 
     # # backend Services
-    # core_service:
-    #   container_name: core_service
-    #   build:
-    #     context: backend
-    #     dockerfile: Dockerfile
-    #     args:
-    #       - app_name=core
-    #   restart: always
-    #   ports:
-    #     - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
-    #   depends_on:
-    #     - auth_service
-    #   networks:
-    #     - my-app-network
+    core_service:
+      container_name: core_service
+      build:
+        context: backend
+        dockerfile: Dockerfile
+        args:
+          - app_name=core
+      restart: always
+      ports:
+        - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+      depends_on:
+        - auth_service
+      networks:
+        - my-app-network
     chat_service:
       container_name: chat_service
       build:
