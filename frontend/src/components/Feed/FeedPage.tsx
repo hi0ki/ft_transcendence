@@ -7,6 +7,7 @@ import CreatePostModal from './CreatePostModal';
 import CommentsModal from './CommentsModal';
 import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
+import { postsAPI } from '../../services/postsApi';
 import './FeedPage.css';
 
 // Extended Mock Data targeting to visually recreate screenshot values including nested comments
@@ -123,59 +124,78 @@ const FeedPage: React.FC = () => {
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
 
+    
     useEffect(() => {
-        // Simulate API fetch request with small latency mapping
         let isMounted = true;
-        setLoading(true);
-        setError(null);
+        
+        const fetchPosts = async () => {
+            setLoading(true);
+            setError(null);
 
-        setTimeout(() => {
-            if (!isMounted) return;
             try {
+                const fetchedPosts = await postsAPI.getAllPosts();
+                
+                if (!isMounted) return;
+
+                // Add mock commentList for existing functionality
+                const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
+                    ...post,
+                    commentList: [] // Mock empty comments list (comments service handles this)
+                }));
+
+                // Filter by active tab
                 if (activeTab === 'All') {
-                    setPosts(MOCK_POSTS);
+                    setPosts(postsWithComments);
                 } else {
                     const mappedType = activeTab === 'Resources' ? 'Resource' : activeTab === 'Memes' ? 'Meme' : activeTab;
-                    setPosts(MOCK_POSTS.filter(post => post.type === mappedType));
+                    setPosts(postsWithComments.filter(post => post.type === mappedType));
                 }
-            } catch (e) {
-                setError('Failed to fetch posts. Please try again later.');
+            } catch (e: any) {
+                if (!isMounted) return;
+                setError(e.message || 'Failed to fetch posts. Please try again later.');
+                console.error('Error fetching posts:', e);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
-        }, 500);
+        };
+
+        fetchPosts();
 
         return () => { isMounted = false; };
     }, [activeTab]);
 
-    const handleCreatePost = (newPostData: { type: string; content: string; tags: string[] }) => {
-        const newPost: ExtendedPost = {
-            id: Date.now().toString(),
-            author: {
-                name: 'Alex Johnson', // Using name from Navbar screenshot profile
-                handle: '@alexj',
-                avatar: CURRENT_USER_AVATAR
-            },
-            timeAgo: 'Just now',
-            content: newPostData.content,
-            tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`),
-            likes: 0,
-            comments: 0,
-            type: newPostData.type as any,
-            commentList: []
-        };
+    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
+        try {
+            
+            const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
+            
+            
+            const createdPost = await postsAPI.createPost({
+                type: backendType,
+                content: newPostData.content
+            });
 
-        // If the current tab is "All" or matches the post type, show it immediately
-        if (activeTab === 'All' || activeTab === newPostData.type) {
-            setPosts([newPost, ...posts]);
+            // Add mock data for comments and tags
+            const newPost: ExtendedPost = {
+                ...createdPost,
+                tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`), // Keep user's tags visually
+                commentList: []
+            };
+
+            
+            if (activeTab === 'All' || activeTab === newPostData.type) {
+                setPosts([newPost, ...posts]);
+            }
+
+            setIsCreateModalOpen(false);
+        } catch (e: any) {
+            console.error('Error creating post:', e);
+            alert(e.message || 'Failed to create post. Please try again.');
         }
-
-        setIsCreateModalOpen(false);
     };
 
     const handleLikePost = (postId: string) => {
-        // Here we could simulate backend like API call. 
-        // PostCard handles visual animation locally via state.
+      
         console.log(`Liked post ${postId}`);
     };
 
@@ -222,7 +242,7 @@ const FeedPage: React.FC = () => {
                     ) : error ? (
                         <div className="feed-error">
                             <p>{error}</p>
-                            <button onClick={() => setActiveTab('All')}>Retry</button>
+                            <button onClick={() => window.location.reload()}>Retry</button>
                         </div>
                     ) : posts.length > 0 ? (
                         posts.map(post => (

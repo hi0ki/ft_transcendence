@@ -94,10 +94,18 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                 </div>
 
                 <div className="input-group">
-                    <label className="input-label">What do you need help with?</label>
+                    <label className="input-label">
+                        {selectedType === 'Help' ? 'What do you need help with?' : 
+                         selectedType === 'Resource' ? 'Share your resource' : 
+                         'Share your meme or funny content'}
+                    </label>
                     <textarea
                         className="post-textarea"
-                        placeholder="Describe your question or problem in detail..."
+                        placeholder={
+                            selectedType === 'Help' ? 'Describe your question or problem in detail...' :
+                            selectedType === 'Resource' ? 'Share a useful resource, tutorial, or guide...' :
+                            'Share something funny with the community...'
+                        }
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                     />
