@@ -23,7 +23,7 @@
         - frontend
         - auth_service
         - chat_service
-        # - core_service
+        - core_service
       networks:
         - my-app-network
     # Database

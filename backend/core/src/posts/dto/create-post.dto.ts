@@ -1,10 +1,7 @@
-import { IsInt, IsString, IsNotEmpty, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsIn } from 'class-validator';
 
 export class CreatePostDto 
 {
-	@IsInt()
-	userId: number;
-
 	@IsIn(['HELP', 'RESOURCE', 'MEME'])
 	type: 'HELP' | 'RESOURCE' | 'MEME';
 

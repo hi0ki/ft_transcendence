@@ -1,40 +1,112 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, catchError } from 'rxjs';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class PostsService 
 {
+	private readonly AUTH_SERVICE_URL = 'http://auth_service:3000/posts';
+
 	constructor(private http: HttpService) {}
 
-	async createPost(data: any)
+	async createPost(data: any, authHeader?: string)
 	{
-		const response = await firstValueFrom(this.http.post('http://auth_service:3000/posts', data)
-		);
-		return response.data;
+		try {
+			const headers = authHeader ? { Authorization: authHeader } : {};
+			const response = await firstValueFrom(
+				this.http.post(this.AUTH_SERVICE_URL, data, { headers }).pipe(
+					catchError((error: AxiosError) => {
+						throw new HttpException(
+							error.response?.data || 'Error creating post',
+							error.response?.status || 500
+						);
+					})
+				)
+			);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async getAllPosts()
+	async getAllPosts(authHeader?: string)
 	{
-		const response = await firstValueFrom(this.http.get('http://auth_service:3000/posts'));
-		return response.data;
+		try {
+			const headers = authHeader ? { Authorization: authHeader } : {};
+			const response = await firstValueFrom(
+				this.http.get(this.AUTH_SERVICE_URL, { headers }).pipe(
+					catchError((error: AxiosError) => {
+						throw new HttpException(
+							error.response?.data || 'Error fetching posts',
+							error.response?.status || 500
+						);
+					})
+				)
+			);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async update(id: number, dto: any)
+	async update(id: number, dto: any, authHeader?: string)
 	{
-		const response = await firstValueFrom(this.http.patch(`http://auth_service:3000/posts/${id}`, dto), );
-		return response.data;
+		try {
+			const headers = authHeader ? { Authorization: authHeader } : {};
+			const response = await firstValueFrom(
+				this.http.patch(`${this.AUTH_SERVICE_URL}/${id}`, dto, { headers }).pipe(
+					catchError((error: AxiosError) => {
+						throw new HttpException(
+							error.response?.data || 'Error updating post',
+							error.response?.status || 500
+						);
+					})
+				)
+			);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async remove(id: number)
+	async remove(id: number, authHeader?: string)
 	{
-		const response = await firstValueFrom(this.http.delete(`http://auth_service:3000/posts/${id}`), );
-		return response.data;
+		try {
+			const headers = authHeader ? { Authorization: authHeader } : {};
+			const response = await firstValueFrom(
+				this.http.delete(`${this.AUTH_SERVICE_URL}/${id}`, { headers }).pipe(
+					catchError((error: AxiosError) => {
+						throw new HttpException(
+							error.response?.data || 'Error deleting post',
+							error.response?.status || 500
+						);
+					})
+				)
+			);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
 	}
 
-	async getOne(id: number)
+	async getOne(id: number, authHeader?: string)
 	{
-		const response = await firstValueFrom(this.http.get(`http://auth_service:3000/posts/${id}`));
-		return response.data;
+		try {
+			const headers = authHeader ? { Authorization: authHeader } : {};
+			const response = await firstValueFrom(
+				this.http.get(`${this.AUTH_SERVICE_URL}/${id}`, { headers }).pipe(
+					catchError((error: AxiosError) => {
+						throw new HttpException(
+							error.response?.data || 'Error fetching post',
+							error.response?.status || 500
+						);
+					})
+				)
+			);
+			return response.data;
+		} catch (error) {
+			throw error;
+		}
 	}
 }
