@@ -44,30 +44,39 @@ export interface CreatePostPayload {
 }
 
 class PostsAPI {
-    
+
     private transformPost(backendPost: BackendPost): Post {
+        // Get current user's username from JWT as fallback
+        const currentUser = authAPI.getCurrentUser();
+        const fallbackName = currentUser?.username || currentUser?.email?.split('@')[0] || 'Anonymous';
+
+        const authorName = backendPost.user?.profile?.username || fallbackName;
+        const authorHandle = `@${authorName.toLowerCase().replace(/\s+/g, '')}`;
+        const authorAvatar = backendPost.user?.profile?.avatarUrl
+            || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+
         return {
             id: backendPost.id.toString(),
             author: {
-                name: backendPost.user?.profile?.username || backendPost.user?.email?.split('@')[0] || 'Anonymous',
-                handle: `@${backendPost.user?.profile?.username?.toLowerCase() || backendPost.user?.email?.split('@')[0] || 'user'}`,
-                avatar: backendPost.user?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${backendPost.userId}`
+                name: authorName,
+                handle: authorHandle,
+                avatar: authorAvatar
             },
             timeAgo: this.formatTimeAgo(backendPost.createdAt),
             content: backendPost.content,
-            tags: [], //to impleemnt hady in backend
-            likes: 0, 
-            comments: 0, 
+            tags: [],
+            likes: 0,
+            comments: 0,
             type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme'
         };
     }
 
-  
+
     private capitalizeFirstLetter(str: string): string {
         return str.charAt(0) + str.slice(1).toLowerCase();
     }
 
- 
+
     private formatTimeAgo(isoDate: string): string {
         const now = new Date();
         const postDate = new Date(isoDate);
@@ -85,7 +94,7 @@ class PostsAPI {
         return `${Math.floor(diffDay / 30)} month${Math.floor(diffDay / 30) > 1 ? 's' : ''} ago`;
     }
 
- 
+
     private getAuthHeader(): Record<string, string> {
         const token = authAPI.getToken();
         if (!token) {
@@ -97,7 +106,7 @@ class PostsAPI {
         };
     }
 
-  
+
     async getAllPosts(): Promise<Post[]> {
         try {
             const response = await fetch(`${API_BASE_URL}/posts/`, {
@@ -138,7 +147,7 @@ class PostsAPI {
         }
     }
 
-   
+
     async createPost(payload: CreatePostPayload): Promise<Post> {
         try {
             const response = await fetch(`${API_BASE_URL}/posts/`, {
@@ -146,7 +155,7 @@ class PostsAPI {
                 headers: this.getAuthHeader(),
                 body: JSON.stringify({
                     type: payload.type,
-                    title: payload.content.substring(0, 100), 
+                    title: payload.content.substring(0, 100),
                     content: payload.content
                 })
             });
@@ -164,7 +173,7 @@ class PostsAPI {
         }
     }
 
-   
+
     async updatePost(id: string, payload: { title?: string; content?: string }): Promise<Post> {
         try {
             const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
@@ -186,7 +195,7 @@ class PostsAPI {
         }
     }
 
-    
+
     async deletePost(id: string): Promise<void> {
         try {
             const response = await fetch(`${API_BASE_URL}/posts/${id}`, {

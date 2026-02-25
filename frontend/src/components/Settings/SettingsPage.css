@@ -1,0 +1,322 @@
+/* ========================================
+   Settings Page — Dark Design
+   ======================================== */
+
+.settings-page {
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+    background: #0d0f1a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.settings-page::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
+}
+
+.settings-container {
+    width: 60%;
+    max-width: 800px;
+    background: #131621;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.settings-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 16px;
+}
+
+.settings-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+
+.settings-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* ── Avatar Section ── */
+.settings-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.015);
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.settings-avatar-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.settings-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    object-fit: cover;
+    background: #1a1e2e;
+}
+
+.settings-avatar-edit-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.settings-avatar-container:hover .settings-avatar-edit-overlay {
+    opacity: 1;
+}
+
+.settings-avatar-info h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0 0 4px;
+}
+
+.settings-avatar-info p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 12px;
+}
+
+.settings-upload-btn {
+    padding: 6px 16px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-upload-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* ── Form Fields ── */
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 2px;
+}
+
+.settings-input,
+.settings-textarea {
+    width: 100%;
+    background: #0d0f1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #f1f5f9;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    outline: none;
+}
+
+.settings-input:focus,
+.settings-textarea:focus {
+    border-color: #6366f1;
+    background: #111421;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.settings-textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+.settings-char-count {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #475569;
+    margin-top: 6px;
+}
+
+/* ── Skills Input ── */
+.settings-skills-input-row {
+    display: flex;
+    gap: 12px;
+}
+
+.settings-add-btn {
+    padding: 0 24px;
+    background: #1e2235;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #a5b4fc;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-add-btn:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.settings-skills-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.settings-skill-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.settings-skill-remove {
+    background: transparent;
+    border: none;
+    color: #6366f1;
+    cursor: pointer;
+    padding: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.settings-skill-remove:hover {
+    opacity: 1;
+}
+
+/* ── Footer Buttons ── */
+.settings-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-save-btn {
+    flex: 2;
+    padding: 14px;
+    background: linear-gradient(135deg, #6366f1, #0ea5e9);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+}
+
+.settings-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+    filter: brightness(1.1);
+}
+
+.settings-cancel-btn {
+    flex: 1;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.settings-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .settings-page {
+        padding: 16px;
+    }
+
+    .settings-container {
+        padding: 24px;
+        border-radius: 16px;
+    }
+
+    .settings-avatar-row {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .settings-footer {
+        flex-direction: column;
+    }
+
+    .settings-save-btn {
+        order: -1;
+    }
+}

@@ -18,7 +18,6 @@ export interface LoginResponse {
 export interface RegisterResponse {
     id: number;
     email: string;
-    username: string;
 }
 
 class AuthAPI {
