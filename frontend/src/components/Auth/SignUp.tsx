@@ -9,6 +9,7 @@ interface SignUpProps {
 
 const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
@@ -23,6 +24,16 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
             return;
         }
 
+        if (username.length < 3 || username.length > 20) {
+            setError('Username must be between 3 and 20 characters');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            setError('Username can only contain letters, numbers, and underscores');
+            return;
+        }
+
         if (password.length < 6) {
             setError('Password must be at least 6 characters');
             return;
@@ -31,7 +42,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
         setLoading(true);
 
         try {
-            await authAPI.register(email, password);
+            await authAPI.register(email, password, username);
             onSignUpSuccess();
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
@@ -90,6 +101,20 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="auth-field">
+                        <label htmlFor="signup-username">Username</label>
+                        <input
+                            id="signup-username"
+                            type="text"
+                            placeholder="your_username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                            minLength={3}
+                            maxLength={20}
                             required
                         />
                     </div>

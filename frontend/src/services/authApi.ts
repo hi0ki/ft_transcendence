@@ -22,11 +22,11 @@ export interface RegisterResponse {
 
 class AuthAPI {
     // Register a new user
-    async register(email: string, password: string): Promise<RegisterResponse> {
+    async register(email: string, password: string, username: string): Promise<RegisterResponse> {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, username }),
         });
 
         if (!response.ok) {

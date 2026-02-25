@@ -28,9 +28,11 @@ const NavItem = ({ label, icon, badge, isActive, onClick }: NavItemProps) => (
 interface NavbarProps {
 	username: string;
 	onLogout: () => void;
+	isOpen?: boolean;
+	onClose?: () => void;
 }
 
-function Navbar({ username, onLogout }: NavbarProps) {
+function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const location = useLocation();
 	const navigate = useNavigate();
 
@@ -47,7 +49,10 @@ function Navbar({ username, onLogout }: NavbarProps) {
 	];
 
 	return (
-		<aside className="sidebar">
+		<aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
+			<button className="sidebar-mobile-close" onClick={onClose}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+			</button>
 			<div className="sidebar-header">
 				<div className="brand-logo">
 					<div className="logo-circle">
@@ -69,7 +74,10 @@ function Navbar({ username, onLogout }: NavbarProps) {
 						icon={item.icon}
 						badge={item.badge}
 						isActive={currentPath === item.path}
-						onClick={() => navigate(item.path)}
+						onClick={() => {
+							navigate(item.path);
+							if (onClose) onClose();
+						}}
 					/>
 				))}
 			</nav>

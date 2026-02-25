@@ -9,7 +9,7 @@ export class AuthService {
     constructor(private prisma: PrismaService,
         private jwtService: JwtService) { }
 
-    async register(email: string, password: string) {
+    async register(email: string, password: string, username: string) {
         const normalizedEmail = email.toLowerCase();
 
         // Check if email exists
@@ -28,7 +28,7 @@ export class AuthService {
         });
 
         // Derive username from email
-        const username = normalizedEmail.split('@')[0];
+        // const username = normalizedEmail.split('@')[0];
         let finalUsername = username;
         const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
         if (existingProfile) {
@@ -38,7 +38,7 @@ export class AuthService {
         const profile = await this.prisma.profile.create({
             data: {
                 userId: user.id,
-                username: finalUsername,
+                username: username,
                 fullName: null,
                 avatarUrl: null,
                 bio: null,

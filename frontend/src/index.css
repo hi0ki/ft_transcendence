@@ -10,7 +10,8 @@
   font-weight: 400;
 
   color: rgba(255, 255, 255, 0.87);
-  background-color: #0f1423;
+  background-color: #0d0f1a;
+  color-scheme: dark;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -34,11 +35,15 @@ a:hover {
   color: #33dfff;
 }
 
+html {
+  background: #0d0f1a;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0f1423;
+  background: #0d0f1a;
 }
 
 h1 {

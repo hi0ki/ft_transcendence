@@ -21,6 +21,58 @@
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-header {
+  display: none;
+  height: 60px;
+  background: #131621;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 16px;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-logo {
+  font-weight: 700;
+  color: #0ea5e9;
+  font-size: 1.1rem;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+/* Mobile Refinements */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .app-content {
+    height: 100vh;
+  }
+
+  .mobile-header {
+    display: flex;
+    flex-shrink: 0;
+  }
 }
 
 /* Mobile: add left padding for hamburger */

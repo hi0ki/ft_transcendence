@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import ChatApp from './components/Chat/ChatApp'
@@ -5,6 +6,8 @@ import Navbar from './components/Navbar/Navbar'
 import Login from './components/Auth/Login'
 import SignUp from './components/Auth/SignUp'
 import AuthCallback from './components/Auth/AuthCallback'
+import ProfilePage from './components/Profile/ProfilePage'
+import SettingsPage from './components/Settings/SettingsPage'
 import './App.css'
 
 function LoginPage() {
@@ -66,6 +69,80 @@ const PlaceholderPage = ({ title }: { title: string }) => (
   </div>
 );
 
+function SettingsPageWrapper() {
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  if (!authAPI.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = authAPI.getCurrentUser();
+
+  const handleLogout = () => {
+    authAPI.logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="app-layout">
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
+      <Navbar
+        username={user?.email?.split('@')[0] || 'User'}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      <div className="app-content">
+        <header className="mobile-header">
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span className="mobile-logo">Peer Hub</span>
+        </header>
+        <SettingsPage />
+      </div>
+    </div>
+  );
+}
+
+function ProfilePageWrapper() {
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  if (!authAPI.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = authAPI.getCurrentUser();
+
+  const handleLogout = () => {
+    authAPI.logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="app-layout">
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
+      <Navbar
+        username={user?.email?.split('@')[0] || 'User'}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      <div className="app-content">
+        <header className="mobile-header">
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span className="mobile-logo">Peer Hub</span>
+        </header>
+        <ProfilePage />
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const isAuthed = authAPI.isAuthenticated();
 
@@ -76,13 +153,17 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/callback" element={<AuthCallback />} />
 
+        {/* Root redirect */}
+        <Route path="/" element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />} />
+
         {/* Protected Routes */}
         <Route path="/home" element={<ChatPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/search" element={<ChatPage />} />
         <Route path="/notifications" element={<ChatPage />} />
-        <Route path="/profile" element={<ChatPage />} />
-        <Route path="/settings" element={<ChatPage />} />
+        <Route path="/profile" element={<ProfilePageWrapper />} />
+        <Route path="/profile/:username" element={<ProfilePageWrapper />} />
+        <Route path="/settings" element={<SettingsPageWrapper />} />
         <Route path="/moderation" element={<ChatPage />} />
 
         {/* Default redirect: if authed go to chat, else login */}

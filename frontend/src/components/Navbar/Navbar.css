@@ -26,6 +26,19 @@
     position: sticky;
     top: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.sidebar-mobile-close {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    padding: 4px;
 }
 
 /* Header / Brand */
@@ -208,6 +221,26 @@
     opacity: 0.7;
 }
 
-.logout-standalone:hover svg {
-    opacity: 1;
+.sidebar-mobile-close svg {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        width: 240px;
+    }
+
+    .sidebar--open {
+        transform: translateX(0);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-mobile-close {
+        display: block;
+    }
 }

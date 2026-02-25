@@ -17,4 +17,11 @@ export class RegisterDto {
   )
   @IsNotEmpty({ message: 'password is required' })
   password: string;
+
+
+  @IsString()
+  @MinLength(3, { message: 'Username must be at least 3 characters' })
+  @MaxLength(20)
+  @IsNotEmpty({ message: 'username is required' })
+  username: string;
 }
