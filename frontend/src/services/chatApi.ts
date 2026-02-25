@@ -98,6 +98,48 @@ class ChatAPI {
         });
         if (!response.ok) throw new Error('Failed to delete message');
     }
+
+    // Find or create a conversation between two users
+    async findOrCreateConversation(userId1: number, userId2: number): Promise<DBConversation> {
+        const response = await fetch(`${this.BASE}/conversation/find-or-create`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ userId1, userId2 }),
+        });
+        if (!response.ok) throw new Error('Failed to find or create conversation');
+        return response.json();
+    }
+
+    // Send a message
+    async sendMessage(conversationId: number, senderId: number, content: string): Promise<DBMessage> {
+        const response = await fetch(`${this.BASE}/new-message`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ conversationId, senderId, content, type: 'TEXT' }),
+        });
+        if (!response.ok) throw new Error('Failed to send message');
+        return response.json();
+    }
+
+    // Update a message
+    async updateMessage(messageId: number, userId: number, content: string): Promise<DBMessage> {
+        const response = await fetch(`${this.BASE}/message`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ messageId, userId, content }),
+        });
+        if (!response.ok) throw new Error('Failed to update message');
+        return response.json();
+    }
+
+    // Delete an empty conversation (no messages)
+    async deleteConversation(conversationId: number): Promise<void> {
+        const response = await fetch(`${this.BASE}/conversation/${conversationId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error('Failed to delete conversation');
+    }
 }
 
 export const chatAPI = new ChatAPI();

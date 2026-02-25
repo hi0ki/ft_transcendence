@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
@@ -52,6 +52,16 @@ export class ChatController {
     @Post('message/delete') // Using POST or DELETE depending on frontend preference, sticking to POST for easier body passing if needed
     deleteMessage(@Body() body: { messageId: number, userId: number, deleteType?: string }) {
         return this.chatService.deleteMessage(body.messageId, body.userId, body.deleteType || 'FOR_ALL');
+    }
+
+    @Delete('conversation/:id')
+    async deleteConversation(@Param('id', ParseIntPipe) id: number) {
+        try {
+            await this.chatService.deleteConversation(id);
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     }
 
     @Get('user/:userId/conversations')

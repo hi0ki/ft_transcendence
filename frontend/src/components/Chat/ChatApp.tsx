@@ -73,9 +73,10 @@ const ChatApp: React.FC = () => {
         socketService.onRoomCreated(async (data) => {
             const userId = currentUserIdRef.current;
             if (userId) {
-                const updatedConversations = await chatAPI.getUserConversations(userId);
-                setConversations(updatedConversations);
-                const newConv = updatedConversations.find(c => c.id === data.conversationId);
+                // Don't add to sidebar yet — only set as active conversation
+                // It will be added to sidebar when the first message is sent
+                const userConvs = await chatAPI.getUserConversations(userId);
+                const newConv = userConvs.find(c => c.id === data.conversationId);
                 if (newConv) {
                     setActiveConversation(newConv);
                     const messages = await chatAPI.getConversationMessages(newConv.id);
@@ -92,16 +93,31 @@ const ChatApp: React.FC = () => {
                     return [...prev, message];
                 });
             }
-            // Update conversation list with the new last message
-            setConversations(prev =>
-                prev.map(conv =>
+            // Add conversation to sidebar if not already there (first message triggers visibility)
+            setConversations(prev => {
+                const exists = prev.some(c => c.id === message.conversationId);
+                if (!exists) {
+                    // Conversation not in sidebar yet — fetch it and add
+                    const activeConv = activeConversationRef.current;
+                    if (activeConv && activeConv.id === message.conversationId) {
+                        return [{ ...activeConv, lastMessage: message }, ...prev];
+                    }
+                    // If it's from another user creating a room with us, reload conversations
+                    const userId = currentUserIdRef.current;
+                    if (userId) {
+                        chatAPI.getUserConversations(userId).then(convs => setConversations(convs));
+                    }
+                    return prev;
+                }
+                // Update existing conversation with new last message
+                return prev.map(conv =>
                     conv.id === message.conversationId ? { ...conv, lastMessage: message } : conv
                 ).sort((a, b) => {
                     const timeA = new Date(a.lastMessage?.createdAt || a.createdAt).getTime();
                     const timeB = new Date(b.lastMessage?.createdAt || b.createdAt).getTime();
                     return timeB - timeA;
-                })
-            );
+                });
+            });
         });
 
         socketService.onMessageUpdated((message: DBMessage) => {
@@ -137,8 +153,29 @@ const ChatApp: React.FC = () => {
         return () => { socketService.disconnect(); };
     }, []);
 
+    // Helper: delete empty conversation (no messages sent) when switching away
+    const cleanupEmptyConversation = async () => {
+        const conv = activeConversationRef.current;
+        if (!conv) return;
+
+        // Check if the active conversation has 0 messages
+        try {
+            const msgs = await chatAPI.getConversationMessages(conv.id, currentUserIdRef.current || undefined);
+            if (msgs.length === 0) {
+                await chatAPI.deleteConversation(conv.id);
+                setConversations(prev => prev.filter(c => c.id !== conv.id));
+            }
+        } catch (e) {
+            // Silently ignore — conversation may already be deleted
+        }
+    };
+
     const handleUserClick = async (user: DBUser) => {
         if (!currentUserId) return;
+
+        // Clean up current empty conversation before switching
+        await cleanupEmptyConversation();
+
         const existingConv = conversations.find(conv =>
             conv.user1.id === user.id || conv.user2.id === user.id
         );
@@ -155,11 +192,8 @@ const ChatApp: React.FC = () => {
         } else {
             try {
                 const conv = await chatAPI.findOrCreateConversation(currentUserId, user.id);
-                setConversations(prev => {
-                    const exists = prev.some(c => c.id === conv.id);
-                    if (exists) return prev;
-                    return [conv, ...prev];
-                });
+                // Don't add to sidebar — only set as active
+                // It will appear in sidebar when first message is sent
                 setActiveConversation(conv);
                 const messages = await chatAPI.getConversationMessages(conv.id, currentUserId);
                 setActiveMessages(messages);
@@ -170,6 +204,10 @@ const ChatApp: React.FC = () => {
     };
 
     const handleConversationClick = async (conversation: DBConversation) => {
+        // Clean up current empty conversation before switching
+        if (activeConversation && activeConversation.id !== conversation.id) {
+            await cleanupEmptyConversation();
+        }
         setActiveConversation(conversation);
         const messages = await chatAPI.getConversationMessages(conversation.id, currentUserId || undefined);
         setActiveMessages(messages);
@@ -184,9 +222,16 @@ const ChatApp: React.FC = () => {
             try {
                 const savedMsg = await chatAPI.sendMessage(activeConversation.id, currentUserId, message);
                 setActiveMessages(prev => [...prev, savedMsg]);
-                setConversations(prev => prev.map(c =>
-                    c.id === activeConversation.id ? { ...c, lastMessage: savedMsg } : c
-                ));
+                // Add conversation to sidebar if not already there (first message)
+                setConversations(prev => {
+                    const exists = prev.some(c => c.id === activeConversation.id);
+                    if (!exists) {
+                        return [{ ...activeConversation, lastMessage: savedMsg }, ...prev];
+                    }
+                    return prev.map(c =>
+                        c.id === activeConversation.id ? { ...c, lastMessage: savedMsg } : c
+                    );
+                });
             } catch (error) {
                 console.error('Failed to send message via REST:', error);
             }

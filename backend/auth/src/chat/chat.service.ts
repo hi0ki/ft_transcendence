@@ -4,6 +4,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
+import { sanitizeInput } from '../utils/sanitize';
 
 @Injectable()
 export class ChatService {
@@ -195,11 +196,14 @@ export class ChatService {
 
 
     async sendMessage(sendMessageDto: SendMessageDto) {
+        // Sanitize message content to prevent XSS
+        const sanitizedContent = sanitizeInput(sendMessageDto.content);
+
         return this.prisma.message.create({
             data: {
                 conversationId: sendMessageDto.conversationId,
                 senderId: sendMessageDto.senderId,
-                content: sendMessageDto.content,
+                content: sanitizedContent,
                 type: sendMessageDto.type,
             },
             include: {
@@ -228,10 +232,13 @@ export class ChatService {
             throw new Error('You can only update your own messages');
         }
 
+        // Sanitize updated content to prevent XSS
+        const sanitizedContent = sanitizeInput(updateMessageDto.content);
+
         return this.prisma.message.update({
             where: { id: updateMessageDto.messageId },
             data: {
-                content: updateMessageDto.content,
+                content: sanitizedContent,
                 type: updateMessageDto.type,
             },
         });
@@ -266,6 +273,21 @@ export class ChatService {
                 },
             });
         }
+    }
+
+    async deleteConversation(conversationId: number) {
+        // Only delete if conversation has no messages
+        const messageCount = await this.prisma.message.count({
+            where: { conversationId },
+        });
+
+        if (messageCount > 0) {
+            throw new Error('Cannot delete a conversation that has messages');
+        }
+
+        return this.prisma.conversation.delete({
+            where: { id: conversationId },
+        });
     }
 
     async markAsRead(markAsReadDto: MarkAsReadDto) {
