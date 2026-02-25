@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsInt, IsString } from "class-validator";
+import { IsNotEmpty, IsInt, IsString, IsOptional } from "class-validator";
 import { MessageType } from "@prisma/client";
 
 export class SendMessageDto {
@@ -11,9 +11,13 @@ export class SendMessageDto {
     senderId: number;
 
     @IsString()
-    @IsNotEmpty()
-    content: string;
+    @IsOptional()
+    content?: string;
 
     @IsNotEmpty()
     type: MessageType;
+
+    @IsString()
+    @IsOptional()
+    fileUrl?: string;
 }

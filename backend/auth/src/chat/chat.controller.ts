@@ -1,20 +1,109 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { randomUUID } from 'crypto';
+import { existsSync, mkdirSync } from 'fs';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
 
+// Allowed file types
+const ALLOWED_MIME_TYPES = [
+    // Images
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    // Videos
+    'video/mp4', 'video/webm', 'video/quicktime',
+    // Audio (voice messages)
+    'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/wav', 'audio/mp4',
+    // Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const UPLOAD_BASE = '/app/uploads/chat';
+
+/** Map a MIME type to its subdirectory name */
+function getSubDir(mimetype: string): string {
+    if (mimetype.startsWith('image/')) return 'images';
+    if (mimetype.startsWith('video/')) return 'videos';
+    if (mimetype.startsWith('audio/')) return 'audio';
+    return 'documents';
+}
+
+/** Generate a unique filename: UUID + original extension */
+function generateUniqueFilename(originalName: string): string {
+    const ext = extname(originalName);
+    return `${randomUUID()}${ext}`;
+}
+
 @Controller('chat')
 export class ChatController {
     constructor(private readonly chatService: ChatService) { }
 
-    // Get all users with profiles (for the user list in chat)
+    // ─── File Upload ───
+    @Post('upload')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: (_req, file, cb) => {
+                // Route to subdirectory based on MIME type
+                const subDir = getSubDir(file.mimetype);
+                const destPath = `${UPLOAD_BASE}/${subDir}`;
+
+                // Ensure the subdirectory exists
+                if (!existsSync(destPath)) {
+                    mkdirSync(destPath, { recursive: true });
+                }
+
+                cb(null, destPath);
+            },
+            filename: (_req, file, cb) => {
+                cb(null, generateUniqueFilename(file.originalname));
+            },
+        }),
+        limits: { fileSize: MAX_FILE_SIZE },
+        fileFilter: (_req, file, cb) => {
+            if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+                cb(null, true);
+            } else {
+                cb(new BadRequestException(`File type ${file.mimetype} is not allowed`), false);
+            }
+        },
+    }))
+    uploadFile(@UploadedFile() file: any) {
+        if (!file) {
+            throw new BadRequestException('No file uploaded');
+        }
+
+        // Determine file category
+        let fileType = 'FILE';
+        if (file.mimetype.startsWith('image/')) fileType = 'IMAGE';
+        else if (file.mimetype.startsWith('video/')) fileType = 'VIDEO';
+        else if (file.mimetype.startsWith('audio/')) fileType = 'VOICE';
+
+        // Build URL path: /uploads/chat/<subdir>/<uuid-filename>
+        const subDir = getSubDir(file.mimetype);
+
+        return {
+            fileUrl: `/uploads/chat/${subDir}/${file.filename}`,
+            fileName: file.originalname,
+            fileSize: file.size,
+            fileType,
+            mimeType: file.mimetype,
+        };
+    }
+
+    // ─── Users ───
     @Get('users')
     getAllUsers() {
         return this.chatService.getAllUsersWithProfiles();
     }
 
-    // Get a single user with profile
     @Get('users/:userId')
     getUser(@Param('userId', ParseIntPipe) userId: number) {
         return this.chatService.getUserWithProfile(userId);
@@ -49,7 +138,7 @@ export class ChatController {
         return this.chatService.updateMessage(userId, updateMessageDto);
     }
 
-    @Post('message/delete') // Using POST or DELETE depending on frontend preference, sticking to POST for easier body passing if needed
+    @Post('message/delete')
     deleteMessage(@Body() body: { messageId: number, userId: number, deleteType?: string }) {
         return this.chatService.deleteMessage(body.messageId, body.userId, body.deleteType || 'FOR_ALL');
     }

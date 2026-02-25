@@ -70,14 +70,15 @@ export class ChatService {
         }
     }
 
-    async sendMessageToDB(conversationId: number, senderId: number, content: string): Promise<DBMessage> {
+    async sendMessageToDB(conversationId: number, senderId: number, content: string, type: string = 'TEXT', fileUrl: string | null = null): Promise<DBMessage> {
         try {
             const response = await firstValueFrom(
                 this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/new-message`, {
                     conversationId,
                     senderId,
                     content,
-                    type: 'TEXT',
+                    type,
+                    fileUrl,
                 })
             );
             return response.data;

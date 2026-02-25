@@ -31,6 +31,7 @@ export interface DBMessage {
     senderId: number;
     content: string;
     type: string;
+    fileUrl?: string | null;
     isRead: boolean;
     deletedFor: number[];
     createdAt: string;
@@ -110,14 +111,33 @@ class ChatAPI {
         return response.json();
     }
 
-    // Send a message
-    async sendMessage(conversationId: number, senderId: number, content: string): Promise<DBMessage> {
+    // Send a message (text, image, video, voice, file)
+    async sendMessage(conversationId: number, senderId: number, content?: string, type: string = 'TEXT', fileUrl?: string): Promise<DBMessage> {
         const response = await fetch(`${this.BASE}/new-message`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ conversationId, senderId, content, type: 'TEXT' }),
+            body: JSON.stringify({ conversationId, senderId, content: content || null, type, fileUrl: fileUrl || null }),
         });
         if (!response.ok) throw new Error('Failed to send message');
+        return response.json();
+    }
+
+    // Upload a file (image, video, voice, document)
+    async uploadFile(file: File | Blob, fileName?: string): Promise<{ fileUrl: string; fileName: string; fileSize: number; fileType: string; mimeType: string }> {
+        const formData = new FormData();
+        if (file instanceof Blob && !(file instanceof File)) {
+            formData.append('file', file, fileName || 'voice-message.webm');
+        } else {
+            formData.append('file', file);
+        }
+
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${this.BASE}/upload`, {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData,
+        });
+        if (!response.ok) throw new Error('Failed to upload file');
         return response.json();
     }
 
