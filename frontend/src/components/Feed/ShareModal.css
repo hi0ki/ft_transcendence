@@ -1,0 +1,110 @@
+.share-modal-content {
+    background-color: #1a1f30;
+    width: 90%;
+    max-width: 450px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    animation: modalScaleIn 0.2s ease;
+}
+
+@keyframes modalScaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.share-header {
+    padding: 20px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-title {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.share-options {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 24px;
+    gap: 12px;
+}
+
+.share-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #0f1423;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.share-option-btn:hover {
+    background-color: #21283b;
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.share-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.copy-icon {
+    background-color: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+}
+
+.twitter-icon {
+    background-color: rgba(29, 161, 242, 0.1);
+    color: #1da1f2;
+}
+
+.facebook-icon {
+    background-color: rgba(66, 103, 178, 0.1);
+    color: #4267B2;
+}
+
+.linkedin-icon {
+    background-color: rgba(10, 102, 194, 0.1);
+    color: #0a66c2;
+}
+
+.share-option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.share-option-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.share-option-desc {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+}

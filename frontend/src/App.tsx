@@ -1,9 +1,11 @@
+import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import ChatApp from './components/Chat/ChatApp'
 import Navbar from './components/Navbar/Navbar'
 import Login from './components/Auth/Login'
 import SignUp from './components/Auth/SignUp'
+import FeedPage from './components/Feed/FeedPage'
 import './App.css'
 
 function LoginPage() {
@@ -11,7 +13,7 @@ function LoginPage() {
 
   return (
     <Login
-      onLoginSuccess={() => navigate('/chat')}
+      onLoginSuccess={() => navigate('/home')}
       onSwitchToSignUp={() => navigate('/register')}
     />
   );
@@ -28,7 +30,7 @@ function RegisterPage() {
   );
 }
 
-function ChatPage() {
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   if (!authAPI.isAuthenticated()) {
@@ -49,7 +51,7 @@ function ChatPage() {
         onLogout={handleLogout}
       />
       <div className="app-content">
-        <ChatApp />
+        {children}
       </div>
     </div>
   );
@@ -57,11 +59,9 @@ function ChatPage() {
 
 // Placeholder for other routes to prevent accidental logouts
 const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="app-layout">
-    <div className="placeholder-content" style={{ padding: '40px', color: 'white' }}>
-      <h2>{title} Page</h2>
-      <p>This is a placeholder for the {title.toLowerCase()} functionality.</p>
-    </div>
+  <div className="placeholder-content" style={{ padding: '40px', color: 'white', width: '100%', height: '100%' }}>
+    <h2>{title} Page</h2>
+    <p>This is a placeholder for the {title.toLowerCase()} functionality.</p>
   </div>
 );
 
@@ -75,18 +75,18 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Protected Routes */}
-        <Route path="/home" element={<ChatPage />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/search" element={<ChatPage />} />
-        <Route path="/notifications" element={<ChatPage />} />
-        <Route path="/profile" element={<ChatPage />} />
-        <Route path="/settings" element={<ChatPage />} />
-        <Route path="/moderation" element={<ChatPage />} />
+        <Route path="/home" element={<ProtectedLayout><FeedPage /></ProtectedLayout>} />
+        <Route path="/chat" element={<ProtectedLayout><ChatApp /></ProtectedLayout>} />
+        <Route path="/search" element={<ProtectedLayout><PlaceholderPage title="Search" /></ProtectedLayout>} />
+        <Route path="/notifications" element={<ProtectedLayout><PlaceholderPage title="Notifications" /></ProtectedLayout>} />
+        <Route path="/profile" element={<ProtectedLayout><PlaceholderPage title="Profile" /></ProtectedLayout>} />
+        <Route path="/settings" element={<ProtectedLayout><PlaceholderPage title="Settings" /></ProtectedLayout>} />
+        <Route path="/moderation" element={<ProtectedLayout><PlaceholderPage title="Moderation" /></ProtectedLayout>} />
 
-        {/* Default redirect: if authed go to chat, else login */}
+        {/* Default redirect: if authed go to home, else login */}
         <Route
           path="*"
-          element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />}
+          element={<Navigate to={isAuthed ? '/home' : '/login'} replace />}
         />
       </Routes>
     </Router>
