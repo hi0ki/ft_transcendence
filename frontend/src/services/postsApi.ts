@@ -100,7 +100,7 @@ class PostsAPI {
   
     async getAllPosts(): Promise<Post[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/posts`, {
+            const response = await fetch(`${API_BASE_URL}/posts/`, {
                 method: 'GET',
                 headers: this.getAuthHeader()
             });
@@ -141,7 +141,7 @@ class PostsAPI {
    
     async createPost(payload: CreatePostPayload): Promise<Post> {
         try {
-            const response = await fetch(`${API_BASE_URL}/posts`, {
+            const response = await fetch(`${API_BASE_URL}/posts/`, {
                 method: 'POST',
                 headers: this.getAuthHeader(),
                 body: JSON.stringify({
