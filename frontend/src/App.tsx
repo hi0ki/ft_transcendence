@@ -35,6 +35,7 @@ function RegisterPage() {
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!authAPI.isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -49,11 +50,20 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-layout">
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
       <Navbar
         username={user?.email?.split('@')[0] || 'User'}
         onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       <div className="app-content">
+        <header className="mobile-header">
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span className="mobile-logo">Peer Hub</span>
+        </header>
         {children}
       </div>
     </div>
