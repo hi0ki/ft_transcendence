@@ -115,13 +115,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             client.emit('room_created', {
                 conversationId: conversation.id,
                 conversation,
+                initiatorId: currentUser.userId,
             });
 
-            // Also notify the target user if online
+            // Also notify the target user if online (they are the recipient, not the initiator)
             if (targetSocketId) {
                 this.server.to(targetSocketId).emit('room_created', {
                     conversationId: conversation.id,
                     conversation,
+                    initiatorId: currentUser.userId,
                 });
             }
 

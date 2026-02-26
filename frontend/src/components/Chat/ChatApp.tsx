@@ -70,11 +70,15 @@ const ChatApp: React.FC = () => {
             setOnlineUserIds(userIds);
         });
 
-        socketService.onRoomCreated(async (data) => {
+        socketService.onRoomCreated(async (data: { conversationId: number; conversation: any; initiatorId?: number }) => {
             const userId = currentUserIdRef.current;
-            if (userId) {
-                // Don't add to sidebar yet — only set as active conversation
-                // It will be added to sidebar when the first message is sent
+            if (!userId) return;
+
+            const isInitiator = data.initiatorId === userId;
+
+            if (isInitiator) {
+                // Initiator: open the conversation in the chat window only
+                // Do NOT add to sidebar yet — it appears there only after the first message is sent
                 const userConvs = await chatAPI.getUserConversations(userId);
                 const newConv = userConvs.find(c => c.id === data.conversationId);
                 if (newConv) {
@@ -83,6 +87,11 @@ const ChatApp: React.FC = () => {
                     setActiveMessages(messages);
                     socketService.joinRoom(newConv.id);
                 }
+            } else {
+                // Recipient: silently join the room so real-time messages work,
+                // but do NOT interrupt the conversation they're currently in.
+                // The conversation appears in BOTH sidebars only once the first message is sent.
+                socketService.joinRoom(data.conversationId);
             }
         });
 
