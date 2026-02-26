@@ -320,6 +320,19 @@
     margin-top: 6px;
 }
 
+/* Clickable links inside messages */
+.msg-link {
+    color: #38bdf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-all;
+    transition: color 0.15s;
+}
+
+.msg-link:hover {
+    color: #7dd3fc;
+}
+
 /* Input */
 .chatroom-input {
     padding: 20px;

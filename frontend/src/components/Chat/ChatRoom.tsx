@@ -298,6 +298,28 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     };
 
     // ─── Render message content (text, image, video, voice, file) ───
+
+    // Detect URLs in plain text and render them as clickable links
+    const renderTextWithLinks = (text: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const parts = text.split(urlRegex);
+        return parts.map((part, i) =>
+            urlRegex.test(part) ? (
+                <a
+                    key={i}
+                    href={part}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="msg-link"
+                >
+                    {part}
+                </a>
+            ) : (
+                <span key={i}>{part}</span>
+            )
+        );
+    };
+
     const renderMessageContent = (message: DBMessage) => {
         const baseUrl = window.location.origin;
 
@@ -373,8 +395,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             }
         }
 
-        // Plain text message
-        return <>{message.content}</>;
+        // Plain text message — detect and render URLs as clickable links
+        return <>{renderTextWithLinks(message.content)}</>;
     };
 
     return (
