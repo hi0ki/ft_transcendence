@@ -35,6 +35,8 @@
         - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
       networks:
         - my-app-network
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
 
     # # backend Services
     core_service:
@@ -73,8 +75,6 @@
         - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
         - postgres
-      # environment:
-      #     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ft_transc"
       networks:
         - my-app-network
 
@@ -83,3 +83,6 @@
     my-app-network:
       name: my-app-network
       driver: bridge
+  
+  volumes:
+    postgres_data:

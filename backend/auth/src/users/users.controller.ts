@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Delete, Param, Body, UseGuards, Req, HttpCode, HttpStatus, ParseIntPipe} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles, Role } from '../decorators/roles.decorator';

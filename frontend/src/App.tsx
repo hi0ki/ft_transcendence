@@ -9,6 +9,7 @@ import FeedPage from './components/Feed/FeedPage'
 import AuthCallback from './components/Auth/AuthCallback'
 import ProfilePage from './components/Profile/ProfilePage'
 import SettingsPage from './components/Settings/SettingsPage'
+import AdminPage from './components/Admin/AdminPage'
 import './App.css'
 
 function LoginPage() {
@@ -27,7 +28,7 @@ function RegisterPage() {
 
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/home')}   // ✅ CHANGED HERE
+      onSignUpSuccess={() => navigate('/profile')}   // ✅ CHANGED HERE
       onSwitchToLogin={() => navigate('/login')}
     />
   );
@@ -160,7 +161,7 @@ function App() {
         <Route path="/profile" element={<ProfilePageWrapper />} />
         <Route path="/profile/:username" element={<ProfilePageWrapper />} />
         <Route path="/settings" element={<SettingsPageWrapper />} />
-        <Route path="/moderation" element={<ProtectedLayout><PlaceholderPage title="Moderation" /></ProtectedLayout>} />
+        <Route path="/moderation" element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
 
         <Route path="*" element={<Navigate to={isAuthed ? '/home' : '/login'} replace />} />
       </Routes>

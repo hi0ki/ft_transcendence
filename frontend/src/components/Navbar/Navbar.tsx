@@ -46,6 +46,8 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 
 	const currentPath = location.pathname;
 
+	const isAdmin = currentUser?.role === 'ADMIN';
+
 	const navItems = [
 		{ id: 'home', label: 'Home', icon: <HomeIcon />, path: '/home' },
 		{ id: 'search', label: 'Search', icon: <SearchIcon />, path: '/search' },
@@ -53,7 +55,7 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 		{ id: 'notifications', label: 'Notifications', icon: <BellIcon />, path: '/notifications', badge: 3 },
 		{ id: 'profile', label: 'Profile', icon: <UserIcon />, path: '/profile' },
 		{ id: 'settings', label: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-		{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' },
+		...(isAdmin ? [{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' }] : []),
 	];
 
 	return (
