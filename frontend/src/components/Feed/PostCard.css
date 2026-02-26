@@ -70,6 +70,27 @@
     line-height: 1.6;
     font-size: 0.95rem;
     white-space: pre-wrap;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.show-more-btn {
+    align-self: flex-start;
+    background-color: transparent;
+    color: #4a9eff;
+    border: none;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
+
+.show-more-btn:hover {
+    color: #6ab1ff;
+    text-decoration: underline;
 }
 
 .post-avatar {

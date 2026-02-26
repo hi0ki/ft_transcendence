@@ -1,0 +1,63 @@
+/* Reuse existing modal styles from CreatePostModal + additions */
+.post-detail-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.post-detail-author {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.post-detail-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.post-detail-name {
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.post-detail-handle {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: 4px 0 0 0;
+}
+
+.post-detail-content {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.post-detail-content p {
+    margin: 0;
+}
+
+.modal-close-btn-bottom {
+    background-color: #6366f1;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close-btn-bottom:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+}

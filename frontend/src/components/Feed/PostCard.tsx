@@ -25,9 +25,16 @@ interface PostCardProps {
     onLike?: (postId: string) => void;
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
+    onShowMore?: (post: Post) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare }) => {
+const MAX_CONTENT_LENGTH = 200;
+
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, onShowMore }) => {
+    const isContentTruncated = post.content.length > MAX_CONTENT_LENGTH;
+    const displayContent = isContentTruncated 
+        ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...' 
+        : post.content;
     return (
         <div className="post-card">
             <div className="avatar-column">
@@ -50,10 +57,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare })
                 </div>
 
                 <div className="post-content">
-                    <p>{post.content}</p>
+                    <p>{displayContent}</p>
+                    {isContentTruncated && (
+                        <button 
+                            className="show-more-btn" 
+                            onClick={() => onShowMore && onShowMore(post)}
+                        >
+                            Show More
+                        </button>
+                    )}
                 </div>
 
-                {/* //////////////////////heeereeee we'll addddd lupdate dyaaal img/link data */}
+                
                 {post.imageUrl && (
                     <div className="post-image">
                         <img src={post.imageUrl} alt="Post content" />
@@ -67,7 +82,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare })
                     </div>
                 )}
                 
-                {/* taageesss are staatic here to reviiiiew */}
+          
 
                 {post.tags && post.tags.length > 0 && (
                     <div className="post-tags">

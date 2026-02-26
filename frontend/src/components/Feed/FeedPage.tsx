@@ -4,6 +4,7 @@ import FilterTabs from './FilterTabs';
 import PostCard from './PostCard';
 import type { Post } from './PostCard';
 import CreatePostModal from './CreatePostModal';
+import PostDetailModal from './PostDetailModal';
 import CommentsModal from './CommentsModal';
 import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
@@ -16,7 +17,8 @@ const FeedPage: React.FC = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
 
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
@@ -97,6 +99,11 @@ const FeedPage: React.FC = () => {
         console.log(`Liked post ${postId}`);
     };
 
+    const handleShowMore = (post: Post) => {
+        setSelectedPost(post);
+        setIsPostDetailOpen(true);
+    };
+
     const handleAddComment = (content: string) => {
         console.log(`Add comment to post ${activeCommentPostId}: ${content}`);
     };
@@ -121,6 +128,7 @@ const FeedPage: React.FC = () => {
                     ) : posts.length > 0 ? (
                         posts.map(post => (
                             <PostCard
+                                onShowMore={handleShowMore}
                                 key={post.id}
                                 post={post}
                                 onLike={handleLikePost}
