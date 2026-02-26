@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -17,10 +18,12 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Enable CORS for frontend
+  
   app.enableCors({
-    origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3001'],
+    origin: true, 
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // Serve uploaded files statically at /uploads

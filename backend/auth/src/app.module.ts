@@ -9,6 +9,7 @@ import { ChatModule } from './chat/chat.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfilesModule } from './profiles/profiles.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ProfilesModule } from './profiles/profiles.module';
     ChatModule,
     AuthModule,
     ProfilesModule,
+    PostsModule
   ],
   providers: [ReactionsService],
   controllers: [ReactionsController],

@@ -36,7 +36,7 @@
       networks:
         - my-app-network
 
-    # backend Services
+    # # backend Services
     core_service:
       container_name: core_service
       build:
@@ -75,8 +75,8 @@
         - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
         - postgres
-      volumes:
-        - uploads_data:/app/uploads
+      # environment:
+      #     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ft_transc"
       networks:
         - my-app-network
 

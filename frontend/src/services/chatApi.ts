@@ -15,7 +15,6 @@ function getAuthHeaders(): HeadersInit {
 
 export interface UserProfile {
     username: string;
-    fullName?: string;
     avatarUrl?: string;
 }
 

@@ -10,7 +10,6 @@ export interface DBUser {
     email: string;
     profile?: {
         username: string;
-        fullName?: string;
         avatarUrl?: string;
     };
 }

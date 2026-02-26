@@ -33,7 +33,6 @@ CREATE TABLE "users" (
 CREATE TABLE "profiles" (
     "userId" INTEGER NOT NULL,
     "username" TEXT NOT NULL,
-    "fullName" TEXT,
     "avatarUrl" TEXT,
     "bio" TEXT,
 

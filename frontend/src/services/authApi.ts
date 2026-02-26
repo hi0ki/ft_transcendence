@@ -9,6 +9,7 @@ export interface AuthUser {
     id: number;
     email: string;
     username?: string;
+    avatarUrl?: string | null;
 }
 
 export interface LoginResponse {
@@ -19,6 +20,13 @@ export interface RegisterResponse {
     id: number;
     email: string;
     username: string;
+}
+
+export interface UserProfile {
+    username: string;
+    bio?: string;
+    avatarUrl?: string;
+    skills?: string[];
 }
 
 class AuthAPI {
@@ -88,26 +96,28 @@ class AuthAPI {
             return {
                 id: payload.id,
                 email: payload.email,
-                username: payload.username
+                username: payload.username,
+                avatarUrl: payload.avatarUrl || null,
             };
         } catch {
             return null;
         }
     }
 
-    // Get current user's profile
-    async getProfile(): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
-            headers: {
-                Authorization: `Bearer ${this.getToken()}`
-            }
-        });
+    // Fetch current user's profile (including avatarUrl) from the backend
+    async getMyProfile(): Promise<UserProfile | null> {
+        const token = this.getToken();
+        if (!token) return null;
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch profile');
+        try {
+            const response = await fetch(`${API_BASE_URL}/profiles/me`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
         }
-
-        return response.json();
     }
 
     // Logout — clear stored data
@@ -118,3 +128,13 @@ class AuthAPI {
 }
 
 export const authAPI = new AuthAPI();
+
+/**
+ * Returns the correct avatar src:
+ * - uses avatarUrl if it exists and is non-empty
+ * - otherwise falls back to a DiceBear avatar seeded by username
+ */
+export function getAvatarSrc(avatarUrl: string | null | undefined, username: string): string {
+    if (avatarUrl && avatarUrl.trim() !== '') return avatarUrl;
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+}

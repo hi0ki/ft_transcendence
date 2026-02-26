@@ -19,7 +19,6 @@ export class ChatService {
                 profile: {
                     select: {
                         username: true,
-                        fullName: true,
                         avatarUrl: true,
                     },
                 },
@@ -37,7 +36,6 @@ export class ChatService {
                 profile: {
                     select: {
                         username: true,
-                        fullName: true,
                         avatarUrl: true,
                     },
                 },
@@ -142,14 +140,14 @@ export class ChatService {
                     select: {
                         id: true,
                         email: true,
-                        profile: { select: { username: true, fullName: true, avatarUrl: true } },
+                        profile: { select: { username: true, avatarUrl: true } },
                     },
                 },
                 user2: {
                     select: {
                         id: true,
                         email: true,
-                        profile: { select: { username: true, fullName: true, avatarUrl: true } },
+                        profile: { select: { username: true, avatarUrl: true } },
                     },
                 },
                 messages: {
