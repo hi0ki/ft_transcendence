@@ -9,6 +9,7 @@ export interface AuthUser {
     id: number;
     email: string;
     username?: string;
+    avatarUrl?: string | null;
 }
 
 export interface LoginResponse {
@@ -95,7 +96,8 @@ class AuthAPI {
             return {
                 id: payload.id,
                 email: payload.email,
-                username: payload.username
+                username: payload.username,
+                avatarUrl: payload.avatarUrl || null,
             };
         } catch {
             return null;

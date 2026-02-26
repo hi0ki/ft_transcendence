@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
 import './Navbar.css';
@@ -36,23 +36,15 @@ interface NavbarProps {
 function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-	const [profileUsername, setProfileUsername] = useState<string>(username);
+
+	// Read everything directly from the JWT — no API call needed
+	const currentUser = authAPI.getCurrentUser();
+	const [avatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
+	const [profileUsername] = useState<string>(
+		currentUser?.username || currentUser?.email?.split('@')[0] || username
+	);
 
 	const currentPath = location.pathname;
-
-	useEffect(() => {
-		// Get the best username we can from the JWT first (immediate)
-		const currentUser = authAPI.getCurrentUser();
-		const jwtUsername = currentUser?.username || currentUser?.email?.split('@')[0] || username;
-		setProfileUsername(jwtUsername);
-
-		// Then fetch the real profile for the definitive username + avatarUrl
-		authAPI.getMyProfile().then((profile) => {
-			if (profile?.avatarUrl) setAvatarUrl(profile.avatarUrl);
-			if (profile?.username) setProfileUsername(profile.username);
-		});
-	}, []);
 
 	const navItems = [
 		{ id: 'home', label: 'Home', icon: <HomeIcon />, path: '/home' },
