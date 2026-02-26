@@ -95,9 +95,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
-            setUploadError('File size must be under 10MB');
+        // Validate file size (50MB max — videos need more room)
+        if (file.size > 50 * 1024 * 1024) {
+            setUploadError('File size must be under 50MB');
             setTimeout(() => setUploadError(null), 3000);
             return;
         }
@@ -126,7 +126,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const getFileType = (file: File): string => {
         if (file.type.startsWith('image/')) return 'IMAGE';
         if (file.type.startsWith('video/')) return 'VIDEO';
-        if (file.type.startsWith('audio/')) return 'VOICE';
+        // webm audio = voice recording; other audio = music/audio file
+        if (file.type === 'audio/webm' || file.type === 'audio/ogg') return 'VOICE';
+        if (file.type.startsWith('audio/')) return 'AUDIO';
         return 'FILE';
     };
 
@@ -346,6 +348,17 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                         </div>
                     );
                 }
+
+                case 'AUDIO': // Uploaded music/audio file (mp3, aac, flac, etc.)
+                    return (
+                        <div className="msg-audio">
+                            <span className="msg-audio-icon">🎵</span>
+                            <div className="msg-audio-content">
+                                <span className="msg-audio-name">{message.content || 'Audio file'}</span>
+                                <audio src={fullUrl} controls preload="metadata" className="msg-audio-player" />
+                            </div>
+                        </div>
+                    );
 
                 default: // FILE
                     return (

@@ -30,8 +30,10 @@ enum NotificationType {
 enum MessageType {
 	TEXT
 	IMAGE
+	VIDEO
 	FILE
 	VOICE
+	AUDIO
 	OTHER
 }
 

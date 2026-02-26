@@ -14,9 +14,12 @@ const ALLOWED_MIME_TYPES = [
     // Images
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     // Videos
-    'video/mp4', 'video/webm', 'video/quicktime',
-    // Audio (voice messages)
-    'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/wav', 'audio/mp4',
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+    'video/x-matroska', 'video/avi', 'video/mkv', 'video/3gpp',
+    // Audio — voice messages AND music files (mp3, aac, flac, etc.)
+    'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp3', 'audio/wav',
+    'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/flac', 'audio/x-flac',
+    'audio/x-m4a', 'audio/m4a',
     // Documents
     'application/pdf',
     'application/msword',
@@ -24,7 +27,7 @@ const ALLOWED_MIME_TYPES = [
     'text/plain',
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — videos need more room
 
 const UPLOAD_BASE = '/app/uploads/chat';
 
@@ -68,7 +71,13 @@ export class ChatController {
         }),
         limits: { fileSize: MAX_FILE_SIZE },
         fileFilter: (_req, file, cb) => {
-            if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+            // Accept any image, video, or audio type by prefix
+            if (
+                file.mimetype.startsWith('video/') ||
+                file.mimetype.startsWith('audio/') ||
+                file.mimetype.startsWith('image/') ||
+                ALLOWED_MIME_TYPES.includes(file.mimetype)
+            ) {
                 cb(null, true);
             } else {
                 cb(new BadRequestException(`File type ${file.mimetype} is not allowed`), false);

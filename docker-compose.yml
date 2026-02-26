@@ -79,6 +79,8 @@
       #     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ft_transc"
       networks:
         - my-app-network
+      volumes:
+        - uploads_data:/app/uploads
 
   # Volumes
   volumes:
