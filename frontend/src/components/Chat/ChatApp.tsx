@@ -135,19 +135,26 @@ const ChatApp: React.FC = () => {
         });
 
         socketService.onMessageDeleted((data: { messageId: number; conversationId: number; deleteType: string }) => {
+            // Remove from active chat window
             if (activeConversationRef.current?.id === data.conversationId) {
                 setActiveMessages(prev => prev.filter(m => m.id !== data.messageId));
             }
-            // Update sidebar (clear last message if it was the deleted one)
-            if (data.deleteType === 'FOR_ALL') {
-                setConversations(prev =>
-                    prev.map(conv =>
-                        conv.id === data.conversationId && conv.lastMessage?.id === data.messageId
-                            ? { ...conv, lastMessage: null }
-                            : conv
-                    )
+            // Update sidebar — reload from server to show the real previous lastMessage
+            const userId = currentUserIdRef.current;
+            setConversations(prev => {
+                const conv = prev.find(c => c.id === data.conversationId);
+                const wasLastMessage = conv?.lastMessage?.id === data.messageId;
+                if (wasLastMessage && userId) {
+                    // Re-fetch conversations from server to get the real previous lastMessage
+                    chatAPI.getUserConversations(userId).then(fresh => setConversations(fresh));
+                }
+                // Optimistically remove from current view while fetch is in-flight
+                return prev.map(c =>
+                    c.id === data.conversationId && c.lastMessage?.id === data.messageId
+                        ? { ...c, lastMessage: null }
+                        : c
                 );
-            }
+            });
         });
 
         return () => { socketService.disconnect(); };

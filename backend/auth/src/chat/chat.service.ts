@@ -152,7 +152,7 @@ export class ChatService {
                 },
                 messages: {
                     orderBy: { createdAt: 'desc' },
-                    take: 1, // only last message
+                    take: 5, // fetch a few so we have fallback when the last is deleted
                     include: {
                         sender: {
                             select: {
