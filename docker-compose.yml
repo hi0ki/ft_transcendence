@@ -21,6 +21,9 @@
         - "8080:80"
       depends_on:
         - frontend
+        - auth_service
+        - chat_service
+        - core_service
       networks:
         - my-app-network
     # Database
@@ -33,7 +36,7 @@
       networks:
         - my-app-network
 
-    # backend Services
+    # # backend Services
     core_service:
       container_name: core_service
       build:
@@ -42,6 +45,9 @@
         args:
           - app_name=core
       restart: always
+      environment:
+        - JWT_SECRET=super_secret_key
+        - AUTH_SERVICE_URL=http://auth_service:3000
       ports:
         - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
@@ -70,6 +76,8 @@
         - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
         - postgres
+      # environment:
+      #     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ft_transc"
       networks:
         - my-app-network
 

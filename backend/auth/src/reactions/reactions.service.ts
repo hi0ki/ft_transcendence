@@ -42,5 +42,32 @@ export class ReactionsService {
             where: { postId },
         });
     }
+
+    async findAllByPost(postId: number) {
+        return this.prisma.like.findMany({
+            where: { postId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: {
+                            select: {
+                                username: true,
+                                avatarUrl: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async findUserReaction(userId: number, postId: number) {
+        return this.prisma.like.findUnique({
+            where: { userId_postId: { userId, postId } },
+        });
+    }
 }
 

@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Put, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, ParseIntPipe, UseGuards, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ReactionsService } from './reactions.service';
 import { AuthGuard } from '../common/guards/auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('reactions')
 export class ReactionsController {
@@ -14,10 +14,10 @@ export class ReactionsController {
     @Post('toggle')
     @UseGuards(AuthGuard)
     toggle(
-        @CurrentUser() user: { id: number },
+        @Req() req: Request & { user: { id: number } },
         @Body() body: { postId: number; type: string },
     ) {
-        return this.reactionsService.toggle(user.id, body.postId, body.type);
+        return this.reactionsService.toggle(req.user.id, body.postId, body.type);
     }
 
     /**
@@ -27,10 +27,10 @@ export class ReactionsController {
     @Put('update')
     @UseGuards(AuthGuard)
     update(
-        @CurrentUser() user: { id: number },
+        @Req() req: Request & { user: { id: number } },
         @Body() body: { postId: number; type: string },
     ) {
-        return this.reactionsService.update(user.id, body.postId, body.type);
+        return this.reactionsService.update(req.user.id, body.postId, body.type);
     }
 
     /**
@@ -40,5 +40,19 @@ export class ReactionsController {
     @Get('post/:postId/count')
     countByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.reactionsService.countByPost(postId);
+    }
+
+    @Get('post/:postId')
+    findAllByPost(@Param('postId', ParseIntPipe) postId: number) {
+        return this.reactionsService.findAllByPost(postId);
+    }
+
+    @Get('mine/:postId')
+    @UseGuards(AuthGuard)
+    findMyReaction(
+        @Req() req: Request & { user: { id: number } },
+        @Param('postId', ParseIntPipe) postId: number,
+    ) {
+        return this.reactionsService.findUserReaction(req.user.id, postId);
     }
 }

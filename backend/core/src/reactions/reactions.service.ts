@@ -113,4 +113,36 @@ export class ReactionsService {
             );
         }
     }
+
+    /**
+     * Get all reactions for a post with user profiles.
+     */
+    async findAllByPost(postId: number) {
+        try {
+            const { data } = await firstValueFrom(
+                this.http.get(`${this.authUrl}/reactions/post/${postId}`),
+            );
+            return data;
+        } catch (err) {
+            throw new HttpException(
+                err.response?.data || 'Failed to fetch reactions',
+                err.response?.status || 500,
+            );
+        }
+    }
+
+    /**
+     * Get a specific user's reaction on a post.
+     */
+    async findUserReaction(userId: number, postId: number) {
+        try {
+            const { data } = await firstValueFrom(
+                this.http.get(`${this.authUrl}/reactions/user/${userId}/post/${postId}`),
+            );
+            return data;
+        } catch (err) {
+            if (err.response?.status === 404) return null;
+            return null;
+        }
+    }
 }
