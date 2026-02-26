@@ -14,6 +14,8 @@ interface Post {
     likes: number;
     comments: number;
     type?: 'Help' | 'Resource' | 'Meme';
+    imageUrl?: string;
+    contentUrl?: string;
 }
 
 export type { Post };
@@ -50,6 +52,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare })
                 <div className="post-content">
                     <p>{post.content}</p>
                 </div>
+
+                {/* //////////////////////heeereeee we'll addddd lupdate dyaaal img/link data */}
+                {post.imageUrl && (
+                    <div className="post-image">
+                        <img src={post.imageUrl} alt="Post content" />
+                    </div>
+                )}
+                {post.contentUrl && (
+                    <div className="post-content-url">
+                        <a href={post.contentUrl} target="_blank" rel="noopener noreferrer">
+                            {post.contentUrl}
+                        </a>
+                    </div>
+                )}
+                
+                {/* taageesss are staatic here to reviiiiew */}
 
                 {post.tags && post.tags.length > 0 && (
                     <div className="post-tags">

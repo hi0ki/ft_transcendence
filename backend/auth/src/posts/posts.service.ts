@@ -11,6 +11,8 @@ export class PostsService {
 		type: 'HELP' | 'RESOURCE' | 'MEME';
 		title: string;
 		content: string;
+		imageUrl?: string;
+		contentUrl?: string;
 	}) {
 		return this.prisma.post.create({
 			data,
@@ -61,7 +63,7 @@ export class PostsService {
 	async remove(id: number, userId: number) {
 		const post = await this.prisma.post.findUnique({ where: { id } });
 		if (!post) throw new NotFoundException('Post not found');
-		if (post.userId !== userId) throw new ForbiddenException('You can only delete your own posts');
+		if (post.userId !== userId) throw new ForbiddenException('You can only delete yourrr own posts');
 		return this.prisma.post.delete({ where: { id } });
 	}
 

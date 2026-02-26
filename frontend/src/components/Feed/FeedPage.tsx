@@ -62,7 +62,7 @@ const FeedPage: React.FC = () => {
         return () => { isMounted = false; };
     }, [activeTab]);
 
-    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
+    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => {
         try {
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
@@ -70,7 +70,9 @@ const FeedPage: React.FC = () => {
 
             const createdPost = await postsAPI.createPost({
                 type: backendType,
-                content: newPostData.content
+                content: newPostData.content,
+                imageUrl: newPostData.imageUrl,
+                contentUrl: newPostData.contentUrl
             });
 
             const newPost: Post = {

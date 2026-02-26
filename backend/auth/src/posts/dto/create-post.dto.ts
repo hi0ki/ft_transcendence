@@ -15,4 +15,12 @@ export class CreatePostDto {
     @IsString()
     @IsNotEmpty()
     content: string;
+
+    @IsOptional()
+    @IsString()
+    imageUrl?: string;
+
+    @IsOptional()
+    @IsString()
+    contentUrl?: string;
 }

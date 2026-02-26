@@ -166,3 +166,42 @@
         padding: 16px;
     }
 }
+
+/* Styles for image and link display */
+.post-image {
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.post-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.post-content-url {
+    margin: 12px 0;
+    padding: 12px;
+    background-color: rgba(74, 158, 255, 0.1);
+    border: 1px solid rgba(74, 158, 255, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.post-content-url a {
+    color: #4a9eff;
+    text-decoration: none;
+    word-break: break-all;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.post-content-url a:hover {
+    color: #6ab1ff;
+    text-decoration: underline;
+}
