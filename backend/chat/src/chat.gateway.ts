@@ -155,7 +155,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('room_message')
     async handleRoomMessage(
-        @MessageBody() data: { conversationId: number; message: string },
+        @MessageBody() data: { conversationId: number; message: string; type?: string; fileUrl?: string },
         @ConnectedSocket() client: Socket,
     ) {
         try {
@@ -170,6 +170,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 data.conversationId,
                 currentUser.userId,
                 data.message,
+                data.type || 'TEXT',
+                data.fileUrl || null,
             );
 
             // Broadcast to all participants in the room

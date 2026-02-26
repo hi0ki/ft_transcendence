@@ -75,8 +75,14 @@
         - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
       depends_on:
         - postgres
+      volumes:
+        - uploads_data:/app/uploads
       networks:
         - my-app-network
+
+  # Volumes
+  volumes:
+    uploads_data:
 
   # Networks
   networks:

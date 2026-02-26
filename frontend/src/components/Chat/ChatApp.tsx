@@ -214,13 +214,13 @@ const ChatApp: React.FC = () => {
         if (connected) socketService.joinRoom(conversation.id);
     };
 
-    const handleSendMessage = async (message: string) => {
+    const handleSendMessage = async (message: string, type?: string, fileUrl?: string) => {
         if (!activeConversation || !currentUserId) return;
         if (connected) {
-            socketService.sendMessage(activeConversation.id, message);
+            socketService.sendMessage(activeConversation.id, message, type, fileUrl);
         } else {
             try {
-                const savedMsg = await chatAPI.sendMessage(activeConversation.id, currentUserId, message);
+                const savedMsg = await chatAPI.sendMessage(activeConversation.id, currentUserId, message, type || 'TEXT', fileUrl);
                 setActiveMessages(prev => [...prev, savedMsg]);
                 // Add conversation to sidebar if not already there (first message)
                 setConversations(prev => {

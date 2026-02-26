@@ -111,8 +111,8 @@ class SocketService {
         this.emit('leave_room', { conversationId });
     }
 
-    sendMessage(conversationId: number, message: string) {
-        this.emit('room_message', { conversationId, message });
+    sendMessage(conversationId: number, message: string, type?: string, fileUrl?: string) {
+        this.emit('room_message', { conversationId, message, type: type || 'TEXT', fileUrl: fileUrl || null });
     }
 
     updateMessage(conversationId: number, messageId: number, content: string) {

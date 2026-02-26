@@ -197,7 +197,7 @@ export class ChatService {
 
     async sendMessage(sendMessageDto: SendMessageDto) {
         // Sanitize message content to prevent XSS
-        const sanitizedContent = sanitizeInput(sendMessageDto.content);
+        const sanitizedContent = sendMessageDto.content ? sanitizeInput(sendMessageDto.content) : null;
 
         return this.prisma.message.create({
             data: {
@@ -205,6 +205,7 @@ export class ChatService {
                 senderId: sendMessageDto.senderId,
                 content: sanitizedContent,
                 type: sendMessageDto.type,
+                fileUrl: sendMessageDto.fileUrl || null,
             },
             include: {
                 sender: {
