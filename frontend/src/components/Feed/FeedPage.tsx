@@ -18,7 +18,7 @@ const FeedPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Interaction Modal States
+
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
 
@@ -26,7 +26,6 @@ const FeedPage: React.FC = () => {
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) return;
 
-        // Still fetch profile for other potential uses (like navbar or future features)
         authAPI.getMyProfile();
     }, []);
 
@@ -74,8 +73,6 @@ const FeedPage: React.FC = () => {
                 content: newPostData.content
             });
 
-            // The backend now returns the full post including user profile.
-            // postsAPI.createPost already transforms this into our Post interface.
             const newPost: Post = {
                 ...createdPost,
                 tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`),
@@ -99,7 +96,6 @@ const FeedPage: React.FC = () => {
     };
 
     const handleAddComment = (content: string) => {
-        // Mocking comment addition removed as per user request (no backend yet)
         console.log(`Add comment to post ${activeCommentPostId}: ${content}`);
     };
 
@@ -132,7 +128,7 @@ const FeedPage: React.FC = () => {
                         ))
                     ) : (
                         <div className="feed-empty">
-                            <p>No posts found in this section yet. Be the first to start a conversation!</p>
+                            <p>No posts found in this section yet. Be the first to post a POOOST!</p>
                         </div>
                     )}
                 </div>
@@ -148,14 +144,14 @@ const FeedPage: React.FC = () => {
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
                 comments={[]}
-                currentUserAvatar={getAvatarSrc(null, 'me')} // Simplified fallback, as we don't have backend comments yet
+                currentUserAvatar={getAvatarSrc(null, 'me')}
                 onAddComment={handleAddComment}
             />
 
             <ShareModal
                 isOpen={!!activeSharePostId}
                 onClose={() => setActiveSharePostId(null)}
-                postUrl={`http://localhost:8080/post/${activeSharePostId}`} // Mock sharing link targeting active environment
+                postUrl={`http://localhost:8080/post/${activeSharePostId}`}
             />
         </div>
     );

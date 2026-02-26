@@ -46,7 +46,7 @@ export interface CreatePostPayload {
 class PostsAPI {
 
     private transformPost(backendPost: BackendPost): Post {
-        // Get current user's username from JWT as fallback
+        // Get current user's username from JWT as fallback hmmmmmmmmmmm aah to this//////////////////
         const currentUser = authAPI.getCurrentUser();
         const fallbackName = currentUser?.username || currentUser?.email?.split('@')[0] || 'Anonymous';
 
@@ -134,14 +134,14 @@ class PostsAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Failed to fetch post' }));
-                throw new Error(error.message || `HTTP ${response.status}: Failed to fetch post`);
+                const error = await response.json().catch(() => ({ message: 'Faiiiiiiiiiiiled to fetch post </3' }));
+                throw new Error(error.message || `HTTP ${response.status}: Faiiiiiiiiiiiled to fetch post </3`);
             }
 
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error fetching post:', error);
+            console.error('Error fetching pooowst:', error);
             throw error;
         }
     }
@@ -160,8 +160,8 @@ class PostsAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Failed to create post' }));
-                throw new Error(error.message || `HTTP ${response.status}: Failed to create post`);
+                const error = await response.json().catch(() => ({ message: 'Faiiled to create post' }));
+                throw new Error(error.message || `HTTP ${response.status}: Faiiled to create post`);
             }
 
             const data: BackendPost = await response.json();

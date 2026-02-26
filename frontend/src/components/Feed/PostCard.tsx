@@ -6,14 +6,14 @@ interface Post {
     author: {
         name: string;
         handle: string;
-        avatar: string; // URL to avatar image
+        avatar: string;
     };
     timeAgo: string;
-    content: string; // The main text of the post
+    content: string;
     tags?: string[];
     likes: number;
     comments: number;
-    type?: 'Help' | 'Resource' | 'Meme'; // Badge indication
+    type?: 'Help' | 'Resource' | 'Meme';
 }
 
 export type { Post };
