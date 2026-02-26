@@ -18,31 +18,37 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-
+    
         if (password !== confirmPassword) {
             setError('Passwords do not match');
             return;
         }
-
+    
         if (username.length < 3 || username.length > 20) {
             setError('Username must be between 3 and 20 characters');
             return;
         }
-
+    
         if (!/^[a-zA-Z0-9_]+$/.test(username)) {
             setError('Username can only contain letters, numbers, and underscores');
             return;
         }
-
+    
         if (password.length < 6) {
             setError('Password must be at least 6 characters');
             return;
         }
-
+    
         setLoading(true);
-
+    
         try {
+            // 1️⃣ Register user
             await authAPI.register(email, password, username);
+    
+            // 2️⃣ Automatically log them in
+            await authAPI.login(email, password);
+    
+            // 3️⃣ Now they are authenticated → go to home
             onSignUpSuccess();
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
@@ -50,7 +56,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
             setLoading(false);
         }
     };
-
+    
     const handleOAuthClick = () => {
         window.location.href = 'http://localhost:8080/auth/42';
     };

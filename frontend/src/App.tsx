@@ -27,13 +27,13 @@ function RegisterPage() {
 
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/login')}
+      onSignUpSuccess={() => navigate('/home')}   // ✅ CHANGED HERE
       onSwitchToLogin={() => navigate('/login')}
     />
   );
 }
 
-function ProtectedLayout({ children }: { children: React.ReactNode }) {
+function ProtectedLayout({ children }) {
   const navigate = useNavigate();
 
   if (!authAPI.isAuthenticated()) {
@@ -60,8 +60,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Placeholder for other routes to prevent accidental logouts
-const PlaceholderPage = ({ title }: { title: string }) => (
+const PlaceholderPage = ({ title }) => (
   <div className="placeholder-content" style={{ padding: '40px', color: 'white', width: '100%', height: '100%' }}>
     <h2>{title} Page</h2>
     <p>This is a placeholder for the {title.toLowerCase()} functionality.</p>
@@ -152,10 +151,8 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/callback" element={<AuthCallback />} />
 
-        {/* Root redirect */}
         <Route path="/" element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />} />
 
-        {/* Protected Routes */}
         <Route path="/home" element={<ProtectedLayout><FeedPage /></ProtectedLayout>} />
         <Route path="/chat" element={<ProtectedLayout><ChatApp /></ProtectedLayout>} />
         <Route path="/search" element={<ProtectedLayout><PlaceholderPage title="Search" /></ProtectedLayout>} />
@@ -165,11 +162,7 @@ function App() {
         <Route path="/settings" element={<SettingsPageWrapper />} />
         <Route path="/moderation" element={<ProtectedLayout><PlaceholderPage title="Moderation" /></ProtectedLayout>} />
 
-        {/* Default redirect: if authed go to home, else login */}
-        <Route
-          path="*"
-          element={<Navigate to={isAuthed ? '/home' : '/login'} replace />}
-        />
+        <Route path="*" element={<Navigate to={isAuthed ? '/home' : '/login'} replace />} />
       </Routes>
     </Router>
   );
