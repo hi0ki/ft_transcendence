@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { authAPI, getAvatarSrc } from '../../services/authApi';
 import './Navbar.css';
 
 interface NavItemProps {
@@ -35,8 +36,23 @@ interface NavbarProps {
 function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const location = useLocation();
 	const navigate = useNavigate();
+	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+	const [profileUsername, setProfileUsername] = useState<string>(username);
 
 	const currentPath = location.pathname;
+
+	useEffect(() => {
+		// Get the best username we can from the JWT first (immediate)
+		const currentUser = authAPI.getCurrentUser();
+		const jwtUsername = currentUser?.username || currentUser?.email?.split('@')[0] || username;
+		setProfileUsername(jwtUsername);
+
+		// Then fetch the real profile for the definitive username + avatarUrl
+		authAPI.getMyProfile().then((profile) => {
+			if (profile?.avatarUrl) setAvatarUrl(profile.avatarUrl);
+			if (profile?.username) setProfileUsername(profile.username);
+		});
+	}, []);
 
 	const navItems = [
 		{ id: 'home', label: 'Home', icon: <HomeIcon />, path: '/home' },
@@ -85,11 +101,18 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 			<div className="sidebar-footer">
 				<div className="user-profile-card">
 					<div className="user-avatar">
-						<img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`} alt="avatar" />
+						<img
+							src={getAvatarSrc(avatarUrl, profileUsername)}
+							alt="avatar"
+							onError={(e) => {
+								(e.target as HTMLImageElement).src =
+									`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileUsername)}`;
+							}}
+						/>
 					</div>
 					<div className="user-details">
-						<span className="user-name">{username}</span>
-						<span className="user-handle">@{username.toLowerCase().replace(/\s+/g, '')}</span>
+						<span className="user-name">{profileUsername}</span>
+						<span className="user-handle">@{profileUsername.toLowerCase().replace(/\s+/g, '')}</span>
 					</div>
 				</div>
 				<button className="logout-standalone" onClick={onLogout}>

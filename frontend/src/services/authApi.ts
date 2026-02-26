@@ -18,6 +18,14 @@ export interface LoginResponse {
 export interface RegisterResponse {
     id: number;
     email: string;
+    username: string;
+}
+
+export interface UserProfile {
+    username: string;
+    bio?: string;
+    avatarUrl?: string;
+    skills?: string[];
 }
 
 class AuthAPI {
@@ -94,6 +102,22 @@ class AuthAPI {
         }
     }
 
+    // Fetch current user's profile (including avatarUrl) from the backend
+    async getMyProfile(): Promise<UserProfile | null> {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/profiles/me`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
+        }
+    }
+
     // Logout — clear stored data
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);
@@ -102,3 +126,13 @@ class AuthAPI {
 }
 
 export const authAPI = new AuthAPI();
+
+/**
+ * Returns the correct avatar src:
+ * - uses avatarUrl if it exists and is non-empty
+ * - otherwise falls back to a DiceBear avatar seeded by username
+ */
+export function getAvatarSrc(avatarUrl: string | null | undefined, username: string): string {
+    if (avatarUrl && avatarUrl.trim() !== '') return avatarUrl;
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+}

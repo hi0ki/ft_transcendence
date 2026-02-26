@@ -12,7 +12,23 @@ export class PostsService {
 		title: string;
 		content: string;
 	}) {
-		return this.prisma.post.create({ data });
+		return this.prisma.post.create({
+			data,
+			include: {
+				user: {
+					select: {
+						id: true,
+						email: true,
+						profile: {
+							select: {
+								username: true,
+								avatarUrl: true,
+							},
+						},
+					},
+				},
+			},
+		});
 	}
 
 	getAllPosts() {

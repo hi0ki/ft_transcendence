@@ -8,114 +8,12 @@ import CommentsModal from './CommentsModal';
 import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
+import { authAPI, getAvatarSrc } from '../../services/authApi';
 import './FeedPage.css';
-
-// Extended Mock Data targeting to visually recreate screenshot values including nested comments
-interface ExtendedPost extends Post {
-    commentList: Comment[];
-}
-
-const MOCK_COMMENTS: Comment[] = [
-    {
-        id: 'c1',
-        author: {
-            name: 'Marcus Lee',
-            handle: '@marcusl',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus'
-        },
-        timeAgo: '1 hour ago',
-        content: 'Big O notation measures the worst-case time complexity. O(1) is constant, O(n) is linear, O(n²) is quadratic. Think of it as how the runtime grows as input size increases!',
-        likes: 5
-    },
-    {
-        id: 'c2',
-        author: {
-            name: 'Sofia Rodriguez',
-            handle: '@sofiar',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia'
-        },
-        timeAgo: '45 minutes ago',
-        content: 'I recommend the book \'Cracking the Coding Interview\' - has great explanations on Big O!',
-        likes: 3
-    }
-];
-
-const MOCK_POSTS: ExtendedPost[] = [
-    {
-        id: '1',
-        author: {
-            name: 'Emma Wilson',
-            handle: '@emmaw',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma'
-        },
-        timeAgo: '2 hours ago',
-        content: 'Can someone help me understand Big O notation? I\'m struggling with time complexity analysis.',
-        tags: ['#Data Structures', '#Algorithms'],
-        likes: 12,
-        comments: 2,
-        type: 'Help',
-        commentList: MOCK_COMMENTS
-    },
-    {
-        id: '2',
-        author: {
-            name: 'Marcus Lee',
-            handle: '@marcusl',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus'
-        },
-        timeAgo: '5 hours ago',
-        content: 'Just uploaded my complete React hooks cheat sheet! Free for everyone. Includes useState, useEffect, useContext, and custom hooks with examples.',
-        tags: ['#React', '#JavaScript', '#Tutorial'],
-        likes: 45,
-        comments: 1,
-        type: 'Resource',
-        commentList: [
-            {
-                id: 'c3',
-                author: { name: 'Elena R', handle: '@elenar', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elena' },
-                timeAgo: '2 hours ago',
-                content: 'This is amazing! Exactly what I was looking for as I transition from class components.',
-                likes: 4
-            }
-        ]
-    },
-    {
-        id: '3',
-        author: {
-            name: 'Sofia Rodriguez',
-            handle: '@sofiar',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia'
-        },
-        timeAgo: '1 day ago',
-        content: 'When you finally fix a bug at 3 AM:\n\n"I don\'t know what I did, but it works now" 🎉',
-        tags: ['#Funny', '#Programming'],
-        likes: 234,
-        comments: 2,
-        type: 'Meme',
-        commentList: [
-            {
-                id: 'c4',
-                author: { name: 'James T', handle: '@jamest', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JamesD' },
-                timeAgo: '20 hours ago',
-                content: 'And then you break it again the next morning trying to "clean up the code".',
-                likes: 56
-            },
-            {
-                id: 'c5',
-                author: { name: 'Sarah Chen', handle: '@sarahc', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
-                timeAgo: '18 hours ago',
-                content: 'Too real 😂',
-                likes: 12
-            }
-        ]
-    }
-];
-
-const CURRENT_USER_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex';
 
 const FeedPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState('All');
-    const [posts, setPosts] = useState<ExtendedPost[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -124,31 +22,32 @@ const FeedPage: React.FC = () => {
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
 
-    
+    useEffect(() => {
+        const currentUser = authAPI.getCurrentUser();
+        if (!currentUser) return;
+
+        // Still fetch profile for other potential uses (like navbar or future features)
+        authAPI.getMyProfile();
+    }, []);
+
     useEffect(() => {
         let isMounted = true;
-        
+
         const fetchPosts = async () => {
             setLoading(true);
             setError(null);
 
             try {
                 const fetchedPosts = await postsAPI.getAllPosts();
-                
-                if (!isMounted) return;
 
-                // Add mock commentList for existing functionality
-                const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
-                    ...post,
-                    commentList: [] // Mock empty comments list (comments service handles this)
-                }));
+                if (!isMounted) return;
 
                 // Filter by active tab
                 if (activeTab === 'All') {
-                    setPosts(postsWithComments);
+                    setPosts(fetchedPosts);
                 } else {
                     const mappedType = activeTab === 'Resources' ? 'Resource' : activeTab === 'Memes' ? 'Meme' : activeTab;
-                    setPosts(postsWithComments.filter(post => post.type === mappedType));
+                    setPosts(fetchedPosts.filter(post => post.type === mappedType));
                 }
             } catch (e: any) {
                 if (!isMounted) return;
@@ -166,23 +65,23 @@ const FeedPage: React.FC = () => {
 
     const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
         try {
-            
+
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
-            
-            
+
+
             const createdPost = await postsAPI.createPost({
                 type: backendType,
                 content: newPostData.content
             });
 
-            // Add mock data for comments and tags
-            const newPost: ExtendedPost = {
+            // The backend now returns the full post including user profile.
+            // postsAPI.createPost already transforms this into our Post interface.
+            const newPost: Post = {
                 ...createdPost,
-                tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`), // Keep user's tags visually
-                commentList: []
+                tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`),
             };
 
-            
+
             if (activeTab === 'All' || activeTab === newPostData.type) {
                 setPosts([newPost, ...posts]);
             }
@@ -195,37 +94,14 @@ const FeedPage: React.FC = () => {
     };
 
     const handleLikePost = (postId: string) => {
-      
+
         console.log(`Liked post ${postId}`);
     };
 
     const handleAddComment = (content: string) => {
-        if (!activeCommentPostId) return;
-
-        setPosts(prevPosts => prevPosts.map(post => {
-            if (post.id === activeCommentPostId) {
-                const newCommentObj: Comment = {
-                    id: `new-${Date.now()}`,
-                    author: {
-                        name: 'Alex Johnson',
-                        handle: '@alexj',
-                        avatar: CURRENT_USER_AVATAR
-                    },
-                    timeAgo: 'Just now',
-                    content: content,
-                    likes: 0
-                };
-                return {
-                    ...post,
-                    comments: post.comments + 1,
-                    commentList: [...post.commentList, newCommentObj]
-                };
-            }
-            return post;
-        }));
+        // Mocking comment addition removed as per user request (no backend yet)
+        console.log(`Add comment to post ${activeCommentPostId}: ${content}`);
     };
-
-    const activeCommentPost = posts.find((p: ExtendedPost) => p.id === activeCommentPostId);
 
     return (
         <div className="feed-page">
@@ -271,8 +147,8 @@ const FeedPage: React.FC = () => {
             <CommentsModal
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
-                comments={activeCommentPost?.commentList || []}
-                currentUserAvatar={CURRENT_USER_AVATAR}
+                comments={[]}
+                currentUserAvatar={getAvatarSrc(null, 'me')} // Simplified fallback, as we don't have backend comments yet
                 onAddComment={handleAddComment}
             />
 

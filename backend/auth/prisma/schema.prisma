@@ -93,6 +93,7 @@ model Post {
 	type      PostType
 	title     String
 	content   String
+	contentUrl String?
 	createdAt DateTime   @default(now()) @db.Timestamptz(6)
 
 	comments  Comment[]

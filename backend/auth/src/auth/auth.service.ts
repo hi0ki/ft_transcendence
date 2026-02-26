@@ -56,7 +56,14 @@ export class AuthService {
             if (!isPasswordValid) {
                 throw new UnauthorizedException('Wrong password');
             }
-            const token = this.jwtService.sign({ id: user.id, email: user.email, role: user.role });
+            // Fetch profile to include username in JWT
+            const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
+            const token = this.jwtService.sign({
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                username: profile?.username || null,
+            });
             return { access_token: token };
         }
         else {
@@ -100,10 +107,14 @@ export class AuthService {
             });
         }
 
+        // Fetch profile to get the actual username (could be the random-suffixed one)
+        const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
+
         const token = this.jwtService.sign({
             id: user.id,
             email: user.email,
             role: user.role,
+            username: profile?.username || null,
         });
         return { access_token: token };
     }

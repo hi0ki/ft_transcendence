@@ -1,6 +1,6 @@
 
+import { authAPI, getAvatarSrc } from './authApi';
 
-import { authAPI } from './authApi';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
@@ -52,8 +52,7 @@ class PostsAPI {
 
         const authorName = backendPost.user?.profile?.username || fallbackName;
         const authorHandle = `@${authorName.toLowerCase().replace(/\s+/g, '')}`;
-        const authorAvatar = backendPost.user?.profile?.avatarUrl
-            || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+        const authorAvatar = getAvatarSrc(backendPost.user?.profile?.avatarUrl, authorName);
 
         return {
             id: backendPost.id.toString(),
