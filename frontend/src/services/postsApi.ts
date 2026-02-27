@@ -26,6 +26,7 @@ interface BackendPost {
 
 export interface Post {
     id: string;
+    title: string;
     author: {
         name: string;
         handle: string;
@@ -44,10 +45,10 @@ export interface Post {
 
 export interface CreatePostPayload {
     type: 'HELP' | 'RESOURCE' | 'MEME';
+    title: string;///////heeemmmm to reviewww this 
     content: string;
     imageUrl?: string;
     contentUrl?: string;
-    title?: string; // Optionalllll to revieeeeew
 }
 
 class PostsAPI {
@@ -63,6 +64,7 @@ class PostsAPI {
 
         return {
             id: backendPost.id.toString(),
+            title: backendPost.title,
             author: {
                 name: authorName,
                 handle: authorHandle,
@@ -164,7 +166,7 @@ class PostsAPI {
                 headers: this.getAuthHeader(),
                 body: JSON.stringify({
                     type: payload.type,
-                    title: payload.content.substring(0, 100),
+                    title: payload.title,
                     content: payload.content,
                     imageUrl: payload.imageUrl,
                     contentUrl: payload.contentUrl

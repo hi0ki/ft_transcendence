@@ -3,6 +3,7 @@ import './PostCard.css';
 
 interface Post {
     id: string;
+    title: string;
     author: {
         name: string;
         handle: string;
@@ -66,6 +67,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                 </div>
 
                 <div className="post-content">
+                    <h3 className="post-title">{post.title}</h3>
                     <p>{displayContent}</p>
                     {isContentTruncated && (
                         <button 
