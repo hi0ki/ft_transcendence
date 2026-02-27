@@ -1,195 +1,189 @@
 generator client {
-	provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-	provider = "postgresql"
-	url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// enums
-enum UserRole {
-	USER
-	ADMIN
-}
-
-enum PostType {
-	HELP
-	RESOURCE
-	MEME
-}
-
-enum NotificationType {
-	COMMENT
-	LIKE
-	MESSAGE
-	FRIEND_REQUEST
-	OTHER
-}
-
-enum MessageType {
-	TEXT
-	IMAGE
-	FILE
-	VOICE
-	OTHER
-}
-
-enum ReactionType {
-	LIKE
-	LOVE
-	HAHA
-	WOW
-	SAD
-	ANGRY
-}
-
-enum FriendshipStatus {
-	PENDING
-	ACCEPTED
-	BLOCKED
-}
-
-// models
 model User {
-	id            Int          @id @default(autoincrement())
-	email         String          @unique
-	passwordHash  String?
-	oauthProvider String?
-	oauthId       String?
-	role		  UserRole		  @default(USER)
-	createdAt     DateTime        @default(now()) @db.Timestamptz(6)
+  id                   Int            @id @default(autoincrement())
+  email                String         @unique
+  passwordHash         String?
+  oauthProvider        String?
+  oauthId              String?
+  role                 UserRole       @default(USER)
+  createdAt            DateTime       @default(now()) @db.Timestamptz(6)
+  comments             Comment[]
+  conversationsAsUser1 Conversation[] @relation("ConversationUser1")
+  conversationsAsUser2 Conversation[] @relation("ConversationUser2")
+  friendOf             Friendship[]   @relation("FriendOf")
+  friendships          Friendship[]   @relation("UserFriendships")
+  likes                Like[]
+  messages             Message[]
+  sentNotifications    Notification[] @relation("NotificationSender")
+  notifications        Notification[]
+  posts                Post[]
+  profile              Profile?
 
-	profile               Profile?
-	posts                 Post[]
-	comments              Comment[]
-	likes                 Like[]
-	notifications         Notification[]
-	conversationsAsUser1  Conversation[] @relation("ConversationUser1")
-	conversationsAsUser2  Conversation[] @relation("ConversationUser2")
-	messages              Message[]	
-	friendships           Friendship[]   @relation("UserFriendships")
-	friendOf              Friendship[]   @relation("FriendOf")
-	sentNotifications Notification[] @relation("NotificationSender")
-	
-	@@map("users")
+  @@map("users")
 }
 
 model Profile {
-	userId    Int  @id
-	user      User    @relation(fields: [userId], references: [id])
-	username  String  @unique
-	avatarUrl String?
-	bio       String?
-	// skills 
+  userId    Int     @id
+  username  String  @unique
+  avatarUrl String?
+  bio       String?
+  user      User    @relation(fields: [userId], references: [id])
 
-	@@map("profiles")
+  @@map("profiles")
 }
 
 model Post {
-	id        Int     @id @default(autoincrement())
-	userId    Int
-	user      User       @relation(fields: [userId], references: [id])
-	type      PostType
-	title     String
-	content   String
-	contentUrl String?
-	imageUrl	String?
-	createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  type          PostType
+  title         String
+  content       String
+  contentUrl    String?
+  imageUrl      String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  comments      Comment[]
+  likes         Like[]
+  notifications Notification[]
+  user          User           @relation(fields: [userId], references: [id])
 
-	comments  Comment[]
-	likes     Like[]
-	notifications Notification[]
-
-	@@index([userId])
-	@@map("posts")
+  @@index([userId])
+  @@map("posts")
 }
 
 model Comment {
-	id        Int   @id @default(autoincrement())
-	postId    Int  
-	post      Post     @relation(fields: [postId], references: [id])
-	userId    Int  
-	author    User     @relation(fields: [userId], references: [id])
-	content   String
-	createdAt DateTime @default(now()) @db.Timestamptz(6)
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  content   String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  post      Post     @relation(fields: [postId], references: [id])
+  author    User     @relation(fields: [userId], references: [id])
 
-	@@index([postId])
-	@@index([userId])
-	@@map("comments")
+  @@index([postId])
+  @@index([userId])
+  @@map("comments")
 }
 
 model Like {
-	userId    Int  
-	postId    Int
-	type	  ReactionType
-	user      User     @relation(fields: [userId], references: [id])
-	post      Post     @relation(fields: [postId], references: [id])
-	createdAt DateTime @default(now()) @db.Timestamptz(6)
+  userId    Int
+  postId    Int
+  type      ReactionType
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  post      Post         @relation(fields: [postId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
 
-	@@id([userId, postId])
-	@@index([postId])
-	@@map("likes")
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("likes")
 }
 
 model Notification {
-	id         Int           @id @default(autoincrement())
-	userId     Int                  // who receives
-	user       User             @relation(fields: [userId], references: [id])
-	senderId   Int?                 // who triggered (nullable)
-	sender     User?            @relation("NotificationSender", fields: [senderId], references: [id])
-	postId     Int?         
-	post       Post?            @relation(fields: [postId], references: [id])
-	type       NotificationType
-	isRead     Boolean          @default(false)
-	createdAt  DateTime         @default(now()) @db.Timestamptz(6)
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  senderId  Int?
+  postId    Int?
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
+  post      Post?            @relation(fields: [postId], references: [id])
+  sender    User?            @relation("NotificationSender", fields: [senderId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
 
-	@@index([userId])
-	@@map("notifications")
+  @@index([userId])
+  @@map("notifications")
 }
 
 model Conversation {
-	id        Int    @id @default(autoincrement())
-	user1Id   Int   
-	user1     User      @relation("ConversationUser1", fields: [user1Id], references: [id])
-	user2Id   Int   
-	user2     User      @relation("ConversationUser2", fields: [user2Id], references: [id])
-	createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  id        Int       @id @default(autoincrement())
+  user1Id   Int
+  user2Id   Int
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  user1     User      @relation("ConversationUser1", fields: [user1Id], references: [id])
+  user2     User      @relation("ConversationUser2", fields: [user2Id], references: [id])
+  messages  Message[]
 
-	messages  Message[]
-
-	@@unique([user1Id, user2Id])
-	@@index([user1Id])
-	@@index([user2Id])
-	@@map("conversations")
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@map("conversations")
 }
 
 model Message {
-	id             Int      @id @default(autoincrement())
-	conversationId Int     
-	conversation   Conversation @relation(fields: [conversationId], references: [id])
-	senderId       Int     
-	sender         User        @relation(fields: [senderId], references: [id])
-	type           MessageType
-	content        String?
-	fileUrl        String?
-	isRead         Boolean     @default(false)
-	createdAt      DateTime    @default(now()) @db.Timestamptz(6)
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  type           MessageType
+  content        String?
+  fileUrl        String?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
 
-	@@index([conversationId])
-	@@index([senderId])
-	@@map("messages")
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
 }
 
 model Friendship {
-	userId    Int          
-	friendId  Int          
-	user      User             @relation("UserFriendships", fields: [userId], references: [id])
-	friend    User             @relation("FriendOf", fields: [friendId], references: [id])
-	status    FriendshipStatus
-	createdAt DateTime         @default(now()) @db.Timestamptz(6)
+  userId    Int
+  friendId  Int
+  status    FriendshipStatus
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
+  friend    User             @relation("FriendOf", fields: [friendId], references: [id])
+  user      User             @relation("UserFriendships", fields: [userId], references: [id])
 
-	@@id([userId, friendId])
-	@@index([friendId])
-	@@map("friendships")
+  @@id([userId, friendId])
+  @@index([friendId])
+  @@map("friendships")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PostType {
+  HELP
+  RESOURCE
+  MEME
+}
+
+enum NotificationType {
+  COMMENT
+  LIKE
+  MESSAGE
+  FRIEND_REQUEST
+  OTHER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+  OTHER
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
 }

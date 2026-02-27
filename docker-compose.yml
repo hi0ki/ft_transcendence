@@ -26,8 +26,8 @@ services:
       - core_service
     networks:
       - my-app-network
-    volumes:
-      - uploads_data:/app/uploads:ro  # Read-only access to uploaded files
+    # volumes:
+    #   - uploads_data:/app/uploads:ro
   
   # Database
   postgres:
@@ -38,8 +38,8 @@ services:
       - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
     networks:
       - my-app-network
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data
 
   # # backend Services
   core_service:
@@ -84,13 +84,13 @@ services:
       - postgres
     networks:
       - my-app-network
-    volumes:
-      - uploads_data:/app/uploads  # Read-write access to save uploaded files
+    # volumes:
+    #   - uploads_data:/app/uploads
 
 # Volumes
-volumes:
-  uploads_data:
-  postgres_data:
+# volumes:
+#   uploads_data:
+#   postgres_data:
 
 # Networks
 networks:
