@@ -7,6 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PostType {
+  HELP
+  RESOURCE
+  MEME
+}
+
+enum NotificationType {
+  COMMENT
+  LIKE
+  MESSAGE
+  FRIEND_REQUEST
+  OTHER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  VOICE
+  OTHER
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
 model User {
   id                   Int            @id @default(autoincrement())
   email                String         @unique
@@ -144,46 +186,4 @@ model Friendship {
   @@id([userId, friendId])
   @@index([friendId])
   @@map("friendships")
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum PostType {
-  HELP
-  RESOURCE
-  MEME
-}
-
-enum NotificationType {
-  COMMENT
-  LIKE
-  MESSAGE
-  FRIEND_REQUEST
-  OTHER
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  FILE
-  VOICE
-  OTHER
-}
-
-enum ReactionType {
-  LIKE
-  LOVE
-  HAHA
-  WOW
-  SAD
-  ANGRY
-}
-
-enum FriendshipStatus {
-  PENDING
-  ACCEPTED
-  BLOCKED
 }
