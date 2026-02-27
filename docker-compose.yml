@@ -1,85 +1,99 @@
-  services:
-    # frontend Service
-    frontend:
-      build: ./frontend
-      container_name: frontend
-      restart: always
-      ports:
-        - "5173:5173" # I will remove this port mapping later, as it's only for development and testing purposes
-      networks:
-        - my-app-network
-      volumes:
-        - ./frontend:/app:Z
-        - /app/node_modules
-      
-    # Nginx Service
-    nginx:
-      container_name: nginx
-      build: ./backend/nginx
-      restart: always
-      ports:
-        - "8080:80"
-      depends_on:
-        - frontend
-        - auth_service
-        - chat_service
-        - core_service
-      networks:
-        - my-app-network
-    # Database
-    postgres:
-      container_name: postgres
-      build: ./backend/database
-      restart: always
-      ports:
-        - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
-      networks:
-        - my-app-network
+services:
+  # frontend Service
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "5173:5173" # I will remove this port mapping later, as it's only for development and testing purposes
+    networks:
+      - my-app-network
+    volumes:
+      - ./frontend:/app:Z
+      - /app/node_modules
+    
+  # Nginx Service
+  nginx:
+    container_name: nginx
+    build: ./backend/nginx
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - frontend
+      - auth_service
+      - chat_service
+      - core_service
+    networks:
+      - my-app-network
+    volumes:
+      - uploads_data:/app/uploads:ro  # Read-only access to uploaded files
+  
+  # Database
+  postgres:
+    container_name: postgres
+    build: ./backend/database
+    restart: always
+    ports:
+      - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
+    networks:
+      - my-app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-    # # backend Services
-    core_service:
-      container_name: core_service
-      build:
-        context: backend
-        dockerfile: Dockerfile
-        args:
-          - app_name=core
-      restart: always
-      ports:
-        - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
-      depends_on:
-        - auth_service
-      networks:
-        - my-app-network
-    chat_service:
-      container_name: chat_service
-      build:
-        context: backend
-        dockerfile: Dockerfile
-        args:
-          - app_name=chat
-      restart: always
-      ports:
-        - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
-      depends_on:
-        - auth_service
-      networks:
-        - my-app-network
-    auth_service:
-      container_name: auth_service
-      build: backend/auth
-      restart: always
-      ports:
-        - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
-      depends_on:
-        - postgres
-      # environment:
-      #     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ft_transc"
-      networks:
-        - my-app-network
+  # # backend Services
+  core_service:
+    container_name: core_service
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      args:
+        - app_name=core
+    restart: always
+    ports:
+      - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+    depends_on:
+      - auth_service
+    networks:
+      - my-app-network
+  
+  chat_service:
+    container_name: chat_service
+    build:
+      context: backend
+      dockerfile: Dockerfile
+      args:
+        - app_name=chat
+    restart: always
+    environment:
+      - JWT_SECRET=super_secret_key
+    ports:
+      - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+    depends_on:
+      - auth_service
+    networks:
+      - my-app-network
+  
+  auth_service:
+    container_name: auth_service
+    build: backend/auth
+    restart: always
+    ports:
+      - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
+    depends_on:
+      - postgres
+    networks:
+      - my-app-network
+    volumes:
+      - uploads_data:/app/uploads  # Read-write access to save uploaded files
 
-  # Networks
-  networks:
-    my-app-network:
-      name: my-app-network
-      driver: bridge
+# Volumes
+volumes:
+  uploads_data:
+  postgres_data:
+
+# Networks
+networks:
+  my-app-network:
+    name: my-app-network
+    driver: bridge

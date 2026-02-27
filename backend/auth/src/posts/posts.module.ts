@@ -8,7 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
     PrismaModule,
-    JwtModule.register({}), // Uses global config if already set up
+    JwtModule.register({}),
     ConfigModule,
   ],
   providers: [PostsService],
