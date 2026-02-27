@@ -163,6 +163,17 @@ const FeedPage: React.FC = () => {
                 onClose={() => setActiveSharePostId(null)}
                 postUrl={`http://localhost:8080/post/${activeSharePostId}`}
             />
+
+            {selectedPost && (
+                <PostDetailModal
+                    isOpen={isPostDetailOpen}
+                    onClose={() => {
+                        setIsPostDetailOpen(false);
+                        setSelectedPost(null);
+                    }}
+                    post={selectedPost}
+                />
+            )}
         </div>
     );
 };
