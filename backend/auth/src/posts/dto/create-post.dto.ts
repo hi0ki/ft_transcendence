@@ -3,7 +3,7 @@ import { IsInt, IsString, IsNotEmpty, IsIn, IsOptional } from 'class-validator';
 export class CreatePostDto {
     @IsOptional()
     @IsInt()
-    userId?: number; // Optional as it comes from JWT token in controller
+    userId?: number;
 
     @IsIn(['HELP', 'RESOURCE', 'MEME'])
     type: 'HELP' | 'RESOURCE' | 'MEME';

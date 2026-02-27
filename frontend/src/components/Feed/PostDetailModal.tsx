@@ -5,6 +5,7 @@ interface PostDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     post: {
+        title: string;
         author: {
             name: string;
             handle: string;
@@ -28,9 +29,18 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
         }
     };
 
+    // Ensure URL has proper protocol
+    const formatUrl = (url: string): string => {
+        if (!url) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        return `https://${url}`;
+    };
+
     return (
         <div className="modal-backdrop" onClick={handleBackdropClick}>
-            <div className="modal-content">
+            <div className="modal-content post-detail-modal-content">
                 <div className="modal-header">
                     <div>
                         <h2 className="modal-title">Post Detail</h2>
@@ -56,20 +66,21 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                 )}
 
                 <div className="post-detail-content">
+                    <h3 className="post-detail-title">{post.title}</h3>
                     <p>{post.content}</p>
                 </div>
+
+                {post.contentUrl && (
+                    <div className="post-content-url">
+                        <a href={formatUrl(post.contentUrl)} target="_blank" rel="noopener noreferrer">
+                            {post.contentUrl}
+                        </a>
+                    </div>
+                )}
 
                 {post.imageUrl && (
                     <div className="post-image">
                         <img src={post.imageUrl} alt="Post content" />
-                    </div>
-                )}
-
-                {post.contentUrl && (
-                    <div className="post-content-url">
-                        <a href={post.contentUrl} target="_blank" rel="noopener noreferrer">
-                            {post.contentUrl}
-                        </a>
                     </div>
                 )}
 

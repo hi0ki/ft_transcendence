@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://auth_service:3000/auth'; // your NestJS backend URL
+// const API_URL = 'http://auth_service:3000/auth'; // your NestJS backend URL
+
+const API_URL = '/auth';//hada relative url to go mnginx port 8080 instaed of container name
 
 // Register
 export const registerUser = async (email: string, password: string) => {

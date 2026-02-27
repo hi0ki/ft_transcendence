@@ -1,8 +1,33 @@
-/* Reuse existing modal styles from CreatePostModal + additions */
-.post-detail-modal {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.post-detail-modal-content {
+    width: 90vw;
+    max-width: 800px;
+    max-height: 85vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.05);
+}
+
+.post-detail-modal-content>* {
+    flex-shrink: 0;
+}
+
+.post-detail-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.post-detail-modal-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.post-detail-modal-content::-webkit-scrollbar-thumb {
+    background-color: rgba(99, 102, 241, 0.5);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.post-detail-modal-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(99, 102, 241, 0.7);
 }
 
 .post-detail-author {
@@ -42,6 +67,14 @@
     white-space: pre-wrap;
 }
 
+.post-detail-title {
+    margin: 0 0 8px 0;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
 .post-detail-content p {
     margin: 0;
 }
@@ -60,4 +93,42 @@
 .modal-close-btn-bottom:hover {
     background-color: #4f46e5;
     transform: translateY(-2px);
+}
+
+.post-image {
+    display: flex;
+    justify-content: center;
+    background-color: #0f1423;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.post-image img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.post-content-url {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.post-content-url a {
+    color: #4da6ff;
+    text-decoration: none;
+    word-break: break-all;
+    font-size: 0.95rem;
+}
+
+.post-content-url a:hover {
+    text-decoration: underline;
 }

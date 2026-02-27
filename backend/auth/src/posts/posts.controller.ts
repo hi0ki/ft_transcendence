@@ -1,4 +1,10 @@
-import { Controller, Post, Get, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseIntPipe } from '@nestjs/common';
+
+import { Controller, Post, Get, Body, Patch, Param, Delete, UseGuards, Req, UseInterceptors, UploadedFile, Query, ParseIntPipe } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as multer from 'multer';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -7,6 +13,14 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Roles, Role } from '../decorators/roles.decorator';
 import { Request } from 'express';
 
+const ensureUploadsDir = () => 
+{
+    const dirPath = path.join(process.cwd(), 'uploads', 'posts');
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+    return dirPath;
+};
 
 @UseGuards(AuthGuard)
 @Controller('posts')
@@ -14,8 +28,23 @@ export class PostsController {
     constructor(private postsService: PostsService) { }
 
     @Post()
-    create(@Req() req: Request, @Body() body: Omit<CreatePostDto, 'userId'>) {
+    @UseInterceptors(FileInterceptor('image', {
+        storage: diskStorage({
+            destination: (req, file, cb) => {
+                cb(null, ensureUploadsDir());
+            },
+            filename: (req, file, cb) => {
+                const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+                cb(null, uniqueSuffix + path.extname(file.originalname));
+            }
+        })
+    }))
+    create(@Req() req: Request, @Body() body: CreatePostDto, @UploadedFile() file?: multer.File) {
         const userId = (req as any).user?.id;
+        if (file)
+        {
+            body.imageUrl = `/uploads/posts/${file.filename}`;
+        }
         return this.postsService.createPost({ ...body, userId });
     }
 
@@ -31,8 +60,22 @@ export class PostsController {
     }
 
     @Patch(':id')
-    update(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdatePostDto) {
+    @UseInterceptors(FileInterceptor('image', {
+        storage: diskStorage({
+            destination: (req, file, cb) => {
+                cb(null, ensureUploadsDir());
+            },
+            filename: (req, file, cb) => {
+                const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+                cb(null, uniqueSuffix + path.extname(file.originalname));
+            }
+        })
+    }))
+    update(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdatePostDto, @UploadedFile() file?: multer.File) {
         const userId = (req as any).user?.id;
+        if (file) {
+            dto.imageUrl = `/uploads/posts/${file.filename}`;
+        }
         return this.postsService.update(+id, dto, userId);
     }
 

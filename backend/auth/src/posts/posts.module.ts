@@ -2,20 +2,16 @@ import { Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-import { AuthModule } from '../auth/auth.module';
-import { RolesGuard } from '../guards/roles.guard';
-import { Reflector } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     PrismaModule,
-    AuthModule, // provides JwtModule, JwtService, AuthGuard
+    JwtModule.register({}),
+    ConfigModule,
   ],
-  providers: [
-    PostsService,
-    RolesGuard,
-    Reflector, // needed by RolesGuard to read @Roles() metadata
-  ],
+  providers: [PostsService],
   controllers: [PostsController],
 })
-export class PostsModule { }
+export class PostsModule {}

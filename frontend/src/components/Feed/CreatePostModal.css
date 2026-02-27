@@ -26,7 +26,14 @@
 .modal-content {
     background-color: #171c2b;
     width: 90%;
-    max-width: 650px;
+    max-width: 550px;
+    height: auto;
+    max-height: 85vh;
+    /* Force a strict maximum height relative to the viewport */
+    overflow-y: auto;
+    /* Enable inner scrolling */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     padding: 24px;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -52,19 +59,13 @@
 .modal-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .modal-title {
     color: #fff;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 600;
-    margin: 0 0 4px 0;
-}
-
-.modal-subtitle {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
     margin: 0;
 }
 
@@ -85,13 +86,18 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+.post-type-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .post-type-selector {
     display: flex;
-    background-color: #0f1423;
-    border-radius: 8px;
-    padding: 4px;
-    gap: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 0;
+    gap: 0;
 }
 
 .type-btn {
@@ -103,19 +109,40 @@
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
     border: none;
-    padding: 10px 0;
-    border-radius: 6px;
+    padding: 8px 0;
+    border-radius: 20px;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .type-btn:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .type-btn.active {
-    background-color: #00d4ff;
-    color: #0f1423;
+    color: #fff;
+}
+
+.type-btn.type-help.active {
+    background-color: #00a8ff;
+}
+
+.type-btn.type-resource.active {
+    background-color: #9d4edd;
+}
+
+.type-btn.type-meme.active {
+    background-color: #00cec9;
+    color: #171c2b;
+}
+
+.post-type-subtitle {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
 }
 
 .input-group {
@@ -125,11 +152,12 @@
 }
 
 .input-label {
-    color: rgba(255, 255, 255, 0.85);
+    color: #fff;
     font-size: 0.9rem;
     font-weight: 500;
 }
 
+.custom-input,
 .post-textarea {
     background-color: #0f1423;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -138,115 +166,122 @@
     color: #fff;
     font-family: inherit;
     font-size: 0.95rem;
-    resize: vertical;
-    min-height: 120px;
     outline: none;
     transition: border-color 0.2s;
+    width: 100%;
 }
 
-.post-textarea:focus,
-.tag-input:focus {
-    border-color: #00d4ff;
+.post-textarea {
+    resize: vertical;
+    min-height: 100px;
 }
 
-.post-textarea::placeholder,
-.tag-input::placeholder {
+.custom-input:focus,
+.post-textarea:focus {
+    border-color: #00a8ff;
+}
+
+.custom-input::placeholder,
+.post-textarea::placeholder {
     color: rgba(255, 255, 255, 0.3);
 }
 
-.tags-input-wrapper {
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 16px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.input-with-icon .custom-input {
+    width: 100%;
+    padding-left: 44px;
+}
+
+.image-upload-area {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-
-.tag-input-field-container {
-    display: flex;
-    background-color: #0f1423;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.tag-input-field-container:focus-within {
-    border-color: #00d4ff;
-}
-
-.tag-input {
-    background-color: transparent;
-    border: none;
-    padding: 10px 16px;
-    color: #fff;
-    font-family: inherit;
-    font-size: 0.95rem;
-    outline: none;
-    flex: 1;
-}
-
-.tag-add-btn {
-    background-color: transparent;
-    color: #fff;
-    border: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0 16px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 0;
-}
-
-.tag-add-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.selected-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.selected-tag-pill {
-    background-color: #2a324a;
-    color: #fff;
-    padding: 4px 10px 4px 14px;
-    border-radius: 14px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.selected-tag-pill button {
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.5);
-    padding: 2px;
-    display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 24px;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s;
+    gap: 8px;
 }
 
-.selected-tag-pill button:hover {
-    color: #ff4d4d;
-    background-color: rgba(255, 255, 255, 0.1);
+.image-upload-area:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.upload-icon {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.upload-text {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.upload-hint {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+}
+
+.image-preview {
+    position: relative;
+    margin-top: 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.remove-image-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.image-preview:hover .remove-image-overlay {
+    opacity: 1;
 }
 
 .modal-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 12px;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .modal-cancel-btn {
-    background-color: transparent;
+    background-color: #0f1423;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 10px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 0;
     border-radius: 8px;
     flex: 1;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .modal-cancel-btn:hover {
@@ -254,18 +289,19 @@
 }
 
 .modal-post-btn {
-    background-color: #00d4ff;
-    color: #0f1423;
+    background-color: #007bb5;
+    color: #fff;
     border: none;
-    padding: 10px 24px;
+    padding: 10px 0;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 500;
     flex: 1;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .modal-post-btn:hover:not(:disabled) {
-    background-color: #33dfff;
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    background-color: #006da1;
 }
 
 .modal-post-btn:disabled {
@@ -275,54 +311,6 @@
 
 @media (min-width: 600px) {
     .modal-actions {
-        justify-content: flex-end;
+        flex-direction: row;
     }
-
-    .modal-cancel-btn,
-    .modal-post-btn {
-        flex: none;
-    }
-}
-
-/* New styles for image and link inputs */
-.file-input,
-.link-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-}
-
-.file-input:hover,
-.link-input:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-.file-input:focus,
-.link-input:focus {
-    outline: none;
-    border-color: #4a9eff;
-    background-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
-}
-
-.image-preview {
-    margin-top: 12px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px;
-    background-color: rgba(255, 255, 255, 0.02);
-}
-
-.image-preview img {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
-    display: block;
 }
