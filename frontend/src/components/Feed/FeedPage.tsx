@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FeedHeader from './FeedHeader';
 import FilterTabs from './FilterTabs';
 import PostCard from './PostCard';
@@ -8,6 +8,8 @@ import CommentsModal from './CommentsModal';
 import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
+import { commentsAPI } from '../../services/commentsApi';
+import { useAuth } from '../../auth/authContext';
 import './FeedPage.css';
 
 // Extended Mock Data targeting to visually recreate screenshot values including nested comments
@@ -15,105 +17,8 @@ interface ExtendedPost extends Post {
     commentList: Comment[];
 }
 
-const MOCK_COMMENTS: Comment[] = [
-    {
-        id: 'c1',
-        author: {
-            name: 'Marcus Lee',
-            handle: '@marcusl',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus'
-        },
-        timeAgo: '1 hour ago',
-        content: 'Big O notation measures the worst-case time complexity. O(1) is constant, O(n) is linear, O(n²) is quadratic. Think of it as how the runtime grows as input size increases!',
-        likes: 5
-    },
-    {
-        id: 'c2',
-        author: {
-            name: 'Sofia Rodriguez',
-            handle: '@sofiar',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia'
-        },
-        timeAgo: '45 minutes ago',
-        content: 'I recommend the book \'Cracking the Coding Interview\' - has great explanations on Big O!',
-        likes: 3
-    }
-];
-
-const MOCK_POSTS: ExtendedPost[] = [
-    {
-        id: '1',
-        author: {
-            name: 'Emma Wilson',
-            handle: '@emmaw',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma'
-        },
-        timeAgo: '2 hours ago',
-        content: 'Can someone help me understand Big O notation? I\'m struggling with time complexity analysis.',
-        tags: ['#Data Structures', '#Algorithms'],
-        likes: 12,
-        comments: 2,
-        type: 'Help',
-        commentList: MOCK_COMMENTS
-    },
-    {
-        id: '2',
-        author: {
-            name: 'Marcus Lee',
-            handle: '@marcusl',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus'
-        },
-        timeAgo: '5 hours ago',
-        content: 'Just uploaded my complete React hooks cheat sheet! Free for everyone. Includes useState, useEffect, useContext, and custom hooks with examples.',
-        tags: ['#React', '#JavaScript', '#Tutorial'],
-        likes: 45,
-        comments: 1,
-        type: 'Resource',
-        commentList: [
-            {
-                id: 'c3',
-                author: { name: 'Elena R', handle: '@elenar', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elena' },
-                timeAgo: '2 hours ago',
-                content: 'This is amazing! Exactly what I was looking for as I transition from class components.',
-                likes: 4
-            }
-        ]
-    },
-    {
-        id: '3',
-        author: {
-            name: 'Sofia Rodriguez',
-            handle: '@sofiar',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sofia'
-        },
-        timeAgo: '1 day ago',
-        content: 'When you finally fix a bug at 3 AM:\n\n"I don\'t know what I did, but it works now" 🎉',
-        tags: ['#Funny', '#Programming'],
-        likes: 234,
-        comments: 2,
-        type: 'Meme',
-        commentList: [
-            {
-                id: 'c4',
-                author: { name: 'James T', handle: '@jamest', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JamesD' },
-                timeAgo: '20 hours ago',
-                content: 'And then you break it again the next morning trying to "clean up the code".',
-                likes: 56
-            },
-            {
-                id: 'c5',
-                author: { name: 'Sarah Chen', handle: '@sarahc', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
-                timeAgo: '18 hours ago',
-                content: 'Too real 😂',
-                likes: 12
-            }
-        ]
-    }
-];
-
-const CURRENT_USER_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex';
-
 const FeedPage: React.FC = () => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('All');
     const [posts, setPosts] = useState<ExtendedPost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -123,6 +28,9 @@ const FeedPage: React.FC = () => {
     // Interaction Modal States
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
+
+    // Current user info derived from auth context
+    const currentUserAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'default'}`;
 
     
     useEffect(() => {
@@ -137,10 +45,9 @@ const FeedPage: React.FC = () => {
                 
                 if (!isMounted) return;
 
-                // Add mock commentList for existing functionality
                 const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
                     ...post,
-                    commentList: [] // Mock empty comments list (comments service handles this)
+                    commentList: []
                 }));
 
                 // Filter by active tab
@@ -163,6 +70,40 @@ const FeedPage: React.FC = () => {
 
         return () => { isMounted = false; };
     }, [activeTab]);
+
+    // Fetch real comments from backend when modal opens
+    const fetchComments = useCallback(async (postId: string) => {
+        const numericId = parseInt(postId);
+        if (isNaN(numericId)) return;
+
+        try {
+            const backendComments = await commentsAPI.getCommentsByPost(numericId);
+            const commentCount = await commentsAPI.getCommentCount(numericId);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        commentList: backendComments.map(c => ({
+                            id: c.id,
+                            userId: c.userId,
+                            author: c.author,
+                            timeAgo: c.timeAgo,
+                            content: c.content,
+                        })),
+                        comments: commentCount,
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to fetch comments:', err);
+        }
+    }, []);
+
+    const handleOpenComments = useCallback((postId: string) => {
+        setActiveCommentPostId(postId);
+        fetchComments(postId);
+    }, [fetchComments]);
 
     const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
         try {
@@ -194,35 +135,83 @@ const FeedPage: React.FC = () => {
         }
     };
 
-    const handleLikePost = (postId: string) => {
-      
-        console.log(`Liked post ${postId}`);
-    };
-
-    const handleAddComment = (content: string) => {
+    const handleAddComment = async (content: string) => {
         if (!activeCommentPostId) return;
 
-        setPosts(prevPosts => prevPosts.map(post => {
-            if (post.id === activeCommentPostId) {
-                const newCommentObj: Comment = {
-                    id: `new-${Date.now()}`,
-                    author: {
-                        name: 'Alex Johnson',
-                        handle: '@alexj',
-                        avatar: CURRENT_USER_AVATAR
-                    },
-                    timeAgo: 'Just now',
-                    content: content,
-                    likes: 0
-                };
-                return {
-                    ...post,
-                    comments: post.comments + 1,
-                    commentList: [...post.commentList, newCommentObj]
-                };
-            }
-            return post;
-        }));
+        const numericPostId = parseInt(activeCommentPostId);
+        if (isNaN(numericPostId)) return;
+
+        try {
+            // Create comment via backend API — returns real comment with real user data
+            const created = await commentsAPI.createComment(numericPostId, content);
+
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    const newCommentObj: Comment = {
+                        id: created.id,
+                        userId: created.userId,
+                        author: created.author,
+                        timeAgo: created.timeAgo,
+                        content: created.content,
+                    };
+                    return {
+                        ...post,
+                        comments: post.comments + 1,
+                        commentList: [...post.commentList, newCommentObj]
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to add comment:', err);
+        }
+    };
+
+    const handleEditComment = async (commentId: string, newContent: string) => {
+        if (!activeCommentPostId) return;
+        const numericPostId = parseInt(activeCommentPostId);
+        const numericCommentId = parseInt(commentId);
+        if (isNaN(numericPostId) || isNaN(numericCommentId)) return;
+
+        try {
+            const updated = await commentsAPI.updateComment(numericCommentId, numericPostId, newContent);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    return {
+                        ...post,
+                        commentList: post.commentList.map(c =>
+                            c.id === commentId ? { ...c, content: updated.content } : c
+                        ),
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to edit comment:', err);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!activeCommentPostId) return;
+        const numericPostId = parseInt(activeCommentPostId);
+        const numericCommentId = parseInt(commentId);
+        if (isNaN(numericPostId) || isNaN(numericCommentId)) return;
+
+        try {
+            await commentsAPI.deleteComment(numericCommentId, numericPostId);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    return {
+                        ...post,
+                        comments: Math.max(0, post.comments - 1),
+                        commentList: post.commentList.filter(c => c.id !== commentId),
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to delete comment:', err);
+        }
     };
 
     const activeCommentPost = posts.find((p: ExtendedPost) => p.id === activeCommentPostId);
@@ -249,8 +238,8 @@ const FeedPage: React.FC = () => {
                             <PostCard
                                 key={post.id}
                                 post={post}
-                                onLike={handleLikePost}
-                                onComment={(id: string) => setActiveCommentPostId(id)}
+                                commentCount={post.comments}
+                                onComment={(id: string) => handleOpenComments(id)}
                                 onShare={(id: string) => setActiveSharePostId(id)}
                             />
                         ))
@@ -272,14 +261,17 @@ const FeedPage: React.FC = () => {
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
                 comments={activeCommentPost?.commentList || []}
-                currentUserAvatar={CURRENT_USER_AVATAR}
+                currentUserAvatar={currentUserAvatar}
+                currentUserId={user?.id ?? null}
                 onAddComment={handleAddComment}
+                onEditComment={handleEditComment}
+                onDeleteComment={handleDeleteComment}
             />
 
             <ShareModal
                 isOpen={!!activeSharePostId}
                 onClose={() => setActiveSharePostId(null)}
-                postUrl={`http://localhost:8080/post/${activeSharePostId}`} // Mock sharing link targeting active environment
+                postUrl={`http://localhost:8080/post/${activeSharePostId}`}
             />
         </div>
     );

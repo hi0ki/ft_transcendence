@@ -38,6 +38,18 @@ export class CommentsService {
     return this.prisma.comment.update({
       where: { id : updateCommentDto.commentId },
       data: { content: updateCommentDto.content },
+      include: {
+        author: {
+          select: {
+            profile: {
+              select: {
+                username: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 

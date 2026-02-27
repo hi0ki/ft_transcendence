@@ -8,7 +8,7 @@ export class ReactionsController {
     constructor(private readonly reactionsService: ReactionsService) {}
 
     /**
-     * Toggle a reaction: creates if new, removes if same type exists.
+     * Toggle a reaction: creates if new, removes if same type, updates if different type.
      * POST /reactions/toggle  { postId, type }
      */
     @Post('toggle')
@@ -40,5 +40,27 @@ export class ReactionsController {
     @Get('post/:postId/count')
     countByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.reactionsService.countByPost(postId);
+    }
+
+    /**
+     * Get the current user's reaction on a post.
+     * GET /reactions/mine/:postId
+     */
+    @Get('mine/:postId')
+    @UseGuards(AuthGuard)
+    getMyReaction(
+        @Req() req: Request & { user: { id: number } },
+        @Param('postId', ParseIntPipe) postId: number,
+    ) {
+        return this.reactionsService.getMyReaction(req.user.id, postId);
+    }
+
+    /**
+     * Get all reactions for a post with user info.
+     * GET /reactions/post/:postId
+     */
+    @Get('post/:postId')
+    getReactionsByPost(@Param('postId', ParseIntPipe) postId: number) {
+        return this.reactionsService.getReactionsByPost(postId);
     }
 }

@@ -44,14 +44,18 @@ export class AuthService {
     async login(email :string, password :string){
     //     //ghadi nchof la kan  l mail kayel donc mezyan ghadi ntcheki passworrd on logi normal
         const normalizedEmail = email.toLowerCase();
-        const user = await this.prisma.user.findUnique({where : {email : normalizedEmail}});
+        const user = await this.prisma.user.findUnique({
+            where : {email : normalizedEmail},
+            include: { profile: { select: { username: true } } },
+        });
         if (user)
         {
             const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
             if (!isPasswordValid) {
               throw new UnauthorizedException('Wrong password');
             }
-            const token = this.jwtService.sign({ id: user.id, email: user.email, role: user.role});
+            const username = user.profile?.username || user.email.split('@')[0];
+            const token = this.jwtService.sign({ id: user.id, email: user.email, role: user.role, username });
             return { access_token: token };
         }
         else {

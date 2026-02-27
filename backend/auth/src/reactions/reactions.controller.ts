@@ -26,4 +26,22 @@ export class ReactionsController {
     countReactionsByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.reactionsService.countReactionsByPost(postId);
     }
+
+    @Get('user/:userId/post/:postId')
+    findByUserAndPost(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('postId', ParseIntPipe) postId: number,
+    ) {
+        return this.reactionsService.findByUserAndPost(userId, postId);
+    }
+
+    @Get('post/:postId')
+    findAllByPost(@Param('postId', ParseIntPipe) postId: number) {
+        return this.reactionsService.findAllByPost(postId);
+    }
+
+    @Get('post/:postId/counts')
+    countByType(@Param('postId', ParseIntPipe) postId: number) {
+        return this.reactionsService.countByType(postId);
+    }
 }
