@@ -35,6 +35,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
     const displayContent = isContentTruncated 
         ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...' 
         : post.content;
+
+
+    const formatUrl = (url: string): string => {
+        if (!url) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        return `https://${url}`;
+    };
     return (
         <div className="post-card">
             <div className="avatar-column">
@@ -76,7 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                 )}
                 {post.contentUrl && (
                     <div className="post-content-url">
-                        <a href={post.contentUrl} target="_blank" rel="noopener noreferrer">
+                        <a href={formatUrl(post.contentUrl)} target="_blank" rel="noopener noreferrer">
                             {post.contentUrl}
                         </a>
                     </div>
