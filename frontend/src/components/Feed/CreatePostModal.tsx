@@ -6,7 +6,7 @@ type PostType = 'Help' | 'Resource' | 'Meme';
 interface CreatePostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (post: { type: PostType; content: string; tags: string[] }) => void;
+    onSubmit: (post: { type: PostType; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => void;
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -14,6 +14,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
     const [content, setContent] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [tags, setTags] = useState<string[]>([]);
+    const [imageUrl, setImageUrl] = useState('');
+    const [imagePreview, setImagePreview] = useState('');
+    const [contentUrl, setContentUrl] = useState('');
 
     if (!isOpen) return null;
 
@@ -34,10 +37,29 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
         setTags(tags.filter(tag => tag !== tagToRemove));
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (max 5MB)
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size > MAX_SIZE) {
+            alert('Image size must be less than 5MB');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64String = event.target?.result as string;
+            setImageUrl(base64String);
+            setImagePreview(base64String);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handlePost = () => {
         if (!content.trim()) return;
 
-        // Auto-add pending tag if any
         let finalTags = [...tags];
         if (tagInput.trim() && !tags.includes(tagInput.trim())) {
             finalTags.push(tagInput.trim());
@@ -46,7 +68,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
         onSubmit({
             type: selectedType,
             content,
-            tags: finalTags
+            tags: finalTags,
+            imageUrl: imageUrl || undefined,
+            contentUrl: contentUrl || undefined
         });
 
         // Reset state after submission
@@ -54,6 +78,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
         setTagInput('');
         setTags([]);
         setSelectedType('Help');
+        setImageUrl('');
+        setImagePreview('');
+        setContentUrl('');
     };
 
     return (
@@ -108,6 +135,32 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                         }
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
+                    />
+                </div>
+
+                <div className="input-group">
+                    <label className="input-label">Add Image (Optional)</label>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange}
+                        className="file-input"
+                    />
+                    {imagePreview && (
+                        <div className="image-preview">
+                            <img src={imagePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                        </div>
+                    )}
+                </div>
+
+                <div className="input-group">
+                    <label className="input-label">Add Link (Optional)</label>
+                    <input 
+                        type="text" 
+                        placeholder="https://example.com" 
+                        value={contentUrl} 
+                        onChange={(e) => setContentUrl(e.target.value)}
+                        className="link-input"
                     />
                 </div>
 

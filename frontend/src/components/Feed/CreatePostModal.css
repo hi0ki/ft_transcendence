@@ -283,3 +283,46 @@
         flex: none;
     }
 }
+
+/* New styles for image and link inputs */
+.file-input,
+.link-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.file-input:hover,
+.link-input:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.file-input:focus,
+.link-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+.image-preview {
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+}

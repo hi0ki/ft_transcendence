@@ -26,6 +26,8 @@ export class PostsService {
 		type: 'HELP' | 'RESOURCE' | 'MEME';
 		title: string;
 		content: string;
+		imageUrl?: string;
+		contentUrl?: string;
 	}) {
 		return this.prisma.post.create({
 			data: {

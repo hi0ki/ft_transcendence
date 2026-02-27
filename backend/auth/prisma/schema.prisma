@@ -100,6 +100,7 @@ model Post {
     title      String
     content    String
     contentUrl String?
+    imageUrl	String?
     createdAt  DateTime   @default(now()) @db.Timestamptz(6)
 
     comments      Comment[]
