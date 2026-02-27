@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDto } from './update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '../decorators/roles.decorator';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll() {
     return this.prisma.user.findMany({
@@ -14,7 +14,14 @@ export class UsersService {
         email: true,
         role: true,
         createdAt: true,
+        profile: {
+          select: {
+            username: true,
+            avatarUrl: true,
+          },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -38,13 +45,13 @@ export class UsersService {
 
   async update(targetId: number, dto: UpdateUserDto, requestingUser: { id: number; role: Role }) {
     if (+requestingUser.id !== targetId && requestingUser.role !== Role.ADMIN)
-  throw new ForbiddenException('You can only update your own account');
+      throw new ForbiddenException('You can only update your own account');
 
     if (dto.role && requestingUser.role !== Role.ADMIN)
       throw new ForbiddenException('Only admins can change roles');
 
     const exists = await this.prisma.user.findUnique({ where: { id: targetId } });
-    if (!exists) 
+    if (!exists)
       throw new NotFoundException(`User with id "${targetId}" not found`);
 
     if (dto.email) {
@@ -72,20 +79,20 @@ export class UsersService {
     if (+requestingUser.id !== targetId && requestingUser.role !== Role.ADMIN) {
       throw new ForbiddenException('You can only delete your own account');
     }
-  
+
     const exists = await this.prisma.user.findUnique({ where: { id: targetId } });
     if (!exists) {
       throw new NotFoundException(`User with id "${targetId}" not found`);
     }
-  
+
     // Delete profile first if it exists, then delete the user
     await this.prisma.profile.deleteMany({ where: { userId: targetId } });
     await this.prisma.user.delete({ where: { id: targetId } });
-  
+
     return { message: `User "${targetId}" deleted successfully` };
   }
 
-  
+
   async changeRole(targetId: number, role: Role) {
     const exists = await this.prisma.user.findUnique({ where: { id: targetId } });
     if (!exists) {

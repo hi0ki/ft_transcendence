@@ -121,7 +121,7 @@ function ProfilePage() {
                                 </div>
                             </div>
 
-                            {profile.skills.length > 0 && (
+                            {profile.skills && profile.skills.length > 0 && (
                                 <div className="profile-skills-section">
                                     <div className="skills-title">Skills</div>
                                     <div className="skills-chips">

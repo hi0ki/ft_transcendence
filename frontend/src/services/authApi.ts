@@ -8,6 +8,7 @@ const USER_KEY = 'auth_user';
 export interface AuthUser {
     id: number;
     email: string;
+    role?: string;
     username?: string;
     avatarUrl?: string | null;
 }
@@ -96,6 +97,7 @@ class AuthAPI {
             return {
                 id: payload.id,
                 email: payload.email,
+                role: payload.role || 'USER',
                 username: payload.username,
                 avatarUrl: payload.avatarUrl || null,
             };

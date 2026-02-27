@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role } from '../decorators/roles.decorator';
+import { Role } from '../../decorators/roles.decorator';
 
 export class UpdateUserDto {
   @IsOptional()
