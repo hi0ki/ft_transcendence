@@ -6,11 +6,12 @@ type PostType = 'Help' | 'Resource' | 'Meme';
 interface CreatePostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (post: { type: PostType; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => void;
+    onSubmit: (post: { type: PostType; title: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => void;
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [selectedType, setSelectedType] = useState<PostType>('Help');
+    const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [tagInput, setTagInput] = useState('');
     const [tags, setTags] = useState<string[]>([]);
@@ -58,7 +59,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
     };
 
     const handlePost = () => {
-        if (!content.trim()) return;
+        if (!title.trim() || !content.trim()) return;
 
         let finalTags = [...tags];
         if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -67,6 +68,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
 
         onSubmit({
             type: selectedType,
+            title,
             content,
             tags: finalTags,
             imageUrl: imageUrl || undefined,
@@ -74,6 +76,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
         });
 
         // Reset state after submission
+        setTitle('');
         setContent('');
         setTagInput('');
         setTags([]);
@@ -118,6 +121,17 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                         Meme
                     </button>
+                </div>
+
+                <div className="input-group">
+                    <label className="input-label">Title</label>
+                    <input
+                        type="text"
+                        className="link-input"
+                        placeholder="Give your post a short title..."
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                    />
                 </div>
 
                 <div className="input-group">
@@ -195,7 +209,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
 
                 <div className="modal-actions">
                     <button className="modal-cancel-btn" onClick={onClose}>Cancel</button>
-                    <button className="modal-post-btn" onClick={handlePost} disabled={!content.trim()}>Post</button>
+                    <button className="modal-post-btn" onClick={handlePost} disabled={!title.trim() || !content.trim()}>Post</button>
                 </div>
             </div>
         </div>

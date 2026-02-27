@@ -6,7 +6,6 @@ import type { Post } from './PostCard';
 import CreatePostModal from './CreatePostModal';
 import PostDetailModal from './PostDetailModal';
 import CommentsModal from './CommentsModal';
-import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
@@ -64,7 +63,7 @@ const FeedPage: React.FC = () => {
         return () => { isMounted = false; };
     }, [activeTab]);
 
-    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => {
+    const handleCreatePost = async (newPostData: { type: string; title: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => {
         try {
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
@@ -72,6 +71,7 @@ const FeedPage: React.FC = () => {
 
             const createdPost = await postsAPI.createPost({
                 type: backendType,
+                title: newPostData.title,
                 content: newPostData.content,
                 imageUrl: newPostData.imageUrl,
                 contentUrl: newPostData.contentUrl

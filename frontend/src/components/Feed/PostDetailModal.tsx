@@ -5,6 +5,7 @@ interface PostDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     post: {
+        title: string;
         author: {
             name: string;
             handle: string;
@@ -65,6 +66,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                 )}
 
                 <div className="post-detail-content">
+                    <h3 className="post-detail-title">{post.title}</h3>
                     <p>{post.content}</p>
                 </div>
 
