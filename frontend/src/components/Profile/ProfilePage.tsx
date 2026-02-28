@@ -52,20 +52,39 @@ function ProfilePage() {
     });
 
     const [activeTab, setActiveTab] = useState<'help' | 'resources' | 'memes'>('help');
+    const [avatarReady, setAvatarReady] = useState(false);
 
     const isOwner = !urlUsername || urlUsername === derivedUsername;
 
     // Fetch profile from backend to get real bio, skills, and crucially avatarUrl
     useEffect(() => {
         if (isOwner) {
+            // Check cache first
+            const cached = sessionStorage.getItem('user_profile');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                setProfile(prev => ({
+                    ...prev,
+                    username: parsed.username || prev.username,
+                    bio: parsed.bio || prev.bio,
+                    skills: parsed.skills || prev.skills,
+                    avatarUrl: parsed.avatarUrl || null,
+                }));
+                return;
+            }
+    
             authAPI.getMyProfile().then((data) => {
                 if (data) {
+                    const profileData = {
+                        username: data.username,
+                        avatarUrl: data.avatarUrl || null,
+                        bio: data.bio,
+                        skills: data.skills,
+                    };
+                    sessionStorage.setItem('user_profile', JSON.stringify(profileData));
                     setProfile(prev => ({
                         ...prev,
-                        username: data.username || prev.username,
-                        bio: data.bio || prev.bio,
-                        skills: data.skills || prev.skills,
-                        avatarUrl: data.avatarUrl || null,
+                        ...profileData,
                     }));
                 }
             });
@@ -85,16 +104,19 @@ function ProfilePage() {
                     </div>
 
                     <div className="profile-avatar-wrap">
-                        <img
-                            src={avatarSrc}
-                            alt="Profile avatar"
-                            className="profile-avatar"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.username)}`;
-                            }}
-                        />
-                        <span className="profile-online-badge" aria-label="Online" />
+                    <img
+                    src={avatarSrc}
+                    alt="Profile avatar"
+                    className="profile-avatar"
+                    style={{ opacity: avatarReady ? 1 : 0, transition: 'opacity 0.2s' }}
+                    onLoad={() => setAvatarReady(true)}
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.username)}`;
+                        setAvatarReady(true);
+                    }}
+                />
+                                        <span className="profile-online-badge" aria-label="Online" />
                     </div>
 
                     <div className="profile-info-row">
@@ -163,15 +185,18 @@ function ProfilePage() {
                         {SAMPLE_POSTS.map(post => (
                             <div key={post.id} className="post-card">
                                 <div className="post-header">
-                                    <img
-                                        src={avatarSrc}
-                                        alt="avatar"
-                                        className="post-author-avatar"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src =
-                                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.username)}`;
-                                        }}
-                                    />
+                                <img
+                                    src={avatarSrc}
+                                    alt="avatar"
+                                    className="post-author-avatar"
+                                    style={{ opacity: avatarReady ? 1 : 0, transition: 'opacity 0.2s' }}
+                                    onLoad={() => setAvatarReady(true)}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.username)}`;
+                                        setAvatarReady(true);
+                                    }}
+                                />
                                     <div className="post-author-info">
                                         <span className="post-author-name">@{profile.username}</span>
                                         <span className="post-time">{post.time}</span>
