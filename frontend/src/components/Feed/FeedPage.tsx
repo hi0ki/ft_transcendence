@@ -8,11 +8,7 @@ import PostDetailModal from './PostDetailModal';
 import CommentsModal from './CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
-<<<<<<< HEAD
 import { authAPI, getAvatarSrc } from '../../services/authApi';
-import './FeedPage.css';
-
-=======
 import { commentsAPI } from '../../services/commentsApi';
 import { useAuth } from '../../auth/authContext';
 import './FeedPage.css';
@@ -22,7 +18,6 @@ interface ExtendedPost extends Post {
     commentList: Comment[];
 }
 
->>>>>>> origin/comment_reaction
 const FeedPage: React.FC = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('All');
@@ -36,7 +31,6 @@ const FeedPage: React.FC = () => {
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
 
-<<<<<<< HEAD
     useEffect(() => {
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) return;
@@ -44,12 +38,6 @@ const FeedPage: React.FC = () => {
         authAPI.getMyProfile();
     }, []);
 
-=======
-    // Current user info derived from auth context
-    const currentUserAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'default'}`;
-
-    
->>>>>>> origin/comment_reaction
     useEffect(() => {
         let isMounted = true;
 
@@ -60,14 +48,11 @@ const FeedPage: React.FC = () => {
             try {
                 const fetchedPosts = await postsAPI.getAllPosts();
 
-<<<<<<< HEAD
                 if (!isMounted) return;
-=======
                 const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
                     ...post,
                     commentList: []
                 }));
->>>>>>> origin/comment_reaction
 
                 // Filter by active tab
                 if (activeTab === 'All') {
@@ -90,9 +75,6 @@ const FeedPage: React.FC = () => {
         return () => { isMounted = false; };
     }, [activeTab]);
 
-<<<<<<< HEAD
-    const handleCreatePost = async (newPostData: { type: string; title: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => {
-=======
     // Fetch real comments from backend when modal opens
     const fetchComments = useCallback(async (postId: string) => {
         const numericId = parseInt(postId);
@@ -128,7 +110,6 @@ const FeedPage: React.FC = () => {
     }, [fetchComments]);
 
     const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
->>>>>>> origin/comment_reaction
         try {
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
@@ -159,7 +140,6 @@ const FeedPage: React.FC = () => {
         }
     };
 
-<<<<<<< HEAD
     const handleLikePost = (postId: string) => {
 
         console.log(`Liked post ${postId}`);
@@ -168,7 +148,7 @@ const FeedPage: React.FC = () => {
     const handleShowMore = (post: Post) => {
         setSelectedPost(post);
         setIsPostDetailOpen(true);
-=======
+    };
     const handleAddComment = async (content: string) => {
         if (!activeCommentPostId) return;
 
@@ -246,12 +226,10 @@ const FeedPage: React.FC = () => {
         } catch (err) {
             console.error('Failed to delete comment:', err);
         }
->>>>>>> origin/comment_reaction
     };
 
-    const handleAddComment = (content: string) => {
-        console.log(`Add comment to post ${activeCommentPostId}: ${content}`);
-    };
+    // Get the active post for comments modal
+    const activeCommentPost = posts.find(p => p.id === activeCommentPostId);
 
     return (
         <div className="feed-page">
@@ -298,14 +276,9 @@ const FeedPage: React.FC = () => {
             <CommentsModal
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
-<<<<<<< HEAD
-                comments={[]}
-                currentUserAvatar={getAvatarSrc(null, 'me')}
-=======
                 comments={activeCommentPost?.commentList || []}
-                currentUserAvatar={currentUserAvatar}
+                currentUserAvatar={getAvatarSrc(null, 'me')}
                 currentUserId={user?.id ?? null}
->>>>>>> origin/comment_reaction
                 onAddComment={handleAddComment}
                 onEditComment={handleEditComment}
                 onDeleteComment={handleDeleteComment}

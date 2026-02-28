@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './CommentsModal.css';
 
 export interface Comment {
@@ -135,6 +136,16 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
 }) => {
     const [newComment, setNewComment] = useState('');
 
+    // Lock body scroll while modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -156,7 +167,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
         }
     };
 
-    return (
+    return createPortal(
         <div className="modal-backdrop" onClick={handleBackdropClick}>
             <div className="comments-modal-content">
                 <div className="comments-header">
@@ -199,7 +210,8 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

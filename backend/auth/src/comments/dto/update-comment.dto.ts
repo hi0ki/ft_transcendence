@@ -9,10 +9,6 @@ export class UpdateCommentDto {
     @IsNotEmpty()
     postId?: number
 
-    @IsNumber()
-    @IsNotEmpty()
-    userId?: number
-
     @IsString()
     @IsNotEmpty()
     content?: string

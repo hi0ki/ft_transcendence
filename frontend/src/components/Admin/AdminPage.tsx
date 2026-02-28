@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { authAPI } from '../../services/authApi';
 import './AdminPage.css';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
-console.log('AdminPage: Using API_BASE_URL:', API_BASE_URL);
 
 interface AdminPost {
     id: number;
@@ -13,11 +13,16 @@ interface AdminPost {
     type: string;
     status: 'PENDING' | 'APPROVED';
     createdAt: string;
+    imageUrl?: string;
+    contentUrl?: string;
+    tags?: string[];
     user?: {
         email: string;
         profile?: { username?: string; avatarUrl?: string | null };
     };
 }
+
+const MAX_PREVIEW_LENGTH = 300;
 
 function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
@@ -36,6 +41,77 @@ function getAvatarSrc(post: AdminPost) {
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
 }
 
+function formatUrl(url: string): string {
+    if (!url) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return 'https://' + url;
+}
+
+/** Full-post modal rendered in a portal */
+function PostDetailModal({ post, onClose }: { post: AdminPost; onClose: () => void }) {
+    const username = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'Unknown';
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
+    return createPortal(
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-content post-detail-modal-content">
+                <div className="modal-header">
+                    <div>
+                        <h2 className="modal-title">Full Post</h2>
+                        <p className="modal-subtitle">Complete post content for moderation</p>
+                    </div>
+                    <button className="modal-close-btn" onClick={onClose}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="post-detail-author">
+                    <img src={getAvatarSrc(post)} alt={username} className="post-detail-avatar" />
+                    <div>
+                        <p className="post-detail-name">{username}</p>
+                        <p className="post-detail-handle">@{username.toLowerCase().replace(/\s+/g, '')} · {timeAgo(post.createdAt)}</p>
+                    </div>
+                </div>
+
+                <span className={`mod-type-badge mod-type-badge--${post.type.toLowerCase()}`}>{post.type}</span>
+
+                <div className="post-detail-content">
+                    <h3 className="post-detail-title">{post.title}</h3>
+                    <p>{post.content}</p>
+                </div>
+
+                {post.contentUrl && (
+                    <div className="post-content-url">
+                        <a href={formatUrl(post.contentUrl)} target="_blank" rel="noopener noreferrer">{post.contentUrl}</a>
+                    </div>
+                )}
+
+                {post.imageUrl && (
+                    <div className="post-image">
+                        <img src={post.imageUrl} alt="Post content" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+                    </div>
+                )}
+
+                {post.tags && post.tags.length > 0 && (
+                    <div className="post-tags">
+                        {post.tags.map(tag => (
+                            <span key={tag} className="tag-pill">{tag}</span>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 export default function AdminPage() {
     const navigate = useNavigate();
     const currentUser = authAPI.getCurrentUser();
@@ -50,6 +126,7 @@ export default function AdminPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'PENDING' | 'APPROVED'>('PENDING');
     const [busy, setBusy] = useState<number | null>(null);
+    const [selectedPost, setSelectedPost] = useState<AdminPost | null>(null);
 
     const token = authAPI.getToken();
 
@@ -66,12 +143,9 @@ export default function AdminPage() {
     useEffect(() => { fetchPosts(); }, []);
 
     const handleApprove = async (post: AdminPost) => {
-        console.log('AdminPage: Approving post', post.id);
         setBusy(post.id);
         try {
-            const url = `${API_BASE_URL}/posts/admin/${post.id}/status`;
-            console.log('AdminPage: PATCH to', url);
-            const res = await fetch(url, {
+            const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}/status`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'APPROVED' }),
@@ -81,22 +155,16 @@ export default function AdminPage() {
                 throw new Error(errData.message || `Failed to approve (HTTP ${res.status})`);
             }
             setPosts(prev => prev.map(p => p.id === post.id ? { ...p, status: 'APPROVED' } : p));
-            console.log('AdminPage: Post approved', post.id);
         } catch (e: any) {
-            console.error('AdminPage: Approve error', e);
             setError(e.message);
-        }
-        finally { setBusy(null); }
+        } finally { setBusy(null); }
     };
 
     const handleDelete = async (post: AdminPost) => {
-        console.log('AdminPage: Deleting post', post.id);
         if (!window.confirm(`Delete post "${post.title}"? This cannot be undone.`)) return;
         setBusy(post.id);
         try {
-            const url = `${API_BASE_URL}/posts/admin/${post.id}`;
-            console.log('AdminPage: DELETE to', url);
-            const res = await fetch(url, {
+            const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -105,12 +173,9 @@ export default function AdminPage() {
                 throw new Error(errData.message || `Failed to delete (HTTP ${res.status})`);
             }
             setPosts(prev => prev.filter(p => p.id !== post.id));
-            console.log('AdminPage: Post deleted', post.id);
         } catch (e: any) {
-            console.error('AdminPage: Delete error', e);
             setError(e.message);
-        }
-        finally { setBusy(null); }
+        } finally { setBusy(null); }
     };
 
     const pending = posts.filter(p => p.status === 'PENDING');
@@ -119,7 +184,8 @@ export default function AdminPage() {
 
     return (
         <div className="mod-page">
-            {/* Header */}
+            {selectedPost && <PostDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />}
+
             <div className="mod-header">
                 <div className="mod-header-left">
                     <div className="mod-title-row">
@@ -133,7 +199,6 @@ export default function AdminPage() {
                 )}
             </div>
 
-            {/* Stats */}
             <div className="mod-stats">
                 <div className="mod-stat-card">
                     <span className="mod-stat-label">Total Posts</span>
@@ -152,26 +217,17 @@ export default function AdminPage() {
                 </div>
             </div>
 
-            {/* Error */}
             {error && <div className="mod-error">⚠ {error} <button onClick={() => setError(null)}>✕</button></div>}
 
-            {/* Tabs */}
             <div className="mod-tabs">
-                <button
-                    className={`mod-tab ${activeTab === 'PENDING' ? 'mod-tab--active' : ''}`}
-                    onClick={() => setActiveTab('PENDING')}
-                >
+                <button className={`mod-tab ${activeTab === 'PENDING' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('PENDING')}>
                     Pending {pending.length > 0 && <span className="mod-tab-count">{pending.length}</span>}
                 </button>
-                <button
-                    className={`mod-tab ${activeTab === 'APPROVED' ? 'mod-tab--active' : ''}`}
-                    onClick={() => setActiveTab('APPROVED')}
-                >
+                <button className={`mod-tab ${activeTab === 'APPROVED' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('APPROVED')}>
                     Approved {approved.length > 0 && <span className="mod-tab-count">{approved.length}</span>}
                 </button>
             </div>
 
-            {/* Post list */}
             <div className="mod-list">
                 {loading ? (
                     <div className="mod-loading"><div className="mod-spinner" /><span>Loading posts…</span></div>
@@ -184,8 +240,10 @@ export default function AdminPage() {
                     displayed.map(post => {
                         const username = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'Unknown';
                         const isBusy = busy === post.id;
+
                         return (
                             <div key={post.id} className="mod-card">
+                                {/* Header: avatar, name, type badge, status */}
                                 <div className="mod-card-header">
                                     <div className="mod-card-author">
                                         <img src={getAvatarSrc(post)} alt={username} className="mod-card-avatar" />
@@ -202,11 +260,41 @@ export default function AdminPage() {
                                     </span>
                                 </div>
 
-                                <div className="mod-card-content">
-                                    <h3 className="mod-card-title">{post.title}</h3>
-                                    <p className="mod-card-body">{post.content}</p>
+                                {/* Body: title, preview text, indicators, link */}
+                                <div className="mod-card-body-block">
+                                    {post.title && <h3 className="mod-card-title">{post.title}</h3>}
+
+                                    {post.content && (
+                                        <p className="mod-card-body">
+                                            {post.content.length > MAX_PREVIEW_LENGTH
+                                                ? post.content.substring(0, MAX_PREVIEW_LENGTH) + '…'
+                                                : post.content}
+                                        </p>
+                                    )}
+
+                                    {/* Indicators row */}
+                                    <div className="mod-card-indicators">
+                                        {post.imageUrl && (
+                                            <span className="mod-indicator mod-indicator--image">📷 Has image</span>
+                                        )}
+                                        {post.contentUrl && (
+                                            <a
+                                                href={formatUrl(post.contentUrl)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="mod-indicator mod-indicator--link"
+                                                onClick={e => e.stopPropagation()}
+                                            >
+                                                🔗 {post.contentUrl.length > 50 ? post.contentUrl.substring(0, 50) + '…' : post.contentUrl}
+                                            </a>
+                                        )}
+                                        {post.tags && post.tags.length > 0 && post.tags.map(tag => (
+                                            <span key={tag} className="mod-tag-pill">{tag}</span>
+                                        ))}
+                                    </div>
                                 </div>
 
+                                {/* Actions */}
                                 <div className="mod-card-actions">
                                     {post.status === 'PENDING' && (
                                         <button
@@ -214,7 +302,7 @@ export default function AdminPage() {
                                             onClick={() => handleApprove(post)}
                                             disabled={isBusy}
                                         >
-                                            <span>✓</span> Approve
+                                            ✓ Approve
                                         </button>
                                     )}
                                     <button
@@ -222,7 +310,13 @@ export default function AdminPage() {
                                         onClick={() => handleDelete(post)}
                                         disabled={isBusy}
                                     >
-                                        <span>✕</span> {isBusy ? '…' : 'Delete'}
+                                        ✕ {isBusy ? '…' : 'Delete'}
+                                    </button>
+                                    <button
+                                        className="mod-action mod-action--view"
+                                        onClick={() => setSelectedPost(post)}
+                                    >
+                                        👁 View Full Post
                                     </button>
                                 </div>
                             </div>

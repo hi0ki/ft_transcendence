@@ -7,20 +7,20 @@ import { UpdateReactionDto } from './dto/update-reaction.dto';
 export class ReactionsService {
     constructor(private prisma: PrismaService) {}
 
-    async create(createReactionDto: CreateReactionDto) {
+    async create(createReactionDto: CreateReactionDto, userId: number) {
         return this.prisma.like.create({
             data: {
-                userId: createReactionDto.userId,
+                userId: userId,
                 postId: createReactionDto.postId,
                 type: createReactionDto.type,
             },
         });
     }
 
-    async update(updateReactionDto: UpdateReactionDto) {
+    async update(updateReactionDto: UpdateReactionDto, userId: number) {
         return this.prisma.like.update({
             where : { userId_postId: {
-                userId: updateReactionDto.userId,
+                userId: userId,
                 postId: updateReactionDto.postId,
             }},
             data: {
@@ -28,6 +28,7 @@ export class ReactionsService {
             },
         });
     }
+
     async delete(userId: number, postId: number) {
         return this.prisma.like.delete({
             where : { userId_postId: {

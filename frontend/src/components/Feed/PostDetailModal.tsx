@@ -92,9 +92,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                     </div>
                 )}
 
-                <div className="modal-actions">
-                    <button className="modal-close-btn-bottom" onClick={onClose}>Close</button>
-                </div>
+
             </div>
         </div>
     );

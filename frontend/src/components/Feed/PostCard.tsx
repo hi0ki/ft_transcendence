@@ -49,6 +49,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
     const pickerTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
 
+    // Lock body scroll when reactions popup is open
+    useEffect(() => {
+        if (showReactionsPopup) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [showReactionsPopup]);
+
     const isContentTruncated = post.content && post.content.length > MAX_CONTENT_LENGTH;
     const displayContent = isContentTruncated
         ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...'
@@ -159,7 +169,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
             <div className="post-header-container">
                 <div className="post-author-info" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
                     <img
-                        src={post.author.avatar || 'https://via.placeholder.com/48'\}
+                        src={post.author.avatar || 'https://via.placeholder.com/48'}
                         alt={post.author.name}
                         className="post-author-avatar"
                         style={{ width: '48px', height: '48px', minWidth: '48px', borderRadius: '50%', objectFit: 'cover' }}
@@ -268,7 +278,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                             {REACTION_TYPES.map(type => (
                                 <button
                                     key={type}
-                                    className={'reaction-picker-btn ' + (myReaction === type ? 'active' : '')}
+                                    className={`reaction-picker-btn ${myReaction === type ? 'active' : ''}`}
                                     onClick={() => handleReaction(type)}
                                     title={REACTION_LABELS[type]}
                                 >
@@ -278,7 +288,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                         </div>
                     )}
                     <button
-                        className={'action-btn ' + (myReaction ? 'reacted' : '')}
+                        className={`action-btn ${myReaction ? 'reacted' : ''}`}
                         onClick={() => handleReaction(myReaction || 'LIKE')}
                     >
                         {myReaction ? (
@@ -317,8 +327,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                 </button>
             </div>
 
-            {/* Reactions Users Popup */}
-            {showReactionsPopup && (
+            {/* Reactions Users Popup — rendered via portal so it covers the full viewport */}
+            {showReactionsPopup && createPortal(
                 <div className="reactions-popup-backdrop" onClick={() => setShowReactionsPopup(false)}>
                     <div className="reactions-popup" onClick={(e) => e.stopPropagation()}>
                         <div className="reactions-popup-header">
@@ -351,7 +361,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                             )}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Image Modal */}

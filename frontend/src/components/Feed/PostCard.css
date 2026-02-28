@@ -336,8 +336,8 @@
 .reaction-picker {
     position: absolute;
     bottom: 110%;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    transform: translateX(0);
     display: flex;
     gap: 4px;
     background: #1e2438;
@@ -345,7 +345,7 @@
     border-radius: 28px;
     padding: 6px 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    z-index: 10;
+    z-index: 1100;
     animation: pickerFadeIn 0.2s ease;
     white-space: nowrap;
 }
@@ -353,12 +353,12 @@
 @keyframes pickerFadeIn {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(6px) scale(0.95);
+        transform: translateY(6px) scale(0.95);
     }
 
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0) scale(1);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -621,5 +621,36 @@
 
     .reactions-popup {
         max-width: 95%;
+    }
+
+    .reaction-picker {
+        left: 0;
+        right: auto;
+        transform: translateX(0);
+        padding: 5px 8px;
+        gap: 2px;
+    }
+
+    .reaction-emoji {
+        font-size: 1.2rem;
+    }
+
+    .reaction-picker-btn {
+        padding: 3px 4px;
+    }
+}
+
+@media (max-width: 400px) {
+    .reaction-picker {
+        position: fixed;
+        bottom: auto;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 20px;
+    }
+
+    .reaction-emoji {
+        font-size: 1.1rem;
     }
 }
