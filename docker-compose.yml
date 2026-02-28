@@ -47,6 +47,10 @@ services:
       args:
         - app_name=core
     restart: always
+    env_file:
+      - ./backend/auth/.env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:3000
     ports:
       - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
     depends_on:

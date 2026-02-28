@@ -50,12 +50,22 @@ export class AuthService {
 
     async login(email: string, password: string) {
         const normalizedEmail = email.toLowerCase();
+<<<<<<< HEAD
         const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
         if (user) {
+=======
+        const user = await this.prisma.user.findUnique({
+            where : {email : normalizedEmail},
+            include: { profile: { select: { username: true } } },
+        });
+        if (user)
+        {
+>>>>>>> origin/comment_reaction
             const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
             if (!isPasswordValid) {
                 throw new UnauthorizedException('Wrong password');
             }
+<<<<<<< HEAD
             // Fetch profile to include username in JWT
             const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
             const token = this.jwtService.sign({
@@ -65,6 +75,10 @@ export class AuthService {
                 username: profile?.username || null,
                 avatarUrl: profile?.avatarUrl || null,
             });
+=======
+            const username = user.profile?.username || user.email.split('@')[0];
+            const token = this.jwtService.sign({ id: user.id, email: user.email, role: user.role, username });
+>>>>>>> origin/comment_reaction
             return { access_token: token };
         }
         else {

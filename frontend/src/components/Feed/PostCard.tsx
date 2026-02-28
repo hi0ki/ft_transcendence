@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { reactionsAPI, REACTION_EMOJI, REACTION_LABELS } from '../../services/reactionsApi';
+import { commentsAPI } from '../../services/commentsApi';
+import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi';
 import './PostCard.css';
 
 interface Post {
@@ -28,24 +31,65 @@ interface PostCardProps {
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
     onShowMore?: (post: Post) => void;
+    commentCount?: number;
 }
 
 const MAX_CONTENT_LENGTH = 200;
+const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, onShowMore }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, commentCount: externalCommentCount }) => {
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [myReaction, setMyReaction] = useState<ReactionType | null>(null);
+    const [reactionCount, setReactionCount] = useState(post.likes);
+    const [commentCount, setCommentCount] = useState(post.comments);
+    const [showPicker, setShowPicker] = useState(false);
+    const [showReactionsPopup, setShowReactionsPopup] = useState(false);
+    const [reactionsUsers, setReactionsUsers] = useState<ReactionWithUser[]>([]);
+    const [loadingReactions, setLoadingReactions] = useState(false);
+    const pickerTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pickerRef = useRef<HTMLDivElement>(null);
 
     const isContentTruncated = post.content && post.content.length > MAX_CONTENT_LENGTH;
     const displayContent = isContentTruncated
         ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...'
         : post.content;
 
+    // Sync external comment count
+    useEffect(() => {
+        if (typeof externalCommentCount === 'number') {
+            setCommentCount(externalCommentCount);
+        }
+    }, [externalCommentCount]);
+
+    // Fetch current user's reaction, counts, and reactions list on mount
+    useEffect(() => {
+        const postId = parseInt(post.id);
+        if (isNaN(postId)) return;
+
+        reactionsAPI.getMyReaction(postId).then(data => {
+            if (data && data.type) setMyReaction(data.type);
+        }).catch(() => { });
+
+        reactionsAPI.getCount(postId).then(count => {
+            if (typeof count === 'number') setReactionCount(count);
+        }).catch(() => { });
+
+        commentsAPI.getCommentCount(postId).then(count => {
+            if (typeof count === 'number') setCommentCount(count);
+        }).catch(() => { });
+
+        // Fetch reactions list for the inline summary
+        reactionsAPI.getReactionsByPost(postId).then(data => {
+            setReactionsUsers(data);
+        }).catch(() => { });
+    }, [post.id]);
+
     const formatUrl = (url: string): string => {
         if (!url) return url;
         if (url.startsWith('http://') || url.startsWith('https://')) {
             return url;
         }
-        return `https://${url}`;
+        return 'https://' + url;
     };
 
     const getTypeIcon = (type: string) => {
@@ -55,12 +99,67 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
         return null;
     };
 
+    const handleReaction = async (type: ReactionType) => {
+        const postId = parseInt(post.id);
+        if (isNaN(postId)) return;
+        setShowPicker(false);
+
+        try {
+            if (myReaction === type) {
+                setMyReaction(null);
+                setReactionCount(prev => Math.max(0, prev - 1));
+                await reactionsAPI.toggle(postId, type);
+            } else if (myReaction) {
+                setMyReaction(type);
+                await reactionsAPI.toggle(postId, type);
+            } else {
+                setMyReaction(type);
+                setReactionCount(prev => prev + 1);
+                await reactionsAPI.toggle(postId, type);
+            }
+        } catch (err) {
+            console.error('Failed to toggle reaction:', err);
+            setMyReaction(null);
+            const count = await reactionsAPI.getCount(postId).catch(() => 0);
+            setReactionCount(count);
+        }
+
+        // Refresh the reactions list after any toggle
+        reactionsAPI.getReactionsByPost(postId).then(data => {
+            setReactionsUsers(data);
+        }).catch(() => { });
+    };
+
+    const handleShowReactionsPopup = async () => {
+        const postId = parseInt(post.id);
+        if (isNaN(postId)) return;
+        setShowReactionsPopup(true);
+        setLoadingReactions(true);
+        try {
+            const data = await reactionsAPI.getReactionsByPost(postId);
+            setReactionsUsers(data);
+        } catch {
+            setReactionsUsers([]);
+        } finally {
+            setLoadingReactions(false);
+        }
+    };
+
+    const handleMouseEnter = () => {
+        if (pickerTimeout.current) clearTimeout(pickerTimeout.current);
+        setShowPicker(true);
+    };
+
+    const handleMouseLeave = () => {
+        pickerTimeout.current = setTimeout(() => setShowPicker(false), 400);
+    };
+
     return (
         <div className="post-card">
             <div className="post-header-container">
                 <div className="post-author-info" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
                     <img
-                        src={post.author.avatar || 'https://via.placeholder.com/48'}
+                        src={post.author.avatar || 'https://via.placeholder.com/48'\}
                         alt={post.author.name}
                         className="post-author-avatar"
                         style={{ width: '48px', height: '48px', minWidth: '48px', borderRadius: '50%', objectFit: 'cover' }}
@@ -69,7 +168,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                         <span className="post-author-name">{post.author.name}</span>
                         <div className="post-author-meta">
                             <span className="post-author-handle">
-                                {post.author.handle?.startsWith('@') ? post.author.handle : `@${post.author.handle || post.author.name.toLowerCase().replace(/\s/g, '')}`}
+                                {post.author.handle?.startsWith('@') ? post.author.handle : '@' + (post.author.handle || post.author.name.toLowerCase().replace(/\s/g, ''))}
                             </span>
                             <span className="post-dot">•</span>
                             <span className="post-time">{post.timeAgo}</span>
@@ -77,7 +176,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                     </div>
                 </div>
                 {post.type && (
-                    <div className={`post-type-badge type-${post.type.toLowerCase()}`}>
+                    <div className={'post-type-badge type-' + post.type.toLowerCase()}>
                         {getTypeIcon(post.type)}
                         {post.type}
                     </div>
@@ -126,18 +225,85 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                 )}
             </div>
 
+            {/* Inline reactions summary — shows who reacted */}
+            {reactionsUsers.length > 0 && (
+                <div className="reactions-summary" onClick={handleShowReactionsPopup}>
+                    <div className="reactions-summary-avatars">
+                        {reactionsUsers.slice(0, 5).map((r) => (
+                            <img
+                                key={r.userId}
+                                src={r.user?.profile?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.userId}
+                                alt={r.user?.profile?.username || 'User'}
+                                className="reactions-summary-avatar"
+                                title={(r.user?.profile?.username || 'Unknown') + ' reacted ' + REACTION_LABELS[r.type]}
+                            />
+                        ))}
+                    </div>
+                    <div className="reactions-summary-emojis">
+                        {/* Show unique reaction types */}
+                        {[...new Set(reactionsUsers.map(r => r.type))].map(type => (
+                            <span key={type} className="reactions-summary-emoji">{REACTION_EMOJI[type]}</span>
+                        ))}
+                    </div>
+                    <span className="reactions-summary-text">
+                        {reactionsUsers.length === 1
+                            ? (reactionsUsers[0].user?.profile?.username || 'Someone')
+                            : reactionsUsers.length <= 3
+                                ? reactionsUsers.map(r => r.user?.profile?.username || 'Someone').join(', ')
+                                : reactionsUsers.slice(0, 2).map(r => r.user?.profile?.username || 'Someone').join(', ') + ' and ' + (reactionsUsers.length - 2) + ' more'
+                        }
+                    </span>
+                </div>
+            )}
+
             <div className="post-actions">
-                <button className="action-btn" onClick={() => onLike && onLike(post.id)}>
-                    <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                    </svg>
-                    {post.likes}
-                </button>
+                <div
+                    className="reaction-wrapper"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    ref={pickerRef}
+                >
+                    {showPicker && (
+                        <div className="reaction-picker">
+                            {REACTION_TYPES.map(type => (
+                                <button
+                                    key={type}
+                                    className={'reaction-picker-btn ' + (myReaction === type ? 'active' : '')}
+                                    onClick={() => handleReaction(type)}
+                                    title={REACTION_LABELS[type]}
+                                >
+                                    <span className="reaction-emoji">{REACTION_EMOJI[type]}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    <button
+                        className={'action-btn ' + (myReaction ? 'reacted' : '')}
+                        onClick={() => handleReaction(myReaction || 'LIKE')}
+                    >
+                        {myReaction ? (
+                            <span className="reaction-emoji-inline">{REACTION_EMOJI[myReaction]}</span>
+                        ) : (
+                            <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                            </svg>
+                        )}
+                        {reactionCount > 0 && (
+                            <span
+                                className="reaction-count-link"
+                                onClick={(e) => { e.stopPropagation(); handleShowReactionsPopup(); }}
+                                title="See who reacted"
+                            >
+                                {reactionCount}
+                            </span>
+                        )}
+                    </button>
+                </div>
                 <button className="action-btn" onClick={() => onComment && onComment(post.id)}>
                     <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    {post.comments}
+                    {commentCount}
                 </button>
                 <button className="action-btn" onClick={() => onShare && onShare(post.id)}>
                     <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -151,6 +317,44 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare, o
                 </button>
             </div>
 
+            {/* Reactions Users Popup */}
+            {showReactionsPopup && (
+                <div className="reactions-popup-backdrop" onClick={() => setShowReactionsPopup(false)}>
+                    <div className="reactions-popup" onClick={(e) => e.stopPropagation()}>
+                        <div className="reactions-popup-header">
+                            <h3>Reactions</h3>
+                            <button className="reactions-popup-close" onClick={() => setShowReactionsPopup(false)}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div className="reactions-popup-list">
+                            {loadingReactions ? (
+                                <div className="reactions-popup-loading">Loading...</div>
+                            ) : reactionsUsers.length === 0 ? (
+                                <div className="reactions-popup-empty">No reactions yet</div>
+                            ) : (
+                                reactionsUsers.map((r) => (
+                                    <div key={r.userId} className="reactions-popup-item">
+                                        <img
+                                            src={r.user?.profile?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.userId}
+                                            alt={r.user?.profile?.username || 'User'}
+                                            className="reactions-popup-avatar"
+                                        />
+                                        <span className="reactions-popup-name">
+                                            {r.user?.profile?.username || r.user?.email || 'Unknown'}
+                                        </span>
+                                        <span className="reactions-popup-emoji" title={REACTION_LABELS[r.type]}>
+                                            {REACTION_EMOJI[r.type]}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Modal */}
             {isImageModalOpen && createPortal(
                 <div className="image-modal-backdrop" onClick={() => setIsImageModalOpen(false)}>
                     <button className="image-modal-close" onClick={() => setIsImageModalOpen(false)}>
