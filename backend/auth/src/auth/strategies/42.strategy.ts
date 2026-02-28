@@ -8,9 +8,9 @@ import { AuthService } from '../auth.service';
 export class FortyTwoStrategy extends PassportStrategy(Strategy, '42') {
     constructor(private configService: ConfigService, private authService: AuthService) {
         super({
-            clientID: configService.get('FORTYTWO_CLIENT_ID') || configService.get('CLIENT_ID'),
-            clientSecret: configService.get('FORTYTWO_CLIENT_SECRET') || configService.get('CLIENT_SECRET'),
-            callbackURL: configService.get('FORTYTWO_CALLBACK_URL') || configService.get('CALLBACK_URL'),
+            clientID: configService.get('CLIENT_ID'),
+            clientSecret: configService.get('CLIENT_SECRET'),
+            callbackURL: configService.get('CALLBACK_URL'),
         });
     }
 
@@ -24,5 +24,3 @@ export class FortyTwoStrategy extends PassportStrategy(Strategy, '42') {
         return user;
     }
 }
-
-//will

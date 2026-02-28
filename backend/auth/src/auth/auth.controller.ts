@@ -8,11 +8,6 @@ import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    @Get()
-    hello(): string {
-        return "Hello Auth";
-    }
-
     @Post('register')
     async register(@Body() registerDto: RegisterDto) {
         return this.authService.register(registerDto.email, registerDto.password, registerDto.username);
@@ -28,7 +23,7 @@ export class AuthController {
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoAuth() { }
 
-    // step 2 — 42 redirects back here after login
+
     @Get('42/callback')
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoCallback(@Req() req: any, @Res() res: any) {
@@ -38,4 +33,3 @@ export class AuthController {
 
 }
 
-//will
