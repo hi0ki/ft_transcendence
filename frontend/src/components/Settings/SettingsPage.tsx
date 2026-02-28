@@ -9,7 +9,13 @@ interface ProfileFormData {
     skills: string[];
 }
 
+interface FormErrors {
+    username?: string;
+}
+
 const BIO_MAX = 160;
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 10;
 
 function SettingsPage() {
     const navigate = useNavigate();
@@ -26,8 +32,20 @@ function SettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+    const [errors, setErrors] = useState<FormErrors>({});
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Validate form
+    const validateForm = (username: string): FormErrors => {
+        const newErrors: FormErrors = {};
+        if (username.length < USERNAME_MIN) {
+            newErrors.username = `Username must be at least ${USERNAME_MIN} characters`;
+        } else if (username.length > USERNAME_MAX) {
+            newErrors.username = `Username must not exceed ${USERNAME_MAX} characters`;
+        }
+        return newErrors;
+    };
 
     // In a real app, you might fetch the latest profile data here
     useEffect(() => {
@@ -69,6 +87,12 @@ function SettingsPage() {
     };
 
     const handleSave = async () => {
+        const newErrors = validateForm(form.username);
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+        
         setIsSaving(true);
         try {
             await authAPI.updateProfile({
@@ -76,9 +100,14 @@ function SettingsPage() {
                 bio: form.bio,
                 skills: form.skills,
             });
-            navigate(`/profile/${form.username.toLowerCase()}`);
+            // Redirect to home after successful save
+            navigate('/profile');
         } catch (err) {
             console.error('Failed to save:', err);
+            // Handle error response from backend
+            if (err instanceof Error) {
+                setErrors({ username: err.message });
+            }
         } finally {
             setIsSaving(false);
         }
@@ -148,12 +177,20 @@ function SettingsPage() {
                         <label className="settings-label" htmlFor="settings-username">Username</label>
                         <input
                             id="settings-username"
-                            className="settings-input"
+                            className={`settings-input ${errors.username ? 'settings-input--error' : ''}`}
                             type="text"
                             value={form.username}
-                            onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))}
+                            onChange={e => {
+                                const newUsername = e.target.value;
+                                setForm(prev => ({ ...prev, username: newUsername }));
+                                // Validate on change
+                                const newErrors = validateForm(newUsername);
+                                setErrors(newErrors);
+                            }}
                             placeholder="username"
                         />
+                        {errors.username && <p className="settings-error-message">{errors.username}</p>}
+                        <p className="settings-hint">{USERNAME_MIN}-{USERNAME_MAX} characters</p>
                     </div>
 
                     <div className="settings-field">
@@ -214,7 +251,7 @@ function SettingsPage() {
                         className="settings-save-btn"
                         onClick={handleSave}
                         type="button"
-                        disabled={isSaving}
+                        disabled={isSaving || Object.keys(errors).length > 0}
                     >
                         {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>

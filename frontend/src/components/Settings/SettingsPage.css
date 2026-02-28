@@ -175,6 +175,29 @@
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
+.settings-input--error {
+    border-color: #ef4444;
+    background: #1a0f0f;
+}
+
+.settings-input--error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.settings-error-message {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.settings-hint {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-top: 6px;
+}
+
 .settings-textarea {
     resize: vertical;
     min-height: 120px;

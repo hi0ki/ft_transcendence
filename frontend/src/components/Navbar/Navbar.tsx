@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
 import './Navbar.css';
@@ -33,19 +33,59 @@ interface NavbarProps {
 	onClose?: () => void;
 }
 
+interface UserProfile {
+	username: string;
+	avatarUrl?: string | null;
+}
+
 function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	// Read everything directly from the JWT — no API call needed
+	// Get user from JWT for fallback
 	const currentUser = authAPI.getCurrentUser();
-	const [avatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
-	const [profileUsername] = useState<string>(
-		currentUser?.username || currentUser?.email?.split('@')[0] || username
-	);
+	
+	// State for profile data from API
+	const [profile, setProfile] = useState<UserProfile | null>(null);
+	const [loading, setLoading] = useState(true);
+
+	// Fetch profile on component mount
+	useEffect(() => {
+		const fetchProfile = async () => {
+			try {
+				const token = authAPI.getToken();
+				if (!token) return;
+
+				const response = await fetch(`${import.meta.env.VITE_API_URL || window.location.origin}/profiles/me`, {
+					method: 'GET',
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					setProfile({
+						username: data.username || data.email?.split('@')[0],
+						avatarUrl: data.avatarUrl
+					});
+				}
+			} catch (error) {
+				console.error('Failed to fetch profile:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchProfile();
+	}, []);
+
+	// Use profile data if available, fallback to JWT data
+	const profileUsername = profile?.username || currentUser?.username || currentUser?.email?.split('@')[0] || username;
+	const avatarUrl = profile?.avatarUrl || currentUser?.avatarUrl || null;
 
 	const currentPath = location.pathname;
-
 	const isAdmin = currentUser?.role === 'ADMIN';
 
 	const navItems = [
