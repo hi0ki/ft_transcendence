@@ -10,6 +10,8 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfilesModule } from './profiles/profiles.module';
 import { PostsModule } from './posts/posts.module';
+// import { FriendsModule } from './friends/friends.module';
+
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { PostsModule } from './posts/posts.module';
     ChatModule,
     AuthModule,
     ProfilesModule,
-    PostsModule
+    PostsModule,
+    // FriendsModule,
+
   ],
   providers: [ReactionsService],
   controllers: [ReactionsController],
