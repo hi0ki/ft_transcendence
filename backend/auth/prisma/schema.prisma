@@ -86,7 +86,7 @@ model Profile {
     username  String  @unique
     avatarUrl String?
     bio       String?
-    // skills 
+    skills    String[] @default([])
 
     @@map("profiles")
 }

@@ -70,11 +70,18 @@ function SettingsPage() {
 
     const handleSave = async () => {
         setIsSaving(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        console.log('Saved profile data:', { ...form, avatar: previewImage });
-        setIsSaving(false);
-        navigate(`/profile/${form.username.toLowerCase()}`);
+        try {
+            await authAPI.updateProfile({
+                username: form.username,
+                bio: form.bio,
+                skills: form.skills,
+            });
+            navigate(`/profile/${form.username.toLowerCase()}`);
+        } catch (err) {
+            console.error('Failed to save:', err);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
