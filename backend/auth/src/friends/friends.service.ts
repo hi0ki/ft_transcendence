@@ -6,7 +6,9 @@ import { FriendshipStatus } from '@prisma/client';
 export class FriendsService {
   constructor(private prisma: PrismaService) {}
 
-  async sendRequest(userId: number, friendId: number) {
+
+  async sendRequest(userId: number, friendId: number) 
+  {
     if (userId === friendId) {
       throw new BadRequestException('You cannot add yourself');
     }
@@ -28,7 +30,10 @@ export class FriendsService {
     });
   }
 
-  async acceptRequest(userId: number, friendId: number) {
+
+
+  async acceptRequest(userId: number, friendId: number) 
+  {
     const request = await this.prisma.friendship.findUnique({
       where: { userId_friendId: { userId: friendId, friendId: userId } },
     });
@@ -51,6 +56,8 @@ export class FriendsService {
     });
   }
 
+
+
   async rejectRequest(userId: number, friendId: number) {
     return this.prisma.friendship.deleteMany({
       where: {
@@ -61,6 +68,8 @@ export class FriendsService {
       },
     });
   }
+
+
 
   async removeFriend(userId: number, friendId: number) {
     return this.prisma.friendship.deleteMany({
@@ -73,6 +82,8 @@ export class FriendsService {
     });
   }
 
+
+
   async listFriends(userId: number) {
     const friends = await this.prisma.friendship.findMany({
       where: { userId, status: FriendshipStatus.ACCEPTED },
@@ -81,6 +92,8 @@ export class FriendsService {
 
     return friends.map(f => f.friend);
   }
+
+  
 
   async listPending(userId: number) {
     const pending = await this.prisma.friendship.findMany({

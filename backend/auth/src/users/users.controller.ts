@@ -17,41 +17,39 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+
   @Get('me')
   getMe(@Req() req: any) {
-    // req.user is set by AuthGuard from the JWT payload
     return this.usersService.findOne(req.user.id);
   }
+
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.usersService.findOne(id);
   }
 
-  // ─── PATCH /users/:id  (ADMIN or self) 
+
   @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateUserDto,
-    @Req() req: any,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
+  {
     return this.usersService.update(id, dto, req.user);
   }
 
-  //(ADMIN or self) 
+
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) 
+  {
     return this.usersService.remove(id, req.user);
   }
 
-  // ─── PATCH /users/:id/role  (ADMIN only) 
+ 
+
   @Patch(':id/role')
   @Roles(Role.ADMIN)
-  changeRole(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('role') role: Role,
-  ) {
+  changeRole(@Param('id', ParseIntPipe) id: number, @Body('role') role: Role)
+  {
     return this.usersService.changeRole(id, role);
   }
 }
