@@ -30,12 +30,6 @@ export class PostsService {
 						},
 					},
 				},
-				_count: {
-					select: {
-						comments: true,
-						likes: true,
-					},
-				},
 			},
 			orderBy: { createdAt: 'desc' },
 		});
@@ -69,12 +63,6 @@ export class PostsService {
 								avatarUrl: true,
 							},
 						},
-					},
-				},
-				_count: {
-					select: {
-						comments: true,
-						likes: true,
 					},
 				},
 			},

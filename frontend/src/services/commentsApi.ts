@@ -18,6 +18,7 @@ export interface BackendComment {
 
 export interface CommentDisplay {
     id: string;
+    userId?: number;
     author: {
         name: string;
         handle: string;
@@ -25,7 +26,6 @@ export interface CommentDisplay {
     };
     timeAgo: string;
     content: string;
-    likes: number;
 }
 
 class CommentsAPI {
@@ -60,6 +60,7 @@ class CommentsAPI {
         const username = bc.author?.profile?.username || 'Anonymous';
         return {
             id: bc.id.toString(),
+            userId: bc.userId,
             author: {
                 name: username,
                 handle: `@${username.toLowerCase()}`,
@@ -67,7 +68,6 @@ class CommentsAPI {
             },
             timeAgo: this.formatTimeAgo(bc.createdAt),
             content: bc.content,
-            likes: 0,
         };
     }
 
@@ -87,7 +87,7 @@ class CommentsAPI {
     }
 
     async getCommentCount(postId: number): Promise<number> {
-        const response = await fetch(`${API_BASE_URL}/comments/posts/${postId}/count`, {
+        const response = await fetch(`${API_BASE_URL}/comments/post/${postId}/count`, {
             method: 'GET',
             headers: this.getAuthHeader(),
         });
@@ -115,8 +115,24 @@ class CommentsAPI {
         return this.transformComment(data);
     }
 
-    async deleteComment(commentId: number): Promise<void> {
-        const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+    async updateComment(commentId: number, postId: number, content: string): Promise<CommentDisplay> {
+        const response = await fetch(`${API_BASE_URL}/comments/update`, {
+            method: 'PUT',
+            headers: this.getAuthHeader(),
+            body: JSON.stringify({ commentId, postId, content }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Failed to update comment' }));
+            throw new Error(error.message || `HTTP ${response.status}`);
+        }
+
+        const data: BackendComment = await response.json();
+        return this.transformComment(data);
+    }
+
+    async deleteComment(commentId: number, postId: number): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/comments/${commentId}?postId=${postId}`, {
             method: 'DELETE',
             headers: this.getAuthHeader(),
         });

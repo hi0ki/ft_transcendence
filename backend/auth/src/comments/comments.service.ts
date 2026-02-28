@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto} from './dto/update-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentsService {
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // Create a new comment
-  async create(createCommentDto: CreateCommentDto)
-  {
+  async create(createCommentDto: CreateCommentDto) {
     return this.prisma.comment.create({
       data: {
         postId: createCommentDto.postId,
@@ -38,18 +37,30 @@ export class CommentsService {
     return this.prisma.comment.update({
       where: { id : updateCommentDto.commentId },
       data: { content: updateCommentDto.content },
+      include: {
+        author: {
+          select: {
+            profile: {
+              select: {
+                username: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
   // Get all comments for a specific post
-  async findAllByPost(postId: number)
-  {
+  async findAllByPost(postId: number) {
     console.log("Finding comments for post ID:", postId);
     return this.prisma.comment.findMany({
       where: { postId },
+      orderBy: { createdAt: 'desc' },
       include: {
         author: {
-          select:{
+          select: {
             profile: {
               select: {
                 username: true,
@@ -74,8 +85,8 @@ export class CommentsService {
   async countCmntsByPost(postId: number)
   {
     return this.prisma.comment.count({
-        where: { postId },
-      });
+      where: { postId },
+    });
   }
 
 }

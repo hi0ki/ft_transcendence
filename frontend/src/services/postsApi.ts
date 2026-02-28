@@ -19,10 +19,6 @@ interface BackendPost {
             avatarUrl: string;
         };
     };
-    _count?: {
-        comments: number;
-        likes: number;
-    };
 }
 
 
@@ -60,8 +56,8 @@ class PostsAPI {
             timeAgo: this.formatTimeAgo(backendPost.createdAt),
             content: backendPost.content,
             tags: [], //to impleemnt hady in backend
-            likes: backendPost._count?.likes ?? 0,
-            comments: backendPost._count?.comments ?? 0,
+            likes: 0, 
+            comments: 0, 
             type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme'
         };
     }

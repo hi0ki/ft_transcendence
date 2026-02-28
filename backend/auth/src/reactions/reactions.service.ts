@@ -43,6 +43,12 @@ export class ReactionsService {
         });
     }
 
+    async findByUserAndPost(userId: number, postId: number) {
+        return this.prisma.like.findUnique({
+            where: { userId_postId: { userId, postId } },
+        });
+    }
+
     async findAllByPost(postId: number) {
         return this.prisma.like.findMany({
             where: { postId },
@@ -60,14 +66,21 @@ export class ReactionsService {
                     },
                 },
             },
-            orderBy: { createdAt: 'desc' },
         });
     }
 
-    async findUserReaction(userId: number, postId: number) {
-        return this.prisma.like.findUnique({
-            where: { userId_postId: { userId, postId } },
+    async countByType(postId: number) {
+        const reactions = await this.prisma.like.groupBy({
+            by: ['type'],
+            where: { postId },
+            _count: true,
         });
+        const total = reactions.reduce((sum, r) => sum + r._count, 0);
+        const byType: Record<string, number> = {};
+        for (const r of reactions) {
+            byType[r.type] = r._count;
+        }
+        return { total, byType };
     }
 }
 
