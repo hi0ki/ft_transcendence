@@ -9,10 +9,10 @@ export class AuthService {
     constructor(private prisma: PrismaService,
         private jwtService: JwtService) { }
 
+
     async register(email: string, password: string, username: string) {
         const normalizedEmail = email.toLowerCase();
 
-        // Check if email exists
         const emailCheck = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
         if (emailCheck) {
             throw new ConflictException('Email already exists');
@@ -27,8 +27,6 @@ export class AuthService {
             }
         });
 
-        // Derive username from email
-        // const username = normalizedEmail.split('@')[0];
         let finalUsername = username;
         const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
         if (existingProfile) {
@@ -43,10 +41,9 @@ export class AuthService {
                 bio: null,
             }
         });
-
-        console.log("Creating user with profile...");
         return { id: user.id, email: normalizedEmail, username: profile.username };
     }
+
 
     async login(email: string, password: string) {
         const normalizedEmail = email.toLowerCase();
@@ -60,7 +57,6 @@ export class AuthService {
             if (!isPasswordValid) {
                 throw new UnauthorizedException('Wrong password');
             }
-            // Fetch profile to include username in JWT
             const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
             const token = this.jwtService.sign({
                 id: user.id,
@@ -75,6 +71,7 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
     }
+
 
 
     async Create42User(data: { fortyTwoId: string; email: string; username: string; avatar: string; }) {
@@ -112,7 +109,6 @@ export class AuthService {
             });
         }
 
-        // Fetch profile to get the actual username (could be the random-suffixed one)
         const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
 
         const token = this.jwtService.sign({

@@ -112,7 +112,7 @@ class AuthAPI {
         if (!token) return null;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/profiles/me`, {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) return null;
@@ -122,6 +122,25 @@ class AuthAPI {
         }
     }
 
+    async updateProfile(data: { username?: string; bio?: string; skills?: string[] }): Promise<UserProfile | null> {
+        const token = this.getToken();
+        if (!token) return null;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
+        }
+    }
     // Logout — clear stored data
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);
