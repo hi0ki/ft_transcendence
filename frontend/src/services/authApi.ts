@@ -148,6 +148,7 @@ class AuthAPI {
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        sessionStorage.removeItem('user_profile');
     }
 }
 

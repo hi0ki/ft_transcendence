@@ -33,6 +33,7 @@ function SettingsPage() {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
     const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+    const [avatarLoading, setAvatarLoading] = useState(true);
     const [errors, setErrors] = useState<FormErrors>({});
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -54,7 +55,6 @@ function SettingsPage() {
             navigate('/login');
             return;
         }
-        // Fetch real profile to get the current avatarUrl
         authAPI.getMyProfile().then((data) => {
             if (data) {
                 setForm(prev => ({
@@ -65,6 +65,7 @@ function SettingsPage() {
                 }));
                 setProfileAvatarUrl(data.avatarUrl || null);
             }
+            setAvatarLoading(false); // ← add this
         });
     }, [navigate]);
 
@@ -136,15 +137,15 @@ function SettingsPage() {
 
                 <div className="settings-avatar-row">
                     <div className="settings-avatar-container">
-                        <img
-                            src={previewImage || getAvatarSrc(profileAvatarUrl, form.username)}
-                            alt="Avatar preview"
-                            className="settings-avatar"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(form.username)}`;
-                            }}
-                        />
+                    <img
+                        src={avatarLoading ? '' : (previewImage || getAvatarSrc(profileAvatarUrl, form.username))}
+                        alt="Avatar preview"
+                        className="settings-avatar"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(form.username)}`;
+                        }}
+                    />
                         <button
                             className="settings-avatar-edit-overlay"
                             onClick={() => fileInputRef.current?.click()}

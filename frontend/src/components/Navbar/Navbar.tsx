@@ -48,28 +48,30 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	// State for profile data from API
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [avatarReady, setAvatarReady] = useState(false);
 
 	// Fetch profile on component mount
 	useEffect(() => {
+		// Check cache first
+		const cached = sessionStorage.getItem('user_profile');
+		if (cached) {
+			const parsed = JSON.parse(cached);
+			setProfile(parsed);
+			setLoading(false);
+			return;
+		}
+	
 		const fetchProfile = async () => {
 			try {
-				const token = authAPI.getToken();
-				if (!token) return;
-
-				const response = await fetch(`${import.meta.env.VITE_API_URL || window.location.origin}/profiles/me`, {
-					method: 'GET',
-					headers: {
-						'Authorization': `Bearer ${token}`,
-						'Content-Type': 'application/json'
-					}
-				});
-
-				if (response.ok) {
-					const data = await response.json();
-					setProfile({
-						username: data.username || data.email?.split('@')[0],
-						avatarUrl: data.avatarUrl
-					});
+				const data = await authAPI.getMyProfile();
+				if (data) {
+					const profileData = {
+						username: data.username,
+						avatarUrl: data.avatarUrl || null,
+					};
+					setProfile(profileData);
+					// Cache it so re-renders don't re-fetch
+					sessionStorage.setItem('user_profile', JSON.stringify(profileData));
 				}
 			} catch (error) {
 				console.error('Failed to fetch profile:', error);
@@ -77,13 +79,13 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 				setLoading(false);
 			}
 		};
-
+	
 		fetchProfile();
 	}, []);
 
 	// Use profile data if available, fallback to JWT data
 	const profileUsername = profile?.username || currentUser?.username || currentUser?.email?.split('@')[0] || username;
-	const avatarUrl = profile?.avatarUrl || currentUser?.avatarUrl || null;
+	const avatarUrl = profile?.avatarUrl || null;
 
 	const currentPath = location.pathname;
 	const isAdmin = currentUser?.role === 'ADMIN';
@@ -135,14 +137,17 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 			<div className="sidebar-footer">
 				<div className="user-profile-card">
 					<div className="user-avatar">
-						<img
-							src={getAvatarSrc(avatarUrl, profileUsername)}
-							alt="avatar"
-							onError={(e) => {
-								(e.target as HTMLImageElement).src =
-									`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileUsername)}`;
-							}}
-						/>
+					<img
+						src={loading ? undefined : getAvatarSrc(avatarUrl, profileUsername)}
+						alt="avatar"
+						style={{ opacity: avatarReady ? 1 : 0, transition: 'opacity 0.2s' }}
+						onLoad={() => setAvatarReady(true)}
+						onError={(e) => {
+							(e.target as HTMLImageElement).src =
+								`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileUsername)}`;
+							setAvatarReady(true);
+						}}
+					/>
 					</div>
 					<div className="user-details">
 						<span className="user-name">{profileUsername}</span>
