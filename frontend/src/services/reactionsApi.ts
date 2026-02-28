@@ -7,7 +7,7 @@ export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD';
 export const REACTION_EMOJI: Record<ReactionType, string> = {
     LIKE: '👍',
     LOVE: '❤️',
-    HAHA: '😂',
+    HAHA: '😄',
     WOW: '😮',
     SAD: '😢',
 };

@@ -4,8 +4,10 @@ import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
 
 @Module({
-  imports: [HttpModule],
+  imports: [
+    HttpModule
+  ],
   controllers: [CommentsController],
   providers: [CommentsService],
 })
-export class CommentsModule {}
+export class CommentsModule { }
