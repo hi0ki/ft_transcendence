@@ -122,8 +122,12 @@ class AuthAPI {
         }
     }
 
-    async updateProfile(data: { username?: string; bio?: string; skills?: string[];avatarUrl?: string | null; // base64 string
-}): Promise<UserProfile | null> {
+    async updateProfile(data: { 
+        username?: string; 
+        bio?: string; 
+        skills?: string[];
+        avatarUrl?: string | null;
+    }): Promise<UserProfile | null> {
         const token = this.getToken();
         if (!token) return null;
     
@@ -137,7 +141,12 @@ class AuthAPI {
                 body: JSON.stringify(data),
             });
             if (!response.ok) return null;
-            return await response.json();
+            const result = await response.json();
+            
+            // ← Clear cache so Navbar fetches fresh profile with new avatar
+            sessionStorage.removeItem('user_profile');
+            
+            return result;
         } catch {
             return null;
         }
