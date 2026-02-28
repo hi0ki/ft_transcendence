@@ -91,7 +91,7 @@ class AuthAPI {
     getCurrentUser(): AuthUser | null {
         const token = this.getToken();
         if (!token) return null;
-
+    
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             return {
@@ -99,7 +99,7 @@ class AuthAPI {
                 email: payload.email,
                 role: payload.role || 'USER',
                 username: payload.username,
-                avatarUrl: payload.avatarUrl || null,
+                avatarUrl: null, // ← always get avatarUrl from getMyProfile() instead
             };
         } catch {
             return null;
@@ -122,7 +122,8 @@ class AuthAPI {
         }
     }
 
-    async updateProfile(data: { username?: string; bio?: string; skills?: string[] }): Promise<UserProfile | null> {
+    async updateProfile(data: { username?: string; bio?: string; skills?: string[];avatarUrl?: string | null; // base64 string
+}): Promise<UserProfile | null> {
         const token = this.getToken();
         if (!token) return null;
     
@@ -141,6 +142,8 @@ class AuthAPI {
             return null;
         }
     }
+
+
     // Logout — clear stored data
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);

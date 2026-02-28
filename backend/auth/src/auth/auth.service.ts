@@ -63,7 +63,7 @@ export class AuthService {
                 email: user.email,
                 role: user.role,
                 username: profile?.username || null,
-                avatarUrl: profile?.avatarUrl || null,
+              
             });
             return { access_token: token };
         }
@@ -116,7 +116,6 @@ export class AuthService {
             email: user.email,
             role: user.role,
             username: profile?.username || null,
-            avatarUrl: profile?.avatarUrl || null,
         });
         return { access_token: token };
     }

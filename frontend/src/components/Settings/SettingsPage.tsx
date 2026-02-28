@@ -32,6 +32,7 @@ function SettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+    const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
     const [errors, setErrors] = useState<FormErrors>({});
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -92,19 +93,18 @@ function SettingsPage() {
             setErrors(newErrors);
             return;
         }
-        
+    
         setIsSaving(true);
         try {
             await authAPI.updateProfile({
                 username: form.username,
                 bio: form.bio,
                 skills: form.skills,
+                avatarUrl: avatarBase64 ?? undefined, // ← add this
             });
-            // Redirect to home after successful save
             navigate('/profile');
         } catch (err) {
             console.error('Failed to save:', err);
-            // Handle error response from backend
             if (err instanceof Error) {
                 setErrors({ username: err.message });
             }
@@ -118,7 +118,9 @@ function SettingsPage() {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
+                const base64 = reader.result as string;
+                setPreviewImage(base64);   // for showing preview
+                setAvatarBase64(base64);   // for sending to backend
             };
             reader.readAsDataURL(file);
         }
