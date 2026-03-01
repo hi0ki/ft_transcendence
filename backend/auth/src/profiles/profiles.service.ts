@@ -25,10 +25,10 @@ export class ProfilesService {
                         },
                         _count: {
                             select: {
-                                friendshipsAsUser1 : { where: { status: 'ACCEPTED' } },
-                                friendshipsAsUser2 : { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser1: { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser2: { where: { status: 'ACCEPTED' } },
                             },
-                        },
+                        }
                     },
                 },
             },
@@ -37,8 +37,8 @@ export class ProfilesService {
             throw new NotFoundException('Profile not found');
         }
         const myFriendsCount =
-            (profile.user._count.friendships ?? 0) +
-            (profile.user._count.friendOf ?? 0);
+        (profile.user._count.friendshipsAsUser1 ?? 0) +
+        (profile.user._count.friendshipsAsUser2 ?? 0);
         return { ...profile, user: { ...profile.user, friendsCount: myFriendsCount } };
     }
 
@@ -62,10 +62,10 @@ export class ProfilesService {
                         },
                         _count: {
                             select: {
-                                friendshipsAsUser1 : { where: { status: 'ACCEPTED' } },
-                                friendshipsAsUser2 :    { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser1: { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser2: { where: { status: 'ACCEPTED' } },
                             },
-                        },
+                        }
                     },
                 },
             },
@@ -74,8 +74,8 @@ export class ProfilesService {
             throw new NotFoundException('Profile not found');
         }
         const friendsCount =
-            (profile.user._count.friendships ?? 0) +
-            (profile.user._count.friendOf ?? 0);
+    (profile.user._count.friendshipsAsUser1 ?? 0) +
+    (profile.user._count.friendshipsAsUser2 ?? 0);
         return { ...profile, user: { ...profile.user, friendsCount } };
     }
 
