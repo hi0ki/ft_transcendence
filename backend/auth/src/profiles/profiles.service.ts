@@ -25,8 +25,8 @@ export class ProfilesService {
                         },
                         _count: {
                             select: {
-                                friendships: { where: { status: 'ACCEPTED' } },
-                                friendOf:    { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser1 : { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser2 : { where: { status: 'ACCEPTED' } },
                             },
                         },
                     },
@@ -62,8 +62,8 @@ export class ProfilesService {
                         },
                         _count: {
                             select: {
-                                friendships: { where: { status: 'ACCEPTED' } },
-                                friendOf:    { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser1 : { where: { status: 'ACCEPTED' } },
+                                friendshipsAsUser2 :    { where: { status: 'ACCEPTED' } },
                             },
                         },
                     },
