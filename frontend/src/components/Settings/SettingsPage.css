@@ -126,6 +126,7 @@
     transition: all 0.2s;
 }
 
+
 .settings-upload-btn:hover {
     background: rgba(99, 102, 241, 0.2);
     border-color: rgba(99, 102, 241, 0.4);
@@ -298,6 +299,39 @@
     transform: translateY(-2px);
     box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
     filter: brightness(1.1);
+}
+
+.settings-footer {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    align-items: stretch;
+}
+
+.settings-delete-btn {
+    flex: 1;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    color: #f87171;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.settings-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
 }
 
 .settings-cancel-btn {

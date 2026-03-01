@@ -16,6 +16,7 @@ interface FormErrors {
 const BIO_MAX = 160;
 const USERNAME_MIN = 3;
 const USERNAME_MAX = 10;
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 function SettingsPage() {
     const navigate = useNavigate();
@@ -111,6 +112,25 @@ function SettingsPage() {
             }
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    
+        const currentUser = authAPI.getCurrentUser();
+        const token = authAPI.getToken();
+    
+        const res = await fetch(`${API_BASE_URL}/api/users/${currentUser?.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    
+        if (res.ok) {
+            authAPI.logout();
+            navigate('/login');
+        } else {
+            alert('Failed to delete account');
         }
     };
 
@@ -243,22 +263,29 @@ function SettingsPage() {
                 </div>
 
                 <div className="settings-footer">
-                    <button
-                        className="settings-cancel-btn"
-                        onClick={() => navigate(-1)}
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="settings-save-btn"
-                        onClick={handleSave}
-                        type="button"
-                        disabled={isSaving || Object.keys(errors).length > 0}
-                    >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                </div>
+                <button
+                    className="settings-cancel-btn"
+                    onClick={() => navigate(-1)}
+                    type="button"
+                >
+                    Cancel
+                </button>
+                <button
+                    className="settings-delete-btn"
+                    onClick={handleDeleteAccount}
+                    type="button"
+                >
+                    🗑 Delete My Account
+                </button>
+                <button
+                    className="settings-save-btn"
+                    onClick={handleSave}
+                    type="button"
+                    disabled={isSaving || Object.keys(errors).length > 0}
+                >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+            </div>
             </div>
         </div>
     );

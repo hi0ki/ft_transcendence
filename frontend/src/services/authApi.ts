@@ -95,15 +95,23 @@ class AuthAPI {
             const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+    
+            // If 401 — user was deleted or token is invalid → logout
+            if (response.status === 401 || response.status === 403) {
+                this.logout();
+                window.location.href = '/login'; // force redirect to login
+                return;
+            }
+    
             if (!response.ok) return;
+    
             const data = await response.json();
-            // Replace old token with new one
             localStorage.setItem(TOKEN_KEY, data.access_token);
         } catch {
             return;
         }
     }
-    
+
     // Get current user info from token
     getCurrentUser(): AuthUser | null {
         const token = this.getToken();

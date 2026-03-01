@@ -39,6 +39,20 @@ const FeedPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (posts.length === 0) return;
+    
+        const params = new URLSearchParams(window.location.search);
+        const postId = params.get('post');
+        if (!postId) return;
+    
+        // Filter to show only the shared post
+        const sharedPost = posts.find(p => p.id === postId);
+        if (sharedPost) {
+            setPosts([sharedPost]); // ← show only that post
+        }
+    }, [posts.length]); 
+    
+    useEffect(() => {
         let isMounted = true;
 
         const fetchPosts = async () => {
@@ -287,7 +301,7 @@ const FeedPage: React.FC = () => {
             <ShareModal
                 isOpen={!!activeSharePostId}
                 onClose={() => setActiveSharePostId(null)}
-                postUrl={`http://localhost:8080/post/${activeSharePostId}`}
+                postUrl={`${window.location.origin}/home?post=${activeSharePostId}`}
             />
 
             {selectedPost && (

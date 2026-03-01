@@ -72,6 +72,16 @@
     color: #fff;
 }
 
+.share-option-btn--copied {
+    border-color: rgba(34, 197, 94, 0.3) !important;
+    background-color: rgba(34, 197, 94, 0.05) !important;
+}
+
+.copied-icon {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
 .copy-icon {
     background-color: rgba(0, 212, 255, 0.1);
     color: #00d4ff;

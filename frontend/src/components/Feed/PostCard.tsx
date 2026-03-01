@@ -165,7 +165,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
     };
 
     return (
-        <div className="post-card">
+        <div className="post-card" id={`post-${post.id}`}>
             <div className="post-header-container">
                 <div className="post-author-info" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
                     <img
