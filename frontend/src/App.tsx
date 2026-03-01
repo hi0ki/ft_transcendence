@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import ChatApp from './components/Chat/ChatApp'
@@ -14,7 +14,6 @@ import './App.css'
 
 function LoginPage() {
   const navigate = useNavigate();
-
   return (
     <Login
       onLoginSuccess={() => navigate('/home')}
@@ -25,10 +24,9 @@ function LoginPage() {
 
 function RegisterPage() {
   const navigate = useNavigate();
-
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/profile')}   // ✅ CHANGED HERE
+      onSignUpSuccess={() => navigate('/profile')}
       onSwitchToLogin={() => navigate('/login')}
     />
   );
@@ -191,6 +189,21 @@ function AdminPageWrapper() {
 
 function App() {
   const isAuthed = authAPI.isAuthenticated();
+
+  // Refresh token every 30 seconds to get latest role/data
+  useEffect(() => {
+    if (authAPI.isAuthenticated()) {
+      authAPI.refreshToken(); // refresh once on load
+    }
+
+    const interval = setInterval(() => {
+      if (authAPI.isAuthenticated()) {
+        authAPI.refreshToken();
+      }
+    }, 30 * 1000); // every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Router>

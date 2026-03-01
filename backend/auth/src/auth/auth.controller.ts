@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import { AuthGuard } from '../guards/auth.guard'; 
 
 @Controller('auth')
 export class AuthController {
@@ -18,6 +19,11 @@ export class AuthController {
         return this.authService.login(loginDto.email, loginDto.password);
     }
 
+    @Get('refresh')
+    @UseGuards(AuthGuard)
+    async refresh(@Req() req: any) {
+        return this.authService.refreshToken(req.user.id);
+    }
 
     @Get('42')
     @UseGuards(PassportAuthGuard('42'))

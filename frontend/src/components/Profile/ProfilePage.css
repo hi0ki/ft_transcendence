@@ -171,6 +171,21 @@
     margin-top: 4px;
 }
 
+.profile-delete-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.profile-delete-btn:hover {
+    background: #dc2626;
+}
 /* ── Stats ── */
 .profile-stats {
     display: flex;

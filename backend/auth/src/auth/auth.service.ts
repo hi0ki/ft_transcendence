@@ -73,6 +73,23 @@ export class AuthService {
     }
 
 
+    async refreshToken(userId: number) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new UnauthorizedException('User not found');
+    
+        const profile = await this.prisma.profile.findUnique({ where: { userId } });
+    
+        // Sign a fresh token with latest role
+        const token = this.jwtService.sign({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            username: profile?.username || null,
+        });
+    
+        return { access_token: token };
+    }
+    
 
     async Create42User(data: { fortyTwoId: string; email: string; username: string; avatar: string; }) {
         let user = await this.prisma.user.findFirst({

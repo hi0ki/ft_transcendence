@@ -210,16 +210,39 @@ function ProfilePage() {
                         </div>
 
                         <div className="profile-actions">
-                            {isOwner ? (
-                                <button className="profile-edit-btn" type="button" onClick={() => navigate('/settings')}>
-                                    Edit Profile
-                                </button>
-                            ) : (
-                                <button className="profile-follow-btn" type="button">
-                                    Follow
-                                </button>
-                            )}
-                        </div>
+                    {isOwner ? (
+                        <button className="profile-edit-btn" type="button" onClick={() => navigate('/settings')}>
+                            Edit Profile
+                        </button>
+                    ) : (
+                        <button className="profile-follow-btn" type="button">
+                            Follow
+                        </button>
+                    )}
+
+                    {/* Delete button — only visible to ADMIN, only for non-admin users */}
+                    {currentUser?.role === 'ADMIN' && !isOwner && profileData?.user?.role !== 'ADMIN' && (
+                        <button
+                            className="profile-delete-btn"
+                            type="button"
+                            onClick={async () => {
+                                if (!window.confirm(`Delete user @${username}? This cannot be undone.`)) return;
+                                const token = authAPI.getToken();
+                                const res = await fetch(`${API_BASE_URL}/api/users/${profileData?.user?.id}`, {
+                                    method: 'DELETE',
+                                    headers: { Authorization: `Bearer ${token}` },
+                                });
+                                if (res.ok) {
+                                    navigate('/home');
+                                } else {
+                                    alert('Failed to delete user');
+                                }
+                            }}
+                        >
+                            🗑 Delete User
+                        </button>
+                    )}
+                </div>
                     </div>
                 </div>
 

@@ -87,6 +87,23 @@ class AuthAPI {
         }
     }
 
+    async refreshToken(): Promise<void> {
+        const token = this.getToken();
+        if (!token) return;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            // Replace old token with new one
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+        } catch {
+            return;
+        }
+    }
+    
     // Get current user info from token
     getCurrentUser(): AuthUser | null {
         const token = this.getToken();
