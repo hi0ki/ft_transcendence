@@ -1,7 +1,6 @@
 import { IsOptional, IsString, IsArray, MinLength, MaxLength } from "class-validator";
 
 export class UpdateProfileDto{
-   
     @IsOptional()
     @IsString()
     @MinLength(3, { message: 'Username must be at least 3 characters long' })

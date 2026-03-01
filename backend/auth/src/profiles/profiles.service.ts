@@ -9,13 +9,26 @@ export class ProfilesService {
     async getMyProfile(userId: number) {
         const profile = await this.prisma.profile.findUnique({
             where: { userId },
-            include: {
+                select: {
+                    skills: true,
+                    bio: true,
+                    avatarUrl: true,
+                    username: true,
                 user: {
                     select: {
                         id: true,
                         email: true,
                         role: true,
                         createdAt: true,
+                        posts: {
+                            orderBy: { createdAt: 'desc' },
+                        },
+                        _count: {
+                            select: {
+                                friendships: { where: { status: 'ACCEPTED' } },
+                                friendOf:    { where: { status: 'ACCEPTED' } },
+                            },
+                        },
                     },
                 },
             },
@@ -23,7 +36,47 @@ export class ProfilesService {
         if (!profile) {
             throw new NotFoundException('Profile not found');
         }
-        return profile;
+        const myFriendsCount =
+            (profile.user._count.friendships ?? 0) +
+            (profile.user._count.friendOf ?? 0);
+        return { ...profile, user: { ...profile.user, friendsCount: myFriendsCount } };
+    }
+
+    async getProfile(username: string) {
+        const profile = await this.prisma.profile.findUnique({
+            where: { username },
+            select: {
+                skills: true,
+                bio: true,
+                avatarUrl: true,
+                username: true,
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        createdAt: true,
+                        posts: {
+                            where: { status: 'APPROVED' },
+                            orderBy: { createdAt: 'desc' },
+                        },
+                        _count: {
+                            select: {
+                                friendships: { where: { status: 'ACCEPTED' } },
+                                friendOf:    { where: { status: 'ACCEPTED' } },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        if (!profile) {
+            throw new NotFoundException('Profile not found');
+        }
+        const friendsCount =
+            (profile.user._count.friendships ?? 0) +
+            (profile.user._count.friendOf ?? 0);
+        return { ...profile, user: { ...profile.user, friendsCount } };
     }
 
     async updateProfile(userId: number, dto: UpdateProfileDto) {

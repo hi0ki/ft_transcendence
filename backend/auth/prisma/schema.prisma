@@ -73,8 +73,8 @@ model User {
     conversationsAsUser1 Conversation[] @relation("ConversationUser1")
     conversationsAsUser2 Conversation[] @relation("ConversationUser2")
     messages             Message[]
-    friendships          Friendship[]   @relation("UserFriendships")
-    friendOf             Friendship[]   @relation("FriendOf")
+    friendshipsAsUser1   Friendship[] @relation("UserFriendships1")
+    friendshipsAsUser2   Friendship[] @relation("UserFriendships2")
     sentNotifications    Notification[] @relation("NotificationSender")
 
     @@map("users")
@@ -88,6 +88,7 @@ model Profile {
     bio       String?
     skills    String[] @default([])
 
+    @@index([username])
     @@map("profiles")
 }
 
@@ -190,14 +191,16 @@ model Message {
 }
 
 model Friendship {
-    userId    Int
-    friendId  Int
-    user      User             @relation("UserFriendships", fields: [userId], references: [id])
-    friend    User             @relation("FriendOf", fields: [friendId], references: [id])
+    user1Id     Int
+    user2Id     Int
+    requestedBy Int
     status    FriendshipStatus
     createdAt DateTime         @default(now()) @db.Timestamptz(6)
 
-    @@id([userId, friendId])
-    @@index([friendId])
+
+    user1     User @relation("UserFriendships1", fields: [user1Id], references: [id])
+    user2     User @relation("UserFriendships2", fields: [user2Id], references: [id])
+
+    @@id([user1Id, user2Id])
     @@map("friendships")
 }

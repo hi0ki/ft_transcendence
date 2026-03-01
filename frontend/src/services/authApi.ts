@@ -122,6 +122,22 @@ class AuthAPI {
         }
     }
 
+    // Fetch any user's profile by username
+    async getProfile(username: string): Promise<any | null> {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/${username}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
+        }
+    }
+
     async updateProfile(data: { 
         username?: string; 
         bio?: string; 
