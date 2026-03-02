@@ -104,6 +104,9 @@ export class PostsController {
     @UseInterceptors(postImageUploadInterceptor)
     async create(@Req() req: Request, @Body() body: CreatePostDto, @UploadedFile() file?: multer.File) {
         const userId = (req as any).user?.id;
+        if (!file && body.imageUrl) {
+            throw new BadRequestException('Direct imageUrl is not allowed. Upload an image file.');
+        }
         if (file)
         {
             await validateUploadedImageSignature(file);
@@ -127,6 +130,9 @@ export class PostsController {
     @UseInterceptors(postImageUploadInterceptor)
     async update(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdatePostDto, @UploadedFile() file?: multer.File) {
         const userId = (req as any).user?.id;
+        if (!file && dto.imageUrl) {
+            throw new BadRequestException('Direct imageUrl is not allowed. Upload an image file.');
+        }
         if (file) {
             await validateUploadedImageSignature(file);
             dto.imageUrl = `/uploads/posts/${file.filename}`;

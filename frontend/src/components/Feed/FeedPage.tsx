@@ -123,7 +123,7 @@ const FeedPage: React.FC = () => {
         fetchComments(postId);
     }, [fetchComments]);
 
-    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
+    const handleCreatePost = async (newPostData: { type: string; title: string; content: string; tags: string[]; imageFile?: File; contentUrl?: string }) => {
         try {
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
@@ -133,7 +133,7 @@ const FeedPage: React.FC = () => {
                 type: backendType,
                 title: newPostData.title,
                 content: newPostData.content,
-                imageUrl: newPostData.imageUrl,
+                imageFile: newPostData.imageFile,
                 contentUrl: newPostData.contentUrl
             });
 

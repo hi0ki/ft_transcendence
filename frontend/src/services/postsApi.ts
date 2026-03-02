@@ -47,7 +47,7 @@ export interface CreatePostPayload {
     type: 'HELP' | 'RESOURCE' | 'MEME';
     title: string;///////heeemmmm to reviewww this 
     content: string;
-    imageUrl?: string;
+    imageFile?: File;
     contentUrl?: string;
 }
 
@@ -116,6 +116,16 @@ class PostsAPI {
         };
     }
 
+    private getAuthTokenHeader(): Record<string, string> {
+        const token = authAPI.getToken();
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+        return {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
 
     async getAllPosts(): Promise<Post[]> {
         try {
@@ -161,16 +171,23 @@ class PostsAPI {
     async createPost(payload: CreatePostPayload): Promise<Post> 
     {
         try {
+            const formData = new FormData();
+            formData.append('type', payload.type);
+            formData.append('title', payload.title);
+            formData.append('content', payload.content);
+
+            if (payload.contentUrl) {
+                formData.append('contentUrl', payload.contentUrl);
+            }
+
+            if (payload.imageFile) {
+                formData.append('image', payload.imageFile);
+            }
+
             const response = await fetch(`${API_BASE_URL}/posts/`, {
                 method: 'POST',
-                headers: this.getAuthHeader(),
-                body: JSON.stringify({
-                    type: payload.type,
-                    title: payload.title,
-                    content: payload.content,
-                    imageUrl: payload.imageUrl,
-                    contentUrl: payload.contentUrl
-                })
+                headers: this.getAuthTokenHeader(),
+                body: formData
             });
 
             if (!response.ok) {
