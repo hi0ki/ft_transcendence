@@ -10,6 +10,7 @@ import AuthCallback from './components/Auth/AuthCallback'
 import ProfilePage from './components/Profile/ProfilePage'
 import SettingsPage from './components/Settings/SettingsPage'
 import AdminPage from './components/Admin/AdminPage'
+import { PrivacyPolicyPage, TermsOfServicePage } from './components/Legal/LegalPages'
 import './App.css'
 
 function LoginPage() {
@@ -211,6 +212,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/callback" element={<AuthCallback />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
 
         <Route path="/" element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />} />
 

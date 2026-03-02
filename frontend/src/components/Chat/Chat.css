@@ -9,7 +9,6 @@
     height: 100vh;
     width: 100%;
     background-color: #0b0f1a;
-    /* Very dark background */
     padding: 40px;
     box-sizing: border-box;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -20,20 +19,35 @@
 /* Global Header */
 .chat-global-header {
     margin-bottom: 30px;
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.chat-global-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.15), transparent);
+    border-radius: 2px;
 }
 
 .chat-global-header h1 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 800;
     margin: 0;
     color: #ffffff;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .chat-global-header p {
-    font-size: 1rem;
-    color: #94a3b8;
-    margin: 6px 0 0;
+    font-size: 0.88rem;
+    color: #64748b;
+    margin: 4px 0 0;
+    font-weight: 500;
 }
 
 /* Container for the two cards */
@@ -228,37 +242,42 @@
 }
 
 .chatroom-header {
-    padding: 20px 24px;
+    padding: 12px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .chatroom-header-user {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
 }
 
 .chatroom-header-avatar {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
 }
 
 .chatroom-header-avatar img {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
+    object-fit: cover;
 }
 
 .chatroom-header-name {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.88rem;
     font-weight: 700;
+    line-height: 1;
 }
 
 .chatroom-header-handle {
-    margin: 2px 0 0;
-    font-size: 0.75rem;
+    margin: 0;
+    font-size: 0.7rem;
     color: #64748b;
+    line-height: 1;
 }
 
 .chatroom-messages {
@@ -267,7 +286,7 @@
     padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 4px;
 }
 
 .chatroom-messages::-webkit-scrollbar {
@@ -382,13 +401,122 @@
 }
 
 @media (max-width: 768px) {
-    .chat-app-container {
-        flex-direction: column;
+    .chat-layout-wrapper {
+        padding: 0;
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile browsers */
     }
 
+    .chat-global-header {
+        margin-bottom: 0;
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+        background: linear-gradient(180deg, #0b0f1a 0%, rgba(11,15,26,0.95) 100%);
+    }
+
+    .chat-global-header::after {
+        bottom: -1px;
+        width: 50px;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
+    }
+
+    .chat-global-header h1 {
+        font-size: 1.35rem;
+        letter-spacing: -0.01em;
+    }
+
+    .chat-global-header p {
+        font-size: 0.75rem;
+        margin-top: 2px;
+        color: #475569;
+    }
+
+    .chat-app-container {
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        gap: 0;
+    }
+
+    /* Panel switching: hide the inactive panel on mobile */
+    .chat-panel-hidden-mobile {
+        display: none !important;
+    }
+
+    /* Left panel (list) fills the screen */
     .chat-card--left {
         width: 100%;
-        height: 300px;
+        flex: 1;
+        height: auto;
+        min-height: 0;
+        border-radius: 0;
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Right panel (chat room) fills the screen too */
+    .chat-card--right {
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-radius: 0;
+        border: none;
+    }
+
+    /* Adjust chatroom to fill available space */
+    .chatroom {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .chatroom-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    .chatroom-input-wrapper {
+        flex-shrink: 0;
+    }
+}
+
+/* ── Mobile Back Button ─────────────────────────────── */
+.chat-mobile-back {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .chat-mobile-back {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #60a5fa;
+        padding: 14px 16px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        width: 100%;
+        text-align: left;
+        flex-shrink: 0;
+        transition: background 0.2s;
+    }
+
+    .chat-mobile-back:hover {
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .chat-mobile-back svg {
+        flex-shrink: 0;
     }
 }
 
@@ -705,34 +833,29 @@
     transform: scale(1.15);
 }
 
-/* Voice and Send Buttons (WhatsApp Style) */
-.chatroom-voice-btn,
-.chatroom-send-btn {
-    background-color: #00a884;
-    /* WhatsApp Green */
-    border: none;
-    color: white;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
+/* Voice and Send Buttons */
+.chatroom-voice-btn {
+    background-color: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s, transform 0.2s;
+    transition: all 0.2s;
     flex-shrink: 0;
-    margin-left: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.chatroom-voice-btn:hover,
-.chatroom-send-btn:hover {
-    background-color: #008f6f;
-    transform: scale(1.05);
+.chatroom-voice-btn:hover {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
-.chatroom-voice-btn:active,
-.chatroom-send-btn:active {
+.chatroom-voice-btn:active {
     transform: scale(0.95);
 }
 

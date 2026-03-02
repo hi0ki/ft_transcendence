@@ -35,6 +35,7 @@ interface PostCardProps {
 }
 
 const MAX_CONTENT_LENGTH = 200;
+const MAX_CONTENT_LINES = 8;//hhmmmmmmmmmmmmmmmmm
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
 const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, commentCount: externalCommentCount }) => {
@@ -59,10 +60,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
         return () => { document.body.style.overflow = ''; };
     }, [showReactionsPopup]);
 
-    const isContentTruncated = post.content && post.content.length > MAX_CONTENT_LENGTH;
-    const displayContent = isContentTruncated
-        ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...'
-        : post.content;
+    const lineCount = post.content ? post.content.split(/\r?\n/).length : 0;
+    const isContentTruncated = Boolean(post.content) && (
+        post.content.length > MAX_CONTENT_LENGTH || lineCount > MAX_CONTENT_LINES
+    );
+
+    const displayContent = React.useMemo(() => {
+        if (!post.content || !isContentTruncated) return post.content;
+
+        const lines = post.content.split(/\r?\n/).slice(0, MAX_CONTENT_LINES);
+        const lineLimitedContent = lines.join('\n');
+        const characterLimitedContent = lineLimitedContent.slice(0, MAX_CONTENT_LENGTH);
+
+        return characterLimitedContent.trimEnd() + '...';
+    }, [post.content, isContentTruncated]);
 
     // Sync external comment count
     useEffect(() => {

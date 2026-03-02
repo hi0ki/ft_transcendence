@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { authAPI } from '../../services/authApi';
 import './Auth.css';
 
@@ -156,6 +157,11 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
 
                 <p className="auth-switch">
                     Already have an account? <button type="button" className="auth-switch-link" onClick={onSwitchToLogin}>Sign In</button>
+                </p>
+                <p className="auth-legal-links">
+                    <Link to="/privacy">Privacy Policy</Link>
+                    <span>•</span>
+                    <Link to="/terms">Terms of Service</Link>
                 </p>
             </div>
         </div>

@@ -25,8 +25,8 @@ function SettingsPage() {
 
     const [form, setForm] = useState<ProfileFormData>({
         username: derivedUsername,
-        bio: 'Computer Science student | Love helping others learn',
-        skills: ['JavaScript', 'React', 'Python', 'Data Structures'],
+        bio: '',
+        skills: [],
     });
 
     const [skillInput, setSkillInput] = useState('');

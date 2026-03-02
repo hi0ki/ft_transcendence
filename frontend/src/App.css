@@ -79,5 +79,8 @@
 @media (max-width: 768px) {
   .app-content {
     width: 100%;
+    padding-bottom: 64px;
+    /* space for mobile bottom nav */
+    box-sizing: border-box;
   }
 }
