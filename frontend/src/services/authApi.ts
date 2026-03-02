@@ -131,6 +131,24 @@ class AuthAPI {
         }
     }
 
+    async reLoginWithFreshToken(): Promise<void> {
+        const token = this.getToken();
+        if (!token) return;
+    
+        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    
+        if (!response.ok) {
+            this.logout();
+            window.location.href = '/login';
+            return;
+        }
+    
+        const data = await response.json();
+        localStorage.setItem(TOKEN_KEY, data.access_token);
+    }
+    
     // Fetch current user's profile (including avatarUrl) from the backend
     async getMyProfile(): Promise<UserProfile | null> {
         const token = this.getToken();

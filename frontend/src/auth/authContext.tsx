@@ -36,8 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await authAPI.refreshToken();
             const newRole = authAPI.getCurrentUser()?.role;
             if (oldRole && newRole && oldRole !== newRole) {
-                authAPI.logout();
-                window.location.href = '/login';
+                // Don't logout — just refresh token and update user state
+                await authAPI.reLoginWithFreshToken();
+                setUser(authAPI.getCurrentUser());
+                window.location.href = '/home';
             }
         };
     
