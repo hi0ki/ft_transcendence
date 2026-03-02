@@ -12,6 +12,7 @@ import { authAPI, getAvatarSrc } from '../../services/authApi';
 import { commentsAPI } from '../../services/commentsApi';
 import { useAuth } from '../../auth/authContext';
 import './FeedPage.css';
+import { useLocation } from 'react-router-dom';
 
 // Extended Mock Data targeting to visually recreate screenshot values including nested comments
 interface ExtendedPost extends Post {
@@ -244,6 +245,28 @@ const FeedPage: React.FC = () => {
 
     // Get the active post for comments modal
     const activeCommentPost = posts.find(p => p.id === activeCommentPostId);
+
+    const location = useLocation();
+
+    // Scroll to post if redirected from search
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const postId = params.get('postId');
+        if (postId) {
+            // Wait for posts to render then scroll
+            const tryScroll = (attempts = 0) => {
+                const el = document.getElementById(`post-${postId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('post-highlight');
+                    setTimeout(() => el.classList.remove('post-highlight'), 2500);
+                } else if (attempts < 10) {
+                    setTimeout(() => tryScroll(attempts + 1), 300);
+                }
+            };
+            tryScroll();
+        }
+    }, [location.search]);
 
     return (
         <div className="feed-page">

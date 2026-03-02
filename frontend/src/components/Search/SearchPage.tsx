@@ -7,6 +7,7 @@ import PostDetailModal from '../Feed/PostDetailModal';
 import type { Post } from '../Feed/PostCard';
 import { searchAPI } from '../../services/searchApi';
 import './SearchPage.css';
+import { useNavigate } from 'react-router-dom';
 
 const LIMIT = 10;
 
@@ -25,6 +26,7 @@ const SearchPage: React.FC = () => {
     const [hasSearched, setHasSearched] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const navigate = useNavigate();
 
     const doSearch = useCallback(async (p: number) => {
         setLoading(true);
@@ -80,6 +82,18 @@ const SearchPage: React.FC = () => {
         setSelectedPost(null);
     };
 
+    const handleComment = (postId: string) => {
+        const post = results.find(p => p.id === postId);
+        if (post) {
+            setSelectedPost(post);
+            setIsDetailModalOpen(true);
+        }
+    };
+
+    const handleViewPost = (postId: string) => {
+        navigate(`/home?postId=${postId}`);
+    };
+
     return (
         <div className="search-page">
             <div className="search-page-header">
@@ -120,12 +134,14 @@ const SearchPage: React.FC = () => {
             {!loading && results.length > 0 && (
                 <div className="search-results-list">
                     {results.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            readOnly={true}
-                            onShowMore={handleShowMore}
-                        />
+                        <div key={post.id} className="search-result-item">
+                            <PostCard
+                                post={post}
+                                readOnly={true}
+                                onShowMore={handleShowMore}
+                                onViewPost={handleViewPost}
+                            />
+                        </div>
                     ))}
                 </div>
             )}

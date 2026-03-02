@@ -31,6 +31,7 @@ interface PostCardProps {
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
     onShowMore?: (post: Post) => void;
+    onViewPost?: (postId: string) => void;
     commentCount?: number;
     readOnly?: boolean;
 }
@@ -39,7 +40,7 @@ const MAX_CONTENT_LENGTH = 200;
 const MAX_CONTENT_LINES = 8;//hhmmmmmmmmmmmmmmmmm
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
-const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, commentCount: externalCommentCount, readOnly = false }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, onViewPost, commentCount: externalCommentCount, readOnly = false }) => {
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [myReaction, setMyReaction] = useState<ReactionType | null>(null);
     const [reactionCount, setReactionCount] = useState(post.likes);
@@ -197,12 +198,27 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                         </div>
                     </div>
                 </div>
-                {post.type && (
-                    <div className={'post-type-badge type-' + post.type.toLowerCase()}>
-                        {getTypeIcon(post.type)}
-                        {post.type}
-                    </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {post.type && (
+                        <div className={'post-type-badge type-' + post.type.toLowerCase()}>
+                            {getTypeIcon(post.type)}
+                            {post.type}
+                        </div>
+                    )}
+                    {onViewPost && (
+                        <button
+                            className="view-post-icon-btn"
+                            onClick={() => onViewPost(post.id)}
+                            title="View full post & comments"
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="post-content-container">
@@ -233,9 +249,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                 )}
 
                 {post.imageUrl && (
-                    <div className="post-image-container" onClick={() => setIsImageModalOpen(true)}>
-                        <img src={post.imageUrl} alt="Post content" className="post-image" />
-                    </div>
+                    <>
+                        <div className="post-image-container" onClick={() => setIsImageModalOpen(true)}>
+                            <img src={post.imageUrl} alt="Post content" className="post-image" />
+                        </div>
+                        <div className="post-has-image-indicator" onClick={() => onShowMore && onShowMore(post)}>
+                            📷 Image attached • Click "Show More" to view
+                        </div>
+                    </>
                 )}
 
                 {post.tags && post.tags.length > 0 && (
