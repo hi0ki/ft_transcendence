@@ -6,14 +6,14 @@ type PostType = 'Help' | 'Resource' | 'Meme';
 interface CreatePostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (post: { type: PostType; title: string; content: string; tags: string[]; imageUrl?: string; contentUrl?: string }) => void;
+    onSubmit: (post: { type: PostType; title: string; content: string; tags: string[]; imageFile?: File; contentUrl?: string }) => void;
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [selectedType, setSelectedType] = useState<PostType>('Help');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState('');
     const [contentUrl, setContentUrl] = useState('');
 
@@ -36,11 +36,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
             return;
         }
 
+        setImageFile(file);
+
         const reader = new FileReader();
         reader.onload = (event) => {
-            const base64String = event.target?.result as string;
-            setImageUrl(base64String);
-            setImagePreview(base64String);
+            const previewString = event.target?.result as string;
+            setImagePreview(previewString);
         };
         reader.readAsDataURL(file);
     };
@@ -53,7 +54,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
             title,
             content,
             tags: [],
-            imageUrl: imageUrl || undefined,
+            imageFile: imageFile || undefined,
             contentUrl: contentUrl || undefined
         });
 
@@ -61,7 +62,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
         setTitle('');
         setContent('');
         setSelectedType('Help');
-        setImageUrl('');
+        setImageFile(null);
         setImagePreview('');
         setContentUrl('');
     };
@@ -157,7 +158,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                         <span className="upload-hint">PNG, JPG up to 5MB</span>
                     </div>
                     {imagePreview && (
-                        <div className="image-preview" onClick={() => { setImageUrl(''); setImagePreview(''); }}>
+                        <div className="image-preview" onClick={() => { setImageFile(null); setImagePreview(''); }}>
                             <img src={imagePreview} alt="Preview" style={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain' }} />
                             <div className="remove-image-overlay">Remove Image</div>
                         </div>

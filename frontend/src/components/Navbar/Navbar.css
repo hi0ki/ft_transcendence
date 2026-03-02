@@ -169,6 +169,37 @@
     gap: 12px;
 }
 
+.sidebar-legal-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px 0 8px;
+}
+
+.sidebar-legal-link {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.22);
+    font-size: 0.68rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+    text-decoration: none;
+    position: relative;
+}
+
+.sidebar-legal-link:hover {
+    color: rgba(255,255,255,0.55);
+}
+
+.sidebar-legal-link:not(:last-child)::after {
+    content: '·';
+    position: absolute;
+    right: -8px;
+    color: rgba(255,255,255,0.15);
+}
+
 .user-profile-card {
     display: flex;
     align-items: center;

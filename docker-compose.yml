@@ -26,6 +26,8 @@ services:
       - core_service
     networks:
       - my-app-network
+    volumes:
+      - uploads_data:/app/uploads
   # Database
   postgres:
     container_name: postgres
@@ -83,6 +85,8 @@ services:
       - postgres
     networks:
       - my-app-network
+    volumes:
+      - uploads_data:/app/uploads
 
 # Volumes
 volumes:
