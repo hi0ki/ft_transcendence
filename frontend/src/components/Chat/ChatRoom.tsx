@@ -574,7 +574,6 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                                 type="submit"
                                 className="chatroom-send-btn"
                                 disabled={isUploading}
-                                style={{ marginLeft: '10px' }}
                             >
                                 {isUploading ? (
                                     <span className="upload-spinner"></span>
