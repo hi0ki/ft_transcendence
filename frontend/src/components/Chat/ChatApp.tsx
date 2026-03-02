@@ -79,12 +79,10 @@ const ChatApp: React.FC = () => {
             if (isInitiator) {
                 // Initiator: open the conversation in the chat window only
                 // Do NOT add to sidebar yet — it appears there only after the first message is sent
-                const userConvs = await chatAPI.getUserConversations(userId);
-                const newConv = userConvs.find(c => c.id === data.conversationId);
+                const newConv = data.conversation;
                 if (newConv) {
                     setActiveConversation(newConv);
-                    const messages = await chatAPI.getConversationMessages(newConv.id);
-                    setActiveMessages(messages);
+                    setActiveMessages([]); // New conversation, no messages yet
                     socketService.joinRoom(newConv.id);
                 }
             } else {

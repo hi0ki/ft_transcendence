@@ -134,6 +134,13 @@ export class ChatService {
                     { user1Id: userId },
                     { user2Id: userId },
                 ],
+                messages: {
+                    some: {
+                        NOT: {
+                            deletedFor: { has: userId }
+                        }
+                    }
+                }
             },
             include: {
                 user1: {
