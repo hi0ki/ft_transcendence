@@ -11,13 +11,14 @@ import { Roles, Role } from '../decorators/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  //temsah
   @Get()
   @Roles(Role.ADMIN)
   findAll() {
     return this.usersService.findAll();
   }
 
-
+//temsah
   @Get('me')
   getMe(@Req() req: any) {
     return this.usersService.findOne(req.user.id);
@@ -29,7 +30,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-
+ //temsah
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
   {

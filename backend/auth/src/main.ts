@@ -6,6 +6,8 @@ import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import helmet from 'helmet'; 
+import { XssInterceptor } from './utils/xss.interceptor'; 
 
 async function bootstrap() {
   // Ensure uploads directories exist (one per file type)
@@ -18,6 +20,8 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use(helmet()); 
 
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
@@ -32,6 +36,8 @@ async function bootstrap() {
   // Serve uploaded files statically at /uploads
   app.useStaticAssets('/app/uploads', { prefix: '/uploads/' });
 
+  app.useGlobalInterceptors(new XssInterceptor());
+  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
