@@ -107,7 +107,7 @@ const SearchPage: React.FC = () => {
             {!loading && results.length > 0 && (
                 <div className="search-results-list">
                     {results.map((post) => (
-                        <PostCard key={post.id} post={post} />
+                        <PostCard key={post.id} post={post} readOnly={true} />
                     ))}
                 </div>
             )}
