@@ -24,12 +24,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<AuthUser | null>(authAPI.getCurrentUser());
 
     useEffect(() => {
-        // Check token validity on mount
         if (authAPI.isAuthenticated()) {
             setUser(authAPI.getCurrentUser());
         } else {
             setUser(null);
         }
+    
+        const checkRole = async () => {
+            if (!authAPI.isAuthenticated()) return;
+            const oldRole = authAPI.getCurrentUser()?.role;
+            await authAPI.refreshToken();
+            const newRole = authAPI.getCurrentUser()?.role;
+            if (oldRole && newRole && oldRole !== newRole) {
+                authAPI.logout();
+                window.location.href = '/login';
+            }
+        };
+    
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') checkRole();
+        };
+    
+        window.addEventListener('focus', checkRole);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        const interval = setInterval(checkRole, 10_000);
+    
+        return () => {
+            window.removeEventListener('focus', checkRole);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            clearInterval(interval);
+        };
     }, []);
 
     const login = async (email: string, password: string) => {
