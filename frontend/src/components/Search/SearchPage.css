@@ -1,0 +1,206 @@
+/* ── Search Page ─────────────────────────────────────────── */
+
+.search-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    color: #e2e8f0;
+}
+
+.search-page-header {
+    margin-bottom: 20px;
+}
+
+.search-page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ── Search Bar ─────────────────────────────────────────── */
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background: #1a1d2e;
+    border: 1px solid #2d3148;
+    border-radius: 12px;
+    padding: 0 16px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+}
+
+.search-bar-icon {
+    font-size: 1.1rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.search-bar-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-size: 1rem;
+    padding: 14px 0;
+}
+
+.search-bar-input::placeholder {
+    color: #64748b;
+}
+
+/* ── Filters ────────────────────────────────────────────── */
+
+.search-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-filter-select {
+    background: #1a1d2e;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    color: #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.search-filter-select:focus {
+    border-color: #7c3aed;
+}
+
+.search-filter-select option {
+    background: #1a1d2e;
+    color: #e2e8f0;
+}
+
+/* ── Loading ────────────────────────────────────────────── */
+
+.search-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.search-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #2d3148;
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Error ──────────────────────────────────────────────── */
+
+.search-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #fca5a5;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+/* ── Results info ───────────────────────────────────────── */
+
+.search-results-info {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+/* ── Results list ───────────────────────────────────────── */
+
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Pagination ─────────────────────────────────────────── */
+
+.search-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.pagination-btn {
+    background: #1a1d2e;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    color: #e2e8f0;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #252940;
+    border-color: #7c3aed;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pagination-num {
+    min-width: 38px;
+    text-align: center;
+    border-radius: 50%;
+    padding: 8px;
+}
+
+.pagination-active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .search-page {
+        padding: 16px 12px 32px;
+    }
+
+    .search-filters {
+        flex-direction: column;
+    }
+
+    .search-filter-select {
+        width: 100%;
+    }
+}
