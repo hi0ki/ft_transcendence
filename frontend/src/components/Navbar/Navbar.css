@@ -156,6 +156,27 @@
     gap: 12px;
 }
 
+.sidebar-legal-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar-legal-link {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.84rem;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+}
+
+.sidebar-legal-link:hover {
+    color: #38bdf8;
+    text-decoration: underline;
+}
+
 .user-profile-card {
     display: flex;
     align-items: center;

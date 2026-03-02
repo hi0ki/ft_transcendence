@@ -325,6 +325,26 @@
     text-decoration: none;
 }
 
+.auth-legal-links {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.auth-legal-links a {
+    color: #94a3b8;
+    text-decoration: none;
+}
+
+.auth-legal-links a:hover {
+    color: #38bdf8;
+    text-decoration: underline;
+}
+
 .auth-error {
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.2);
