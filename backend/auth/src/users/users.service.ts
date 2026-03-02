@@ -8,7 +8,7 @@ export class UsersService {
     constructor(private prisma: PrismaService) {}
 
     async findAll() {
-        return this.prisma.user.findMany({
+        const users = await this.prisma.user.findMany({
             select: {
                 id: true,
                 email: true,
@@ -20,9 +20,25 @@ export class UsersService {
                         avatarUrl: true,
                     },
                 },
+                _count: {
+                    select: {
+                        posts: true,
+                        friendshipsAsUser2: true,  // ← Change this
+                    },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
+    
+        return users.map((user) => ({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            createdAt: user.createdAt,
+            profile: user.profile,
+            postCount: user._count.posts,
+            followerCount: user._count.friendshipsAsUser2,  // ← Change this
+        }));
     }
 
     async findOne(id: number) {

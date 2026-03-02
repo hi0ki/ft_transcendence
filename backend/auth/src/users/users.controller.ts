@@ -12,17 +12,29 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   //temsah
+  // @Get()
+  // @Roles(Role.ADMIN)
+  // findAll() {
+  //   return this.usersService.findAll();
+  // }
+
   @Get()
   @Roles(Role.ADMIN)
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    console.log('✓ findAll() called'); // ← Add this
+    const users = await this.usersService.findAll();
+    return {
+      success: true,
+      data: users,
+      message: 'Users retrieved successfully',
+    };
   }
 
 //temsah
-  @Get('me')
-  getMe(@Req() req: any) {
-    return this.usersService.findOne(req.user.id);
-  }
+  // @Get('me')
+  // getMe(@Req() req: any) {
+  //   return this.usersService.findOne(req.user.id);
+  // }
 
 
   @Get(':id')
@@ -31,11 +43,11 @@ export class UsersController {
   }
 
  //temsah
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
-  {
-    return this.usersService.update(id, dto, req.user);
-  }
+  // @Patch(':id')
+  // update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
+  // {
+  //   return this.usersService.update(id, dto, req.user);
+  // }
 
 
   @Delete(':id')

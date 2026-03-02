@@ -66,7 +66,7 @@ function SettingsPage() {
                 }));
                 setProfileAvatarUrl(data.avatarUrl || null);
             }
-            setAvatarLoading(false); // ← add this
+            setAvatarLoading(false);
         });
     }, [navigate]);
 
@@ -102,7 +102,7 @@ function SettingsPage() {
                 username: form.username,
                 bio: form.bio,
                 skills: form.skills,
-                avatarUrl: avatarBase64 ?? undefined, // ← add this
+                avatarUrl: avatarBase64 ?? undefined,
             });
             navigate('/profile');
         } catch (err) {
@@ -140,12 +140,15 @@ function SettingsPage() {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64 = reader.result as string;
-                setPreviewImage(base64);   // for showing preview
-                setAvatarBase64(base64);   // for sending to backend
+                setPreviewImage(base64);
+                setAvatarBase64(base64);
             };
             reader.readAsDataURL(file);
         }
     };
+
+    // ── FIX: Use getAvatarSrc to generate proper fallback when loading ──
+    const displayAvatarSrc = previewImage || getAvatarSrc(profileAvatarUrl, form.username);
 
     return (
         <div className="settings-page">
@@ -158,7 +161,7 @@ function SettingsPage() {
                 <div className="settings-avatar-row">
                     <div className="settings-avatar-container">
                     <img
-                        src={avatarLoading ? '' : (previewImage || getAvatarSrc(profileAvatarUrl, form.username))}
+                        src={displayAvatarSrc}
                         alt="Avatar preview"
                         className="settings-avatar"
                         onError={(e) => {
@@ -206,7 +209,6 @@ function SettingsPage() {
                             onChange={e => {
                                 const newUsername = e.target.value;
                                 setForm(prev => ({ ...prev, username: newUsername }));
-                                // Validate on change
                                 const newErrors = validateForm(newUsername);
                                 setErrors(newErrors);
                             }}

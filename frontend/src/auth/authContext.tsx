@@ -29,32 +29,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
             setUser(null);
         }
-    
-        const checkRole = async () => {
+
+        // ── DEBOUNCING: Track last refresh time to prevent rate limiting ──
+        let lastRefreshTime = 0;
+        let refreshTimeout: NodeJS.Timeout | null = null;
+        const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh attempts
+
+        const debouncedCheckRole = async () => {
+            // Clear any pending timeout
+            if (refreshTimeout) clearTimeout(refreshTimeout);
+
+            const now = Date.now();
+            const timeSinceLastRefresh = now - lastRefreshTime;
+
+            // If less than 30 seconds since last refresh, schedule for later
+            if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
+                const delay = REFRESH_COOLDOWN - timeSinceLastRefresh;
+                refreshTimeout = setTimeout(() => {
+                    debouncedCheckRole();
+                }, delay);
+                return;
+            }
+
+            // Safe to refresh
+            lastRefreshTime = now;
+
             if (!authAPI.isAuthenticated()) return;
-            const oldRole = authAPI.getCurrentUser()?.role;
-            await authAPI.refreshToken();
-            const newRole = authAPI.getCurrentUser()?.role;
-            if (oldRole && newRole && oldRole !== newRole) {
-                // Don't logout — just refresh token and update user state
-                await authAPI.reLoginWithFreshToken();
-                setUser(authAPI.getCurrentUser());
-                window.location.href = '/home';
+
+            try {
+                const oldRole = authAPI.getCurrentUser()?.role;
+                await authAPI.refreshToken();
+                const newRole = authAPI.getCurrentUser()?.role;
+
+                if (oldRole && newRole && oldRole !== newRole) {
+                    await authAPI.reLoginWithFreshToken();
+                    setUser(authAPI.getCurrentUser());
+                    window.location.href = '/home';
+                }
+            } catch (err) {
+                console.error('Error checking role:', err);
             }
         };
-    
+
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') checkRole();
+            if (document.visibilityState === 'visible') {
+                debouncedCheckRole();
+            }
         };
-    
-        window.addEventListener('focus', checkRole);
+
+        window.addEventListener('focus', debouncedCheckRole);
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        const interval = setInterval(checkRole, 10_000);
-    
+        const interval = setInterval(debouncedCheckRole, 10_000);
+
         return () => {
-            window.removeEventListener('focus', checkRole);
+            window.removeEventListener('focus', debouncedCheckRole);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             clearInterval(interval);
+            if (refreshTimeout) clearTimeout(refreshTimeout);
         };
     }, []);
 

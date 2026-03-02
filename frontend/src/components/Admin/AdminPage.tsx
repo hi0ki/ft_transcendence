@@ -22,6 +22,20 @@ interface AdminPost {
     };
 }
 
+// ── NEW ──
+interface AdminUser {
+    id: number;
+    email: string;
+    role: string;
+    createdAt: string;
+    postCount: number;
+    followerCount: number;
+    profile?: {
+        username?: string;
+        avatarUrl?: string | null;
+    };
+}
+
 const MAX_PREVIEW_LENGTH = 300;
 
 function timeAgo(iso: string): string {
@@ -38,6 +52,12 @@ function timeAgo(iso: string): string {
 function getAvatarSrc(post: AdminPost) {
     if (post.user?.profile?.avatarUrl) return post.user.profile.avatarUrl;
     const seed = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'user';
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+}
+
+function getUserAvatarSrc(user: AdminUser) {
+    if (user.profile?.avatarUrl) return user.profile.avatarUrl;
+    const seed = user.profile?.username || user.email.split('@')[0] || 'user';
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
 }
 
@@ -128,6 +148,12 @@ export default function AdminPage() {
     const [busy, setBusy] = useState<number | null>(null);
     const [selectedPost, setSelectedPost] = useState<AdminPost | null>(null);
 
+    // ── NEW: main tab + users state ──
+    const [activeMainTab, setActiveMainTab] = useState<'posts' | 'users'>('posts');
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [usersBusy, setUsersBusy] = useState<number | null>(null);
+
     const token = authAPI.getToken();
 
     const fetchPosts = () => {
@@ -138,6 +164,21 @@ export default function AdminPage() {
             .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
             .then((data: AdminPost[]) => { setPosts(data); setLoading(false); })
             .catch(err => { setError(err.message); setLoading(false); });
+    };
+
+    // ── NEW ──
+    const fetchUsers = () => {
+        setUsersLoading(true);
+        fetch(`${API_BASE_URL}/api/users`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+            .then((response: any) => { 
+                const users = response.data || response;
+                setUsers(users); 
+                setUsersLoading(false); 
+            })
+            .catch(err => { setError(err.message); setUsersLoading(false); });
     };
 
     useEffect(() => { fetchPosts(); }, []);
@@ -178,9 +219,32 @@ export default function AdminPage() {
         } finally { setBusy(null); }
     };
 
+    // ── NEW ──
+    const handleChangeRole = async (userId: number, newRole: string) => {
+        setUsersBusy(userId);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole }),
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || `Failed to change role (HTTP ${res.status})`);
+            }
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+        } catch (e: any) {
+            setError(e.message);
+        } finally { setUsersBusy(null); }
+    };
+
     const pending = posts.filter(p => p.status === 'PENDING');
     const approved = posts.filter(p => p.status === 'APPROVED');
     const displayed = activeTab === 'PENDING' ? pending : approved;
+
+    // ── NEW: Filter users by role ──
+    const adminUsers = users.filter(u => u.role === 'ADMIN');
+    const regularUsers = users.filter(u => u.role === 'USER');
 
     return (
         <div className="mod-page">
@@ -199,131 +263,293 @@ export default function AdminPage() {
                 )}
             </div>
 
-            <div className="mod-stats">
-                <div className="mod-stat-card">
-                    <span className="mod-stat-label">Total Posts</span>
-                    <span className="mod-stat-value">{posts.length}</span>
-                    <span className="mod-stat-icon mod-stat-icon--total">⚑</span>
-                </div>
-                <div className="mod-stat-card">
-                    <span className="mod-stat-label">Pending Review</span>
-                    <span className="mod-stat-value mod-stat-value--pending">{pending.length}</span>
-                    <span className="mod-stat-icon mod-stat-icon--pending">◉</span>
-                </div>
-                <div className="mod-stat-card">
-                    <span className="mod-stat-label">Approved</span>
-                    <span className="mod-stat-value mod-stat-value--approved">{approved.length}</span>
-                    <span className="mod-stat-icon mod-stat-icon--approved">✓</span>
-                </div>
+            {/* ── NEW: Main tab switcher ── */}
+            <div className="mod-tabs" style={{ paddingBottom: '0', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0' }}>
+                <button
+                    className={`mod-tab ${activeMainTab === 'posts' ? 'mod-tab--active' : ''}`}
+                    onClick={() => setActiveMainTab('posts')}
+                >
+                    Posts
+                    {posts.length > 0 && <span className="mod-tab-count">{posts.length}</span>}
+                </button>
+                <button
+                    className={`mod-tab ${activeMainTab === 'users' ? 'mod-tab--active' : ''}`}
+                    onClick={() => {
+                        setActiveMainTab('users');
+                        if (users.length === 0) fetchUsers();
+                    }}
+                >
+                    Users
+                    {users.length > 0 && <span className="mod-tab-count">{users.length}</span>}
+                </button>
             </div>
 
             {error && <div className="mod-error">⚠ {error} <button onClick={() => setError(null)}>✕</button></div>}
 
-            <div className="mod-tabs">
-                <button className={`mod-tab ${activeTab === 'PENDING' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('PENDING')}>
-                    Pending {pending.length > 0 && <span className="mod-tab-count">{pending.length}</span>}
-                </button>
-                <button className={`mod-tab ${activeTab === 'APPROVED' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('APPROVED')}>
-                    Approved {approved.length > 0 && <span className="mod-tab-count">{approved.length}</span>}
-                </button>
-            </div>
-
-            <div className="mod-list">
-                {loading ? (
-                    <div className="mod-loading"><div className="mod-spinner" /><span>Loading posts…</span></div>
-                ) : displayed.length === 0 ? (
-                    <div className="mod-empty">
-                        <span className="mod-empty-icon">📭</span>
-                        <span>No {activeTab.toLowerCase()} posts</span>
+            {/* ── POSTS SECTION (unchanged) ── */}
+            {activeMainTab === 'posts' && (
+                <>
+                    <div className="mod-stats">
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Total Posts</span>
+                            <span className="mod-stat-value">{posts.length}</span>
+                            <span className="mod-stat-icon mod-stat-icon--total">⚑</span>
+                        </div>
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Pending Review</span>
+                            <span className="mod-stat-value mod-stat-value--pending">{pending.length}</span>
+                            <span className="mod-stat-icon mod-stat-icon--pending">◉</span>
+                        </div>
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Approved</span>
+                            <span className="mod-stat-value mod-stat-value--approved">{approved.length}</span>
+                            <span className="mod-stat-icon mod-stat-icon--approved">✓</span>
+                        </div>
                     </div>
-                ) : (
-                    displayed.map(post => {
-                        const username = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'Unknown';
-                        const isBusy = busy === post.id;
 
-                        return (
-                            <div key={post.id} className="mod-card">
-                                {/* Header: avatar, name, type badge, status */}
-                                <div className="mod-card-header">
-                                    <div className="mod-card-author">
-                                        <img src={getAvatarSrc(post)} alt={username} className="mod-card-avatar" />
-                                        <div className="mod-card-author-info">
-                                            <span className="mod-card-name">{username}</span>
-                                            <span className="mod-card-meta">
-                                                @{username.toLowerCase().replace(/\s+/g, '')} · {timeAgo(post.createdAt)}
+                    <div className="mod-tabs">
+                        <button className={`mod-tab ${activeTab === 'PENDING' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('PENDING')}>
+                            Pending {pending.length > 0 && <span className="mod-tab-count">{pending.length}</span>}
+                        </button>
+                        <button className={`mod-tab ${activeTab === 'APPROVED' ? 'mod-tab--active' : ''}`} onClick={() => setActiveTab('APPROVED')}>
+                            Approved {approved.length > 0 && <span className="mod-tab-count">{approved.length}</span>}
+                        </button>
+                    </div>
+
+                    <div className="mod-list">
+                        {loading ? (
+                            <div className="mod-loading"><div className="mod-spinner" /><span>Loading posts…</span></div>
+                        ) : displayed.length === 0 ? (
+                            <div className="mod-empty">
+                                <span className="mod-empty-icon">📭</span>
+                                <span>No {activeTab.toLowerCase()} posts</span>
+                            </div>
+                        ) : (
+                            displayed.map(post => {
+                                const username = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'Unknown';
+                                const isBusy = busy === post.id;
+
+                                return (
+                                    <div key={post.id} className="mod-card">
+                                        <div className="mod-card-header">
+                                            <div className="mod-card-author">
+                                                <img src={getAvatarSrc(post)} alt={username} className="mod-card-avatar" />
+                                                <div className="mod-card-author-info">
+                                                    <span className="mod-card-name">{username}</span>
+                                                    <span className="mod-card-meta">
+                                                        @{username.toLowerCase().replace(/\s+/g, '')} · {timeAgo(post.createdAt)}
+                                                    </span>
+                                                </div>
+                                                <span className={`mod-type-badge mod-type-badge--${post.type.toLowerCase()}`}>{post.type}</span>
+                                            </div>
+                                            <span className={`mod-status-badge mod-status-badge--${post.status.toLowerCase()}`}>
+                                                {post.status === 'PENDING' ? 'Pending Review' : 'Approved'}
                                             </span>
                                         </div>
-                                        <span className={`mod-type-badge mod-type-badge--${post.type.toLowerCase()}`}>{post.type}</span>
-                                    </div>
-                                    <span className={`mod-status-badge mod-status-badge--${post.status.toLowerCase()}`}>
-                                        {post.status === 'PENDING' ? 'Pending Review' : 'Approved'}
-                                    </span>
-                                </div>
 
-                                {/* Body: title, preview text, indicators, link */}
-                                <div className="mod-card-body-block">
-                                    {post.title && <h3 className="mod-card-title">{post.title}</h3>}
+                                        <div className="mod-card-body-block">
+                                            {post.title && <h3 className="mod-card-title">{post.title}</h3>}
 
-                                    {post.content && (
-                                        <p className="mod-card-body">
-                                            {post.content.length > MAX_PREVIEW_LENGTH
-                                                ? post.content.substring(0, MAX_PREVIEW_LENGTH) + '…'
-                                                : post.content}
-                                        </p>
-                                    )}
+                                            {post.content && (
+                                                <p className="mod-card-body">
+                                                    {post.content.length > MAX_PREVIEW_LENGTH
+                                                        ? post.content.substring(0, MAX_PREVIEW_LENGTH) + '…'
+                                                        : post.content}
+                                                </p>
+                                            )}
 
-                                    {/* Indicators row */}
-                                    <div className="mod-card-indicators">
-                                        {post.imageUrl && (
-                                            <span className="mod-indicator mod-indicator--image">📷 Has image</span>
-                                        )}
-                                        {post.contentUrl && (
-                                            <a
-                                                href={formatUrl(post.contentUrl)}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="mod-indicator mod-indicator--link"
-                                                onClick={e => e.stopPropagation()}
+                                            <div className="mod-card-indicators">
+                                                {post.imageUrl && (
+                                                    <span className="mod-indicator mod-indicator--image">📷 Has image</span>
+                                                )}
+                                                {post.contentUrl && (
+                                                    <a
+                                                        href={formatUrl(post.contentUrl)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mod-indicator mod-indicator--link"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        🔗 {post.contentUrl.length > 50 ? post.contentUrl.substring(0, 50) + '…' : post.contentUrl}
+                                                    </a>
+                                                )}
+                                                {post.tags && post.tags.length > 0 && post.tags.map(tag => (
+                                                    <span key={tag} className="mod-tag-pill">{tag}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="mod-card-actions">
+                                            {post.status === 'PENDING' && (
+                                                <button
+                                                    className="mod-action mod-action--approve"
+                                                    onClick={() => handleApprove(post)}
+                                                    disabled={isBusy}
+                                                >
+                                                    ✓ Approve
+                                                </button>
+                                            )}
+                                            <button
+                                                className="mod-action mod-action--delete"
+                                                onClick={() => handleDelete(post)}
+                                                disabled={isBusy}
                                             >
-                                                🔗 {post.contentUrl.length > 50 ? post.contentUrl.substring(0, 50) + '…' : post.contentUrl}
-                                            </a>
-                                        )}
-                                        {post.tags && post.tags.length > 0 && post.tags.map(tag => (
-                                            <span key={tag} className="mod-tag-pill">{tag}</span>
-                                        ))}
+                                                ✕ {isBusy ? '…' : 'Delete'}
+                                            </button>
+                                            <button
+                                                className="mod-action mod-action--view"
+                                                onClick={() => setSelectedPost(post)}
+                                            >
+                                                👁 View Full Post
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </>
+            )}
 
-                                {/* Actions */}
-                                <div className="mod-card-actions">
-                                    {post.status === 'PENDING' && (
-                                        <button
-                                            className="mod-action mod-action--approve"
-                                            onClick={() => handleApprove(post)}
-                                            disabled={isBusy}
-                                        >
-                                            ✓ Approve
-                                        </button>
-                                    )}
-                                    <button
-                                        className="mod-action mod-action--delete"
-                                        onClick={() => handleDelete(post)}
-                                        disabled={isBusy}
-                                    >
-                                        ✕ {isBusy ? '…' : 'Delete'}
-                                    </button>
-                                    <button
-                                        className="mod-action mod-action--view"
-                                        onClick={() => setSelectedPost(post)}
-                                    >
-                                        👁 View Full Post
-                                    </button>
-                                </div>
+            {/* ── NEW: USERS SECTION ── */}
+            {activeMainTab === 'users' && (
+                <>
+                    <div className="mod-stats">
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Total Users</span>
+                            <span className="mod-stat-value">{users.length}</span>
+                            <span className="mod-stat-icon mod-stat-icon--total">👤</span>
+                        </div>
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Admins</span>
+                            <span className="mod-stat-value mod-stat-value--approved">
+                                {adminUsers.length}
+                            </span>
+                            <span className="mod-stat-icon mod-stat-icon--approved">★</span>
+                        </div>
+                        <div className="mod-stat-card">
+                            <span className="mod-stat-label">Regular Users</span>
+                            <span className="mod-stat-value mod-stat-value--pending">
+                                {regularUsers.length}
+                            </span>
+                            <span className="mod-stat-icon mod-stat-icon--pending">◉</span>
+                        </div>
+                    </div>
+
+                    {/* Admin Users Section */}
+                    {adminUsers.length > 0 && (
+                         <div style={{ marginBottom: '1rem', paddingLeft: '1rem' }}>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                                <span style={{ marginRight: '0.5rem', fontSize: '1.3rem' }}>★</span> Admin Users ({adminUsers.length})
+                            </h2>
+                            <div className="mod-list">
+                                {adminUsers.map(user => {
+                                    const username = user.profile?.username || user.email.split('@')[0];
+                                    const isBusy = usersBusy === user.id;
+                                    const isCurrentUser = user.id === currentUser?.id;
+
+                                    return (
+                                        <div key={user.id} className="mod-card" style={{ borderLeftColor: '#a78bfa' }}>
+                                            <div className="mod-card-header">
+                                                <div className="mod-card-author">
+                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-card-avatar" />
+                                                    <div className="mod-card-author-info">
+                                                        <span className="mod-card-name">
+                                                            {username}
+                                                            {isCurrentUser && (
+                                                                <span style={{ marginLeft: '8px', fontSize: '0.7rem', color: '#0ea5e9', fontWeight: 600 }}>(you)</span>
+                                                            )}
+                                                        </span>
+                                                        <span className="mod-card-meta">
+                                                            {user.email} · joined {timeAgo(user.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="mod-status-badge mod-status-badge--approved" style={{ fontSize: '0.85rem' }}>
+                                                    ADMIN
+                                                </span>
+                                            </div>
+
+                                            {/* User Stats */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Posts</div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{user.postCount}</div>
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Followers</div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>{user.followerCount}</div>
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        );
-                    })
-                )}
-            </div>
+                        </div>
+                    )}
+
+                    {/* Regular Users Section */}
+                    {regularUsers.length > 0 && (
+                        <div style={{ paddingLeft: '1rem' }}>
+                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                                <span style={{ marginRight: '0.5rem', fontSize: '1.3rem' }}>◉</span> Regular Users ({regularUsers.length})
+                            </h2>
+                            <div className="mod-list">
+                                {regularUsers.map(user => {
+                                    const username = user.profile?.username || user.email.split('@')[0];
+                                    const isBusy = usersBusy === user.id;
+
+                                    return (
+                                        <div key={user.id} className="mod-card" style={{ borderLeftColor: '#3b82f6' }}>
+                                            <div className="mod-card-header">
+                                                <div className="mod-card-author">
+                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-card-avatar" />
+                                                    <div className="mod-card-author-info">
+                                                        <span className="mod-card-name">{username}</span>
+                                                        <span className="mod-card-meta">
+                                                            {user.email} · joined {timeAgo(user.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="mod-status-badge mod-status-badge--pending" style={{ fontSize: '0.85rem' }}>
+                                                    USER
+                                                </span>
+                                            </div>
+
+                                            {/* User Stats */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Posts</div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{user.postCount}</div>
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Followers</div>
+                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>{user.followerCount}</div>
+                                                </div>
+                                            </div>
+
+                                            {/* No actions for regular users */}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {usersLoading && (
+                        <div className="mod-loading"><div className="mod-spinner" /><span>Loading users…</span></div>
+                    )}
+
+                    {!usersLoading && users.length === 0 && (
+                        <div className="mod-empty">
+                            <span className="mod-empty-icon">👤</span>
+                            <span>No users found</span>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
