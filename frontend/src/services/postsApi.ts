@@ -53,6 +53,14 @@ export interface CreatePostPayload {
 
 class PostsAPI {
 
+    private toAbsoluteMediaUrl(url?: string): string | undefined {
+        if (!url) return undefined;
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+            return url;
+        }
+        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
+
     private transformPost(backendPost: BackendPost): Post {
         // Get currentuser's username from JWT as fallback hmmmmmmmmmmm aah to this//////////////////
         const currentUser = authAPI.getCurrentUser();
@@ -76,7 +84,7 @@ class PostsAPI {
             likes: 0,
             comments: 0,
             type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme',
-            imageUrl: backendPost.imageUrl,
+            imageUrl: this.toAbsoluteMediaUrl(backendPost.imageUrl),
             contentUrl: backendPost.contentUrl
         };
     }
