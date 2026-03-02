@@ -11,6 +11,7 @@ import ProfilePage from './components/Profile/ProfilePage'
 import SettingsPage from './components/Settings/SettingsPage'
 import AdminPage from './components/Admin/AdminPage'
 import { PrivacyPolicyPage, TermsOfServicePage } from './components/Legal/LegalPages'
+import SearchPage from './components/Search/SearchPage'
 import './App.css'
 
 function LoginPage() {
@@ -219,7 +220,7 @@ function App() {
 
         <Route path="/home" element={<ProtectedLayout><FeedPage /></ProtectedLayout>} />
         <Route path="/chat" element={<ProtectedLayout><ChatApp /></ProtectedLayout>} />
-        <Route path="/search" element={<ProtectedLayout><PlaceholderPage title="Search" /></ProtectedLayout>} />
+        <Route path="/search" element={<ProtectedLayout><SearchPage /></ProtectedLayout>} />
         <Route path="/notifications" element={<ProtectedLayout><PlaceholderPage title="Notifications" /></ProtectedLayout>} />
         <Route path="/profile" element={<ProfilePageWrapper />} />
         <Route path="/profile/:username" element={<ProfilePageWrapper />} />

@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { SearchPostsDto } from './dto/search-posts.dto';
 
 const POST_INCLUDE = {
 	user: {
@@ -100,5 +101,59 @@ export class PostsService {
 			where: { id },
 			include: POST_INCLUDE,
 		});
+	}
+
+	// ── Advanced search with filters, sorting, pagination ──────────────
+	async searchPosts(dto: SearchPostsDto, userId?: number) {
+		const { q, type, sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 } = dto;
+
+		// Visibility: APPROVED posts + own PENDING posts (same as feed)
+		const statusFilter: any = {
+			OR: [
+				{ status: 'APPROVED' },
+				userId ? { userId, status: 'PENDING' } : undefined,
+			].filter(Boolean),
+		};
+
+		const where: any = { AND: [statusFilter] };
+
+		if (type) {
+			where.AND.push({ type });
+		}
+
+		if (q && q.trim()) {
+			where.AND.push({
+				OR: [
+					{ title: { contains: q, mode: 'insensitive' } },
+					{ content: { contains: q, mode: 'insensitive' } },
+				],
+			});
+		}
+
+		const orderBy: any =
+			sortBy === 'reactions'
+				? { likes: { _count: 'desc' as const } }
+				: { createdAt: order };
+
+		const skip = (page - 1) * limit;
+
+		const [data, total] = await this.prisma.$transaction([
+			this.prisma.post.findMany({
+				where,
+				include: POST_INCLUDE,
+				orderBy,
+				skip,
+				take: limit,
+			}),
+			this.prisma.post.count({ where }),
+		]);
+
+		return {
+			data,
+			total,
+			page,
+			limit,
+			totalPages: Math.ceil(total / limit),
+		};
 	}
 }
