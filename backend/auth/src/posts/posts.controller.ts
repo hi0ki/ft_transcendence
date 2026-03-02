@@ -8,6 +8,7 @@ import * as multer from 'multer';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { SearchPostsDto } from './dto/search-posts.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles, Role } from '../decorators/roles.decorator';
@@ -46,6 +47,12 @@ export class PostsController {
             body.imageUrl = `/uploads/posts/${file.filename}`;
         }
         return this.postsService.createPost({ ...body, userId });
+    }
+
+    @Get('search')
+    search(@Query() dto: SearchPostsDto, @Req() req: Request) {
+        const userId = (req as any).user?.id;
+        return this.postsService.searchPosts(dto, userId);
     }
 
     @Get('detail/:id')
