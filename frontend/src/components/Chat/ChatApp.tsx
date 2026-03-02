@@ -296,8 +296,8 @@ const ChatApp: React.FC = () => {
     return (
         <div className="chat-layout-wrapper">
             <div className="chat-global-header">
-                <h1>Messages</h1>
-                <p>Chat with your peers</p>
+                <h1>Conversations</h1>
+                <p>Connect with your study partners</p>
             </div>
 
             <div className="chat-app-container">
