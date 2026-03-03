@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
+import { friendsAPI, type PendingRequest } from '../../services/friendsApi';
 import './Navbar.css';
 
 interface NavItemProps {
@@ -50,6 +51,12 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const [loading, setLoading] = useState(true);
 	const [avatarReady, setAvatarReady] = useState(false);
 
+	// Friend requests state
+	const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+	const [showFriendPanel, setShowFriendPanel] = useState(false);
+	const [friendActionLoading, setFriendActionLoading] = useState<number | null>(null);
+	const friendPanelRef = useRef<HTMLDivElement>(null);
+
 	// Fetch profile on component mount
 	useEffect(() => {
 		// Check cache first
@@ -83,6 +90,55 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 		fetchProfile();
 	}, []);
 
+	// Fetch pending friend requests
+	const refreshPending = async () => {
+		try {
+			const requests = await friendsAPI.getPendingRequests();
+			setPendingRequests(requests);
+		} catch {
+			// ignore
+		}
+	};
+
+	useEffect(() => {
+		refreshPending();
+		// Poll every 30 seconds
+		const interval = setInterval(refreshPending, 30000);
+		return () => clearInterval(interval);
+	}, []);
+
+	// Close panel on outside click
+	useEffect(() => {
+		if (!showFriendPanel) return;
+		const handleClick = (e: MouseEvent) => {
+			if (friendPanelRef.current && !friendPanelRef.current.contains(e.target as Node)) {
+				setShowFriendPanel(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClick);
+		return () => document.removeEventListener('mousedown', handleClick);
+	}, [showFriendPanel]);
+
+	const handleAccept = async (senderId: number) => {
+		setFriendActionLoading(senderId);
+		try {
+			await friendsAPI.acceptRequest(senderId);
+			setPendingRequests(prev => prev.filter(r => r.senderId !== senderId));
+		} catch { /* ignore */ } finally {
+			setFriendActionLoading(null);
+		}
+	};
+
+	const handleReject = async (senderId: number) => {
+		setFriendActionLoading(senderId);
+		try {
+			await friendsAPI.rejectRequest(senderId);
+			setPendingRequests(prev => prev.filter(r => r.senderId !== senderId));
+		} catch { /* ignore */ } finally {
+			setFriendActionLoading(null);
+		}
+	};
+
 	// Use profile data if available, fallback to JWT data
 	const profileUsername = profile?.username || currentUser?.username || currentUser?.email?.split('@')[0] || username;
 	const avatarUrl = profile?.avatarUrl || null;
@@ -93,8 +149,8 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const navItems = [
 		{ id: 'home', label: 'Home', icon: <HomeIcon />, path: '/home' },
 		{ id: 'search', label: 'Search', icon: <SearchIcon />, path: '/search' },
-		{ id: 'messages', label: 'Messages', icon: <MessageIcon />, path: '/chat', badge: 2 },
-		{ id: 'notifications', label: 'Notifications', icon: <BellIcon />, path: '/notifications', badge: 3 },
+		{ id: 'messages', label: 'Messages', icon: <MessageIcon />, path: '/chat' },
+		{ id: 'friends', label: 'Friend Requests', icon: <UsersIcon />, path: '/friends', badge: pendingRequests.length, isFriendReq: true },
 		{ id: 'profile', label: 'Profile', icon: <UserIcon />, path: '/profile' },
 		{ id: 'settings', label: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 		...(isAdmin ? [{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' }] : []),
@@ -103,7 +159,7 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	// Bottom nav items: App, Chat, Profile, and Moderation (admin only)
 	const bottomNavItems = [
 		{ id: 'home', label: 'App', icon: <HomeIcon />, path: '/home' },
-		{ id: 'messages', label: 'Chat', icon: <MessageIcon />, path: '/chat', badge: 2 },
+		{ id: 'messages', label: 'Chat', icon: <MessageIcon />, path: '/chat' },
 		{ id: 'profile', label: 'Profile', icon: <UserIcon />, path: '/profile' },
 		...(isAdmin ? [{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' }] : []),
 	];
@@ -128,18 +184,93 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 
 				<nav className="sidebar-nav">
 					{navItems.map((item) => (
-						<NavItem
-							key={item.id}
-							id={item.id}
-							label={item.label}
-							icon={item.icon}
-							badge={item.badge}
-							isActive={currentPath === item.path}
-							onClick={() => {
-								navigate(item.path);
-								if (onClose) onClose();
-							}}
-						/>
+						(item as any).isFriendReq ? (
+							<div key={item.id} className="friend-req-nav-wrap" ref={friendPanelRef}>
+								<NavItem
+									key={item.id}
+									id={item.id}
+									label={item.label}
+									icon={item.icon}
+									badge={item.badge}
+									isActive={showFriendPanel}
+									onClick={() => setShowFriendPanel(v => !v)}
+								/>
+								{showFriendPanel && (
+									<>
+										{/* Mobile overlay backdrop */}
+										<div className="friend-req-backdrop" onClick={() => setShowFriendPanel(false)} />
+										<div className="friend-req-panel">
+											<div className="friend-req-panel-header">
+												<span>Friend Requests</span>
+												<div className="friend-req-panel-header-right">
+													{pendingRequests.length > 0 && (
+														<span className="friend-req-panel-count">{pendingRequests.length}</span>
+													)}
+													<button className="friend-req-close" onClick={() => setShowFriendPanel(false)} aria-label="Close">
+														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+													</button>
+												</div>
+											</div>
+											{pendingRequests.length === 0 ? (
+												<div className="friend-req-empty">No pending requests</div>
+											) : (
+												<div className="friend-req-list">
+													{pendingRequests.map(req => (
+														<div key={req.senderId} className="friend-req-item">
+															<img
+																src={req.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`}
+																alt={req.username}
+																className="friend-req-avatar"
+																onError={(e) => {
+																	(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`;
+																}}
+															/>
+															<div className="friend-req-info">
+																<button
+																	className="friend-req-username"
+																	onClick={() => { navigate(`/profile/${req.username}`); setShowFriendPanel(false); }}
+																>
+																	@{req.username}
+																</button>
+																<div className="friend-req-actions">
+																	<button
+																		className="friend-req-accept"
+																		disabled={friendActionLoading === req.senderId}
+																		onClick={() => handleAccept(req.senderId)}
+																	>
+																		{friendActionLoading === req.senderId ? '...' : 'Accept'}
+																	</button>
+																	<button
+																		className="friend-req-reject"
+																		disabled={friendActionLoading === req.senderId}
+																		onClick={() => handleReject(req.senderId)}
+																	>
+																		{friendActionLoading === req.senderId ? '...' : 'Decline'}
+																	</button>
+																</div>
+															</div>
+														</div>
+													))}
+												</div>
+											)}
+										</div>
+									</>
+								)}
+							</div>
+						) : (
+							<NavItem
+								key={item.id}
+								id={item.id}
+								label={item.label}
+								icon={item.icon}
+								badge={item.badge}
+								isActive={currentPath === item.path}
+								onClick={() => {
+									navigate(item.path);
+									if (onClose) onClose();
+								}}
+							/>
+						)
 					))}
 				</nav>
 
@@ -201,7 +332,7 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 const HomeIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>;
 const SearchIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>;
 const MessageIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>;
-const BellIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>;
+const UsersIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
 const UserIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
 const SettingsIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.72V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
 const ShieldIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>;

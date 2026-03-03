@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
+import { friendsAPI, type FriendshipStatusResponse, type Friend } from '../../services/friendsApi';
 import { reactionsAPI, REACTION_EMOJI, REACTION_LABELS } from '../../services/reactionsApi';
 import { commentsAPI } from '../../services/commentsApi';
 import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi';
@@ -481,10 +482,34 @@ function ProfilePage() {
     const [avatarReady, setAvatarReady] = useState(false);
     const [posts, setPosts] = useState<BackendPost[]>([]);
 
+    // Friend request state
+    const [friendStatus, setFriendStatus] = useState<FriendshipStatusResponse>({ status: 'NONE' });
+    const [friendLoading, setFriendLoading] = useState(false);
+
+    // Friends list popup
+    const [showFriendsPopup, setShowFriendsPopup] = useState(false);
+    const [friendsList, setFriendsList] = useState<Friend[]>([]);
+    const [friendsListLoading, setFriendsListLoading] = useState(false);
+
+    const openFriendsPopup = async () => {
+        if (!profileData?.user?.id) return;
+        setShowFriendsPopup(true);
+        setFriendsListLoading(true);
+        try {
+            const list = await friendsAPI.getFriendsByUser(profileData.user.id);
+            setFriendsList(list);
+        } catch {
+            setFriendsList([]);
+        } finally {
+            setFriendsListLoading(false);
+        }
+    };
+
     useEffect(() => {
         setLoading(true);
         setNotFound(false);
         setAvatarReady(false);
+        setFriendStatus({ status: 'NONE' });
 
         const fetchProfile = async () => {
             const data: ProfileData | null = isOwner
@@ -495,6 +520,10 @@ function ProfilePage() {
             else {
                 setProfileData(data);
                 setPosts(data.user?.posts || []);
+                // Fetch friendship status for other users' profiles
+                if (!isOwner && data.user?.id) {
+                    friendsAPI.getStatus(data.user.id).then(setFriendStatus).catch(() => {});
+                }
             }
             setLoading(false);
         };
@@ -560,6 +589,7 @@ function ProfilePage() {
     }
 
     return (
+        <>
         <div className="profile-page">
             <div className="profile-container">
 
@@ -599,10 +629,14 @@ function ProfilePage() {
                                     <span className="stat-value">{posts.length}</span>
                                     <span className="stat-label">Posts</span>
                                 </div>
-                                <div className="stat-item">
+                                <button
+                                    className="stat-item stat-item--clickable"
+                                    type="button"
+                                    onClick={openFriendsPopup}
+                                >
                                     <span className="stat-value">{profileData?.user?.friendsCount ?? 0}</span>
                                     <span className="stat-label">Friends</span>
-                                </div>
+                                </button>
                             </div>
 
                             {skills.length > 0 && (
@@ -623,9 +657,95 @@ function ProfilePage() {
                                     Edit Profile
                                 </button>
                             ) : (
-                                <button className="profile-follow-btn" type="button">
-                                    Follow
-                                </button>
+                                (() => {
+                                    const s = friendStatus.status;
+                                    const isMeRequester = friendStatus.requestedBy === currentUserId;
+
+                                    if (s === 'ACCEPTED') {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--friends"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    if (!window.confirm(`Remove @${username} as a friend?`)) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.removeFriend(profileData.user.id);
+                                                        setFriendStatus({ status: 'NONE' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : '✓ Friends · Remove'}
+                                            </button>
+                                        );
+                                    }
+                                    if (s === 'PENDING' && isMeRequester) {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--pending"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.rejectRequest(profileData.user.id);
+                                                        setFriendStatus({ status: 'NONE' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : 'Request Sent · Cancel'}
+                                            </button>
+                                        );
+                                    }
+                                    if (s === 'PENDING' && !isMeRequester) {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--accept"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.acceptRequest(profileData.user.id);
+                                                        setFriendStatus({ status: 'ACCEPTED' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : 'Accept Request'}
+                                            </button>
+                                        );
+                                    }
+                                    // NONE
+                                    return (
+                                        <button
+                                            className="profile-follow-btn"
+                                            type="button"
+                                            disabled={friendLoading}
+                                            onClick={async () => {
+                                                if (!profileData?.user?.id) return;
+                                                setFriendLoading(true);
+                                                try {
+                                                    await friendsAPI.sendRequest(profileData.user.id);
+                                                    setFriendStatus({ status: 'PENDING', requestedBy: currentUserId ?? undefined });
+                                                } catch { /* ignore */ } finally {
+                                                    setFriendLoading(false);
+                                                }
+                                            }}
+                                        >
+                                            {friendLoading ? '...' : 'Send Friend Request'}
+                                        </button>
+                                    );
+                                })()
                             )}
 
                             {/* Delete button — only visible to ADMIN, only for non-admin users */}
@@ -697,6 +817,50 @@ function ProfilePage() {
 
             </div>
         </div>
+
+        {/* ── Friends List Popup ── */}
+        {showFriendsPopup && createPortal(
+            <div className="friends-popup-backdrop" onClick={() => setShowFriendsPopup(false)}>
+                <div className="friends-popup" onClick={e => e.stopPropagation()}>
+                    <div className="friends-popup-header">
+                        <h3 className="friends-popup-title">Friends</h3>
+                        <button className="friends-popup-close" onClick={() => setShowFriendsPopup(false)} aria-label="Close">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div className="friends-popup-body">
+                        {friendsListLoading ? (
+                            <div className="friends-popup-empty">Loading...</div>
+                        ) : friendsList.length === 0 ? (
+                            <div className="friends-popup-empty">No friends yet</div>
+                        ) : (
+                            <div className="friends-popup-list">
+                                {friendsList.map(f => (
+                                    <button
+                                        key={f.id}
+                                        className="friends-popup-item"
+                                        type="button"
+                                        onClick={() => { setShowFriendsPopup(false); navigate(`/profile/${f.username}`); }}
+                                    >
+                                        <img
+                                            src={f.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(f.username)}`}
+                                            alt={f.username}
+                                            className="friends-popup-avatar"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(f.username)}`;
+                                            }}
+                                        />
+                                        <span className="friends-popup-name">@{f.username}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+        </>
     );
 }
 

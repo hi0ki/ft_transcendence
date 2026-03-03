@@ -282,7 +282,6 @@ function App() {
         <Route path="/home" element={<ProtectedLayout onLogout={handleLoggedOut}><FeedPage /></ProtectedLayout>} />
         <Route path="/chat" element={<ProtectedLayout onLogout={handleLoggedOut}><ChatApp /></ProtectedLayout>} />
         <Route path="/search" element={<ProtectedLayout onLogout={handleLoggedOut}><SearchPage /></ProtectedLayout>} />
-        <Route path="/notifications" element={<ProtectedLayout onLogout={handleLoggedOut}><PlaceholderPage title="Notifications" /></ProtectedLayout>} />
         <Route path="/profile" element={<ProfilePageWrapper onLogout={handleLoggedOut} />} />
         <Route path="/profile/:username" element={<ProfilePageWrapper onLogout={handleLoggedOut} />} />
         <Route path="/settings" element={<SettingsPageWrapper onLogout={handleLoggedOut} />} />

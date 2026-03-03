@@ -10,7 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfilesModule } from './profiles/profiles.module';
 import { PostsModule } from './posts/posts.module';
-// import { FriendsModule } from './friends/friends.module';
+import { FriendsModule } from './friends/friends.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -29,8 +29,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     AuthModule,
     ProfilesModule,
     PostsModule,
-    // FriendsModule,
-
+    FriendsModule,
   ],
   controllers: [ReactionsController],
   providers: [ReactionsService,
