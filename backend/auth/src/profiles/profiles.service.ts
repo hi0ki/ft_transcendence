@@ -79,6 +79,43 @@ export class ProfilesService {
         return { ...profile, user: { ...profile.user, friendsCount } };
     }
 
+    async searchUsers(query?: string, page = 1, limit = 10) {
+        const skip = (page - 1) * limit;
+        const where = query
+            ? {
+                  username: {
+                      contains: query,
+                      mode: 'insensitive' as const,
+                  },
+              }
+            : {};
+
+        const [profiles, total] = await Promise.all([
+            this.prisma.profile.findMany({
+                where,
+                select: {
+                    userId: true,
+                    username: true,
+                    avatarUrl: true,
+                    bio: true,
+                    skills: true,
+                },
+                orderBy: { username: 'asc' },
+                skip,
+                take: limit,
+            }),
+            this.prisma.profile.count({ where }),
+        ]);
+
+        return {
+            data: profiles,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
     async updateProfile(userId: number, dto: UpdateProfileDto) {
         return this.prisma.profile.update({
             where: { userId },
