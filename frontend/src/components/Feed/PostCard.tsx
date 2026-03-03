@@ -89,23 +89,33 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
         const postId = parseInt(post.id);
         if (isNaN(postId)) return;
 
-        reactionsAPI.getMyReaction(postId).then(data => {
-            if (data && data.type) setMyReaction(data.type);
-        }).catch(() => { });
+        // On readOnly (search page) — skip ALL API calls to prevent 429
+        // The search page shows static data only, user redirects to home to interact
+        if (readOnly) return;
 
-        reactionsAPI.getCount(postId).then(count => {
-            if (typeof count === 'number') setReactionCount(count);
-        }).catch(() => { });
+        // Stagger based on postId to spread out requests on feed page
+        const delay = (postId % 10) * 150;
 
-        commentsAPI.getCommentCount(postId).then(count => {
-            if (typeof count === 'number') setCommentCount(count);
-        }).catch(() => { });
+        const timer = setTimeout(() => {
+            reactionsAPI.getMyReaction(postId).then(data => {
+                if (data && data.type) setMyReaction(data.type);
+            }).catch(() => { });
 
-        // Fetch reactions list for the inline summary
-        reactionsAPI.getReactionsByPost(postId).then(data => {
-            setReactionsUsers(data);
-        }).catch(() => { });
-    }, [post.id]);
+            reactionsAPI.getCount(postId).then(count => {
+                if (typeof count === 'number') setReactionCount(count);
+            }).catch(() => { });
+
+            commentsAPI.getCommentCount(postId).then(count => {
+                if (typeof count === 'number') setCommentCount(count);
+            }).catch(() => { });
+
+            reactionsAPI.getReactionsByPost(postId).then(data => {
+                setReactionsUsers(data);
+            }).catch(() => { });
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [post.id, readOnly]);
 
     const formatUrl = (url: string): string => {
         if (!url) return url;
