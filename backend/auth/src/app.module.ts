@@ -10,10 +10,17 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfilesModule } from './profiles/profiles.module';
 import { PostsModule } from './posts/posts.module';
+// import { FriendsModule } from './friends/friends.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      { ttl: 60000, limit: 10 },  // 100 req/min
+    ]),
     PrismaModule,
     UsersModule,
     CommentsModule,
@@ -21,9 +28,16 @@ import { PostsModule } from './posts/posts.module';
     ChatModule,
     AuthModule,
     ProfilesModule,
-    PostsModule
+    PostsModule,
+    // FriendsModule,
+
   ],
-  providers: [ReactionsService],
   controllers: [ReactionsController],
+  providers: [ReactionsService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -1,18 +1,3 @@
-// import { Module } from '@nestjs/common';
-// import { ProfilesController } from './profiles.controller';
-// import { ProfilesService } from './profiles.service';
-// import { PrismaService } from '../prisma/prisma.service';
-// import { AuthGuard } from '../auth/auth.guard';
-
-// @Module({
-//     imports : [],
-//     controllers : [ProfilesController],
-//     providers : [ProfilesService, PrismaService, AuthGuard],  //, ProfilesService
-//     exports : [AuthGuard],
-
-// })
-// export class ProfilesModule{}
-
 import { Module } from '@nestjs/common';
 import { ProfilesController } from './profiles.controller';
 import { ProfilesService } from './profiles.service';

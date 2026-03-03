@@ -11,4 +11,12 @@ export class UpdatePostDto
 	@IsString()
 	@IsNotEmpty()
 	content?: string;
+
+	@IsOptional()
+	@IsString()
+	imageUrl?: string;
+
+	@IsOptional()
+	@IsString()
+	contentUrl?: string;
 }

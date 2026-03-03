@@ -14,7 +14,7 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
     cors: {
-        origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3001'],
+        origin: ['https://localhost', 'http://localhost:5173', 'http://localhost:3001'],
         credentials: true,
     },
 })

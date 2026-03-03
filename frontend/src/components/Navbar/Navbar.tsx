@@ -1,29 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
 import './Navbar.css';
 
 interface NavItemProps {
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-    badge?: number;
-    isActive: boolean;
-    onClick: () => void;
+	id: string;
+	label: string;
+	icon: React.ReactNode;
+	badge?: number;
+	isActive: boolean;
+	onClick: () => void;
 }
 
 const NavItem = ({ label, icon, badge, isActive, onClick }: NavItemProps) => (
-    <button
-        type="button"
-        className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
-        onClick={onClick}
-    >
-        <span className="nav-item-icon">{icon}</span>
-        <span className="nav-item-label">{label}</span>
-        {badge !== undefined && badge > 0 && (
-            <span className="nav-item-badge">{badge}</span>
-        )}
-    </button>
+	<button
+		type="button"
+		className={`nav-item ${isActive ? 'nav-item--active' : ''}`}
+		onClick={onClick}
+	>
+		<span className="nav-item-icon">{icon}</span>
+		<span className="nav-item-label">{label}</span>
+		{badge !== undefined && badge > 0 && (
+			<span className="nav-item-badge">{badge}</span>
+		)}
+	</button>
 );
 
 interface NavbarProps {
@@ -33,18 +33,62 @@ interface NavbarProps {
 	onClose?: () => void;
 }
 
+interface UserProfile {
+	username: string;
+	avatarUrl?: string | null;
+}
+
 function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	// Read everything directly from the JWT — no API call needed
+	// Get user from JWT for fallback
 	const currentUser = authAPI.getCurrentUser();
-	const [avatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
-	const [profileUsername] = useState<string>(
-		currentUser?.username || currentUser?.email?.split('@')[0] || username
-	);
+
+	// State for profile data from API
+	const [profile, setProfile] = useState<UserProfile | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [avatarReady, setAvatarReady] = useState(false);
+
+	// Fetch profile on component mount
+	useEffect(() => {
+		// Check cache first
+		const cached = sessionStorage.getItem('user_profile');
+		if (cached) {
+			const parsed = JSON.parse(cached);
+			setProfile(parsed);
+			setLoading(false);
+			return;
+		}
+
+		const fetchProfile = async () => {
+			try {
+				const data = await authAPI.getMyProfile();
+				if (data) {
+					const profileData = {
+						username: data.username,
+						avatarUrl: data.avatarUrl || null,
+					};
+					setProfile(profileData);
+					// Cache it so re-renders don't re-fetch
+					sessionStorage.setItem('user_profile', JSON.stringify(profileData));
+				}
+			} catch (error) {
+				console.error('Failed to fetch profile:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchProfile();
+	}, []);
+
+	// Use profile data if available, fallback to JWT data
+	const profileUsername = profile?.username || currentUser?.username || currentUser?.email?.split('@')[0] || username;
+	const avatarUrl = profile?.avatarUrl || null;
 
 	const currentPath = location.pathname;
+	const isAdmin = currentUser?.role === 'ADMIN';
 
 	const navItems = [
 		{ id: 'home', label: 'Home', icon: <HomeIcon />, path: '/home' },
@@ -53,66 +97,103 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 		{ id: 'notifications', label: 'Notifications', icon: <BellIcon />, path: '/notifications', badge: 3 },
 		{ id: 'profile', label: 'Profile', icon: <UserIcon />, path: '/profile' },
 		{ id: 'settings', label: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-		{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' },
+		...(isAdmin ? [{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' }] : []),
+	];
+
+	// Bottom nav items: App, Chat, Profile, and Moderation (admin only)
+	const bottomNavItems = [
+		{ id: 'home', label: 'App', icon: <HomeIcon />, path: '/home' },
+		{ id: 'messages', label: 'Chat', icon: <MessageIcon />, path: '/chat', badge: 2 },
+		{ id: 'profile', label: 'Profile', icon: <UserIcon />, path: '/profile' },
+		...(isAdmin ? [{ id: 'moderation', label: 'Moderation', icon: <ShieldIcon />, path: '/moderation' }] : []),
 	];
 
 	return (
-		<aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
-			<button className="sidebar-mobile-close" onClick={onClose}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-			</button>
-			<div className="sidebar-header">
-				<div className="brand-logo">
-					<div className="logo-circle">
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" /><path d="M8 7h6" /><path d="M8 11h8" /></svg>
+		<>
+			<aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
+				<button className="sidebar-mobile-close" onClick={onClose}>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+				</button>
+				<div className="sidebar-header">
+					<div className="brand-logo">
+						<div className="logo-circle">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" /><path d="M8 7h6" /><path d="M8 11h8" /></svg>
+						</div>
+					</div>
+					<div className="brand-text">
+						<h1 className="brand-title">Peer Study Hub</h1>
+						<p className="brand-tagline">Learn Together</p>
 					</div>
 				</div>
-				<div className="brand-text">
-					<h1 className="brand-title">Peer Study Hub</h1>
-					<p className="brand-tagline">Learn Together</p>
-				</div>
-			</div>
 
-			<nav className="sidebar-nav">
-				{navItems.map((item) => (
-					<NavItem
-						key={item.id}
-						id={item.id}
-						label={item.label}
-						icon={item.icon}
-						badge={item.badge}
-						isActive={currentPath === item.path}
-						onClick={() => {
-							navigate(item.path);
-							if (onClose) onClose();
-						}}
-					/>
-				))}
-			</nav>
-
-			<div className="sidebar-footer">
-				<div className="user-profile-card">
-					<div className="user-avatar">
-						<img
-							src={getAvatarSrc(avatarUrl, profileUsername)}
-							alt="avatar"
-							onError={(e) => {
-								(e.target as HTMLImageElement).src =
-									`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileUsername)}`;
+				<nav className="sidebar-nav">
+					{navItems.map((item) => (
+						<NavItem
+							key={item.id}
+							id={item.id}
+							label={item.label}
+							icon={item.icon}
+							badge={item.badge}
+							isActive={currentPath === item.path}
+							onClick={() => {
+								navigate(item.path);
+								if (onClose) onClose();
 							}}
 						/>
+					))}
+				</nav>
+
+				<div className="sidebar-footer">
+					<div className="user-profile-card">
+						<div className="user-avatar">
+							<img
+								src={loading ? undefined : getAvatarSrc(avatarUrl, profileUsername)}
+								alt="avatar"
+								style={{ opacity: avatarReady ? 1 : 0, transition: 'opacity 0.2s' }}
+								onLoad={() => setAvatarReady(true)}
+								onError={(e) => {
+									(e.target as HTMLImageElement).src =
+										`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileUsername)}`;
+									setAvatarReady(true);
+								}}
+							/>
+						</div>
+						<div className="user-details">
+							<span className="user-name">{profileUsername}</span>
+							<span className="user-handle">@{profileUsername.toLowerCase().replace(/\s+/g, '')}</span>
+						</div>
 					</div>
-					<div className="user-details">
-						<span className="user-name">{profileUsername}</span>
-						<span className="user-handle">@{profileUsername.toLowerCase().replace(/\s+/g, '')}</span>
+					<button className="logout-standalone" onClick={onLogout}>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+						<span>Logout</span>
+					</button>
+					<div className="sidebar-legal-links">
+						<button className="sidebar-legal-link" onClick={() => navigate('/privacy')}>Privacy Policy</button>
+						<button className="sidebar-legal-link" onClick={() => navigate('/terms')}>Terms of Service</button>
 					</div>
 				</div>
-				<button className="logout-standalone" onClick={onLogout}>
-					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-					<span>Logout</span>
-				</button>
-			</div>
-		</aside>
+			</aside>
+
+			{/* Mobile Bottom Navigation Bar */}
+			<nav className="mobile-bottom-nav">
+				{bottomNavItems.map((item) => (
+					<button
+						key={item.id}
+						type="button"
+						className={`mobile-bottom-btn ${currentPath === item.path ? 'mobile-bottom-btn--active' : ''}`}
+						onClick={() => navigate(item.path)}
+					>
+						<span className="mobile-bottom-icon">
+							{item.icon}
+							{item.badge !== undefined && item.badge > 0 && (
+								<span className="mobile-bottom-badge">{item.badge}</span>
+							)}
+						</span>
+						<span className="mobile-bottom-label">{item.label}</span>
+					</button>
+				))}
+			</nav>
+		</>
 	);
 }
 

@@ -53,6 +53,7 @@ export class CommentsService {
             const { data } = await firstValueFrom(
                 this.http.put(`${this.authUrl}/comments/update`, {
                     commentId: body.commentId,
+                    postId: body.postId,
                     userId,
                     content: body.content,
                 }),

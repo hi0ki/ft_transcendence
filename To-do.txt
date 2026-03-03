@@ -1,8 +1,0 @@
--CI/CD : just CI
-    CI/CD is something you code and configure to automate 
-    checks and deployments using GitHub or similar platforms.
-
-######## to do today
-
-    profile - frontend
-    grafana

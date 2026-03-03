@@ -11,6 +11,8 @@ interface BackendPost {
     title: string;
     content: string;
     createdAt: string;
+    imageUrl?: string;
+    contentUrl?: string;
     user?: {
         id: number;
         email: string;
@@ -24,6 +26,7 @@ interface BackendPost {
 
 export interface Post {
     id: string;
+    title: string;
     author: {
         name: string;
         handle: string;
@@ -35,18 +38,31 @@ export interface Post {
     likes: number;
     comments: number;
     type?: 'Help' | 'Resource' | 'Meme';
+    imageUrl?: string;
+    contentUrl?: string;
 }
 
 
 export interface CreatePostPayload {
     type: 'HELP' | 'RESOURCE' | 'MEME';
+    title: string;///////heeemmmm to reviewww this 
     content: string;
+    imageFile?: File;
+    contentUrl?: string;
 }
 
 class PostsAPI {
 
+    private toAbsoluteMediaUrl(url?: string): string | undefined {
+        if (!url) return undefined;
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+            return url;
+        }
+        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    }
+
     private transformPost(backendPost: BackendPost): Post {
-        // Get current user's username from JWT as fallback
+        // Get currentuser's username from JWT as fallback hmmmmmmmmmmm aah to this//////////////////
         const currentUser = authAPI.getCurrentUser();
         const fallbackName = currentUser?.username || currentUser?.email?.split('@')[0] || 'Anonymous';
 
@@ -56,6 +72,7 @@ class PostsAPI {
 
         return {
             id: backendPost.id.toString(),
+            title: backendPost.title,
             author: {
                 name: authorName,
                 handle: authorHandle,
@@ -66,7 +83,9 @@ class PostsAPI {
             tags: [],
             likes: 0,
             comments: 0,
-            type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme'
+            type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme',
+            imageUrl: this.toAbsoluteMediaUrl(backendPost.imageUrl),
+            contentUrl: backendPost.contentUrl
         };
     }
 
@@ -105,6 +124,16 @@ class PostsAPI {
         };
     }
 
+    private getAuthTokenHeader(): Record<string, string> {
+        const token = authAPI.getToken();
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+        return {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
 
     async getAllPosts(): Promise<Post[]> {
         try {
@@ -134,34 +163,44 @@ class PostsAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Failed to fetch post' }));
-                throw new Error(error.message || `HTTP ${response.status}: Failed to fetch post`);
+                const error = await response.json().catch(() => ({ message: 'Faiiiiiiiiiiiled to fetch post </3' }));
+                throw new Error(error.message || `HTTP ${response.status}: Faiiiiiiiiiiiled to fetch post </3`);
             }
 
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error fetching post:', error);
+            console.error('Error fetching pooowst:', error);
             throw error;
         }
     }
 
 
-    async createPost(payload: CreatePostPayload): Promise<Post> {
+    async createPost(payload: CreatePostPayload): Promise<Post> 
+    {
         try {
+            const formData = new FormData();
+            formData.append('type', payload.type);
+            formData.append('title', payload.title);
+            formData.append('content', payload.content);
+
+            if (payload.contentUrl) {
+                formData.append('contentUrl', payload.contentUrl);
+            }
+
+            if (payload.imageFile) {
+                formData.append('image', payload.imageFile);
+            }
+
             const response = await fetch(`${API_BASE_URL}/posts/`, {
                 method: 'POST',
-                headers: this.getAuthHeader(),
-                body: JSON.stringify({
-                    type: payload.type,
-                    title: payload.content.substring(0, 100),
-                    content: payload.content
-                })
+                headers: this.getAuthTokenHeader(),
+                body: formData
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Failed to create post' }));
-                throw new Error(error.message || `HTTP ${response.status}: Failed to create post`);
+                const error = await response.json().catch(() => ({ message: 'Faiiled to create post' }));
+                throw new Error(error.message || `HTTP ${response.status}: Faiiled to create post`);
             }
 
             const data: BackendPost = await response.json();
@@ -173,7 +212,7 @@ class PostsAPI {
     }
 
 
-    async updatePost(id: string, payload: { title?: string; content?: string }): Promise<Post> {
+    async updatePost(id: string, payload: { title?: string; content?: string; imageUrl?: string; contentUrl?: string }): Promise<Post> {
         try {
             const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
                 method: 'PATCH',

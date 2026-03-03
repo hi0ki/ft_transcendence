@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Delete, Param, Body, UseGuards, Req, HttpCode, HttpStatus, ParseIntPipe} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles, Role } from '../decorators/roles.decorator';
@@ -11,47 +11,58 @@ import { Roles, Role } from '../decorators/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  //temsah
+  // @Get()
+  // @Roles(Role.ADMIN)
+  // findAll() {
+  //   return this.usersService.findAll();
+  // }
+
   @Get()
   @Roles(Role.ADMIN)
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    console.log('✓ findAll() called'); // ← Add this
+    const users = await this.usersService.findAll();
+    return {
+      success: true,
+      data: users,
+      message: 'Users retrieved successfully',
+    };
   }
 
-  @Get('me')
-  getMe(@Req() req: any) {
-    // req.user is set by AuthGuard from the JWT payload
-    return this.usersService.findOne(req.user.id);
-  }
+//temsah
+  // @Get('me')
+  // getMe(@Req() req: any) {
+  //   return this.usersService.findOne(req.user.id);
+  // }
+
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.usersService.findOne(id);
   }
 
-  // ─── PATCH /users/:id  (ADMIN or self) 
-  @Patch(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateUserDto,
-    @Req() req: any,
-  ) {
-    return this.usersService.update(id, dto, req.user);
-  }
+ //temsah
+  // @Patch(':id')
+  // update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
+  // {
+  //   return this.usersService.update(id, dto, req.user);
+  // }
 
-  //(ADMIN or self) 
+
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) 
+  {
     return this.usersService.remove(id, req.user);
   }
 
-  // ─── PATCH /users/:id/role  (ADMIN only) 
+ 
+
   @Patch(':id/role')
   @Roles(Role.ADMIN)
-  changeRole(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('role') role: Role,
-  ) {
+  changeRole(@Param('id', ParseIntPipe) id: number, @Body('role') role: Role)
+  {
     return this.usersService.changeRole(id, role);
   }
 }

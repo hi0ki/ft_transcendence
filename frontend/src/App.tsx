@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import { socketService } from './services/socketService'
@@ -11,6 +11,9 @@ import AuthCallback from './components/Auth/AuthCallback'
 import ProfilePage from './components/Profile/ProfilePage'
 import SettingsPage from './components/Settings/SettingsPage'
 import { useHeartbeat } from './hooks/useHeartbeat'
+import AdminPage from './components/Admin/AdminPage'
+import { PrivacyPolicyPage, TermsOfServicePage } from './components/Legal/LegalPages'
+import SearchPage from './components/Search/SearchPage'
 import './App.css'
 
 function LoginPage({ onLoginSuccess }: { onLoginSuccess: () => void }) {
@@ -27,7 +30,7 @@ function RegisterPage() {
   const navigate = useNavigate();
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/login')}
+      onSignUpSuccess={() => navigate('/profile')}
       onSwitchToLogin={() => navigate('/login')}
     />
   );
@@ -60,7 +63,7 @@ function useGlobalSocket(isAuthenticated: boolean) {
       if (socketService.isConnected()) {
         socketService.emit('request_online_users');
       } else if (isAuthenticated) {
-        socketService.connect().catch(() => {});
+        socketService.connect().catch(() => { });
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -76,21 +79,16 @@ function ProtectedLayout({
   onLogout,
 }: {
   children: React.ReactNode;
-  onLogout: () => void;
+  onLogout?: () => void;
 }) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  if (!authAPI.isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
   const user = authAPI.getCurrentUser();
 
   const handleLogout = () => {
     socketService.disconnect();
     authAPI.logout();
-    onLogout();
+    onLogout?.();
     navigate('/login');
   };
 
@@ -187,6 +185,43 @@ function ProfilePageWrapper({ onLogout }: { onLogout: () => void }) {
   );
 }
 
+function AdminPageWrapper() {
+  const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  if (!authAPI.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = authAPI.getCurrentUser();
+
+  const handleLogout = () => {
+    authAPI.logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="app-layout">
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
+      <Navbar
+        username={user?.email?.split('@')[0] || 'User'}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      <div className="app-content">
+        <header className="mobile-header">
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span className="mobile-logo">Peer Hub</span>
+        </header>
+        <AdminPage />
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [isAuthed, setIsAuthed] = useState(authAPI.isAuthenticated());
 
@@ -197,23 +232,61 @@ function App() {
   useGlobalSocket(isAuthed);
   useHeartbeat(isAuthed);
 
+  // ── FIX: Debounced token refresh to prevent 429 rate limiting errors ──
+  useEffect(() => {
+    let lastRefreshTime = 0;
+    const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh calls
+
+    const debouncedRefresh = async () => {
+      if (!authAPI.isAuthenticated()) return;
+
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime;
+
+      // If less than 120 seconds since last refresh, skip this attempt
+      if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
+        return;
+      }
+
+      lastRefreshTime = now;
+      try {
+        await authAPI.refreshToken();
+      } catch (err) {
+        // Silently handle rate limit errors - token is probably still valid
+        if (err instanceof Error && !err.message.includes('429')) {
+          console.error('Token refresh failed:', err);
+        }
+      }
+    };
+
+    // DON'T refresh on load - just start the interval
+    // debouncedRefresh(); ← Removed this
+
+    // Check every 30 seconds (but actual refresh respects 120 second cooldown)
+    const interval = setInterval(debouncedRefresh, 30 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage onLoginSuccess={handleLoggedIn} />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/callback" element={<AuthCallback />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
 
         <Route path="/" element={<Navigate to={isAuthed ? '/chat' : '/login'} replace />} />
 
         <Route path="/home" element={<ProtectedLayout onLogout={handleLoggedOut}><FeedPage /></ProtectedLayout>} />
         <Route path="/chat" element={<ProtectedLayout onLogout={handleLoggedOut}><ChatApp /></ProtectedLayout>} />
-        <Route path="/search" element={<ProtectedLayout onLogout={handleLoggedOut}><PlaceholderPage title="Search" /></ProtectedLayout>} />
+        <Route path="/search" element={<ProtectedLayout onLogout={handleLoggedOut}><SearchPage /></ProtectedLayout>} />
         <Route path="/notifications" element={<ProtectedLayout onLogout={handleLoggedOut}><PlaceholderPage title="Notifications" /></ProtectedLayout>} />
         <Route path="/profile" element={<ProfilePageWrapper onLogout={handleLoggedOut} />} />
         <Route path="/profile/:username" element={<ProfilePageWrapper onLogout={handleLoggedOut} />} />
         <Route path="/settings" element={<SettingsPageWrapper onLogout={handleLoggedOut} />} />
-        <Route path="/moderation" element={<ProtectedLayout onLogout={handleLoggedOut}><PlaceholderPage title="Moderation" /></ProtectedLayout>} />
+        <Route path="/moderation" element={<AdminPageWrapper />} />
 
         <Route path="*" element={<Navigate to={isAuthed ? '/home' : '/login'} replace />} />
       </Routes>

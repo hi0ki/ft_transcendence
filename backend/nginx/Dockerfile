@@ -1,9 +1,13 @@
 FROM nginx:stable-alpine
 
-RUN apk add bash
+RUN apk add bash openssl
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
+EXPOSE 443
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY setup_ssl.sh .
+
+RUN chmod +x /setup_ssl.sh
+
+CMD ["sh", "/setup_ssl.sh"]

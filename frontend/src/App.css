@@ -20,7 +20,7 @@
   flex: 1;
   min-width: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
@@ -79,5 +79,8 @@
 @media (max-width: 768px) {
   .app-content {
     width: 100%;
+    padding-bottom: 64px;
+    /* space for mobile bottom nav */
+    box-sizing: border-box;
   }
 }

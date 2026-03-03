@@ -9,7 +9,14 @@ interface ProfileFormData {
     skills: string[];
 }
 
+interface FormErrors {
+    username?: string;
+}
+
 const BIO_MAX = 160;
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 10;
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 function SettingsPage() {
     const navigate = useNavigate();
@@ -18,16 +25,30 @@ function SettingsPage() {
 
     const [form, setForm] = useState<ProfileFormData>({
         username: derivedUsername,
-        bio: 'Computer Science student | Love helping others learn',
-        skills: ['JavaScript', 'React', 'Python', 'Data Structures'],
+        bio: '',
+        skills: [],
     });
 
     const [skillInput, setSkillInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+    const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
+    const [avatarLoading, setAvatarLoading] = useState(true);
+    const [errors, setErrors] = useState<FormErrors>({});
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Validate form
+    const validateForm = (username: string): FormErrors => {
+        const newErrors: FormErrors = {};
+        if (username.length < USERNAME_MIN) {
+            newErrors.username = `Username must be at least ${USERNAME_MIN} characters`;
+        } else if (username.length > USERNAME_MAX) {
+            newErrors.username = `Username must not exceed ${USERNAME_MAX} characters`;
+        }
+        return newErrors;
+    };
 
     // In a real app, you might fetch the latest profile data here
     useEffect(() => {
@@ -35,7 +56,6 @@ function SettingsPage() {
             navigate('/login');
             return;
         }
-        // Fetch real profile to get the current avatarUrl
         authAPI.getMyProfile().then((data) => {
             if (data) {
                 setForm(prev => ({
@@ -46,6 +66,7 @@ function SettingsPage() {
                 }));
                 setProfileAvatarUrl(data.avatarUrl || null);
             }
+            setAvatarLoading(false);
         });
     }, [navigate]);
 
@@ -69,12 +90,48 @@ function SettingsPage() {
     };
 
     const handleSave = async () => {
+        const newErrors = validateForm(form.username);
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+    
         setIsSaving(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        console.log('Saved profile data:', { ...form, avatar: previewImage });
-        setIsSaving(false);
-        navigate(`/profile/${form.username.toLowerCase()}`);
+        try {
+            await authAPI.updateProfile({
+                username: form.username,
+                bio: form.bio,
+                skills: form.skills,
+                avatarUrl: avatarBase64 ?? undefined,
+            });
+            navigate('/profile');
+        } catch (err) {
+            console.error('Failed to save:', err);
+            if (err instanceof Error) {
+                setErrors({ username: err.message });
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    
+        const currentUser = authAPI.getCurrentUser();
+        const token = authAPI.getToken();
+    
+        const res = await fetch(`${API_BASE_URL}/api/users/${currentUser?.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    
+        if (res.ok) {
+            authAPI.logout();
+            navigate('/login');
+        } else {
+            alert('Failed to delete account');
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,11 +139,16 @@ function SettingsPage() {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPreviewImage(reader.result as string);
+                const base64 = reader.result as string;
+                setPreviewImage(base64);
+                setAvatarBase64(base64);
             };
             reader.readAsDataURL(file);
         }
     };
+
+    // ── FIX: Use getAvatarSrc to generate proper fallback when loading ──
+    const displayAvatarSrc = previewImage || getAvatarSrc(profileAvatarUrl, form.username);
 
     return (
         <div className="settings-page">
@@ -98,15 +160,15 @@ function SettingsPage() {
 
                 <div className="settings-avatar-row">
                     <div className="settings-avatar-container">
-                        <img
-                            src={previewImage || getAvatarSrc(profileAvatarUrl, form.username)}
-                            alt="Avatar preview"
-                            className="settings-avatar"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(form.username)}`;
-                            }}
-                        />
+                    <img
+                        src={displayAvatarSrc}
+                        alt="Avatar preview"
+                        className="settings-avatar"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(form.username)}`;
+                        }}
+                    />
                         <button
                             className="settings-avatar-edit-overlay"
                             onClick={() => fileInputRef.current?.click()}
@@ -141,12 +203,19 @@ function SettingsPage() {
                         <label className="settings-label" htmlFor="settings-username">Username</label>
                         <input
                             id="settings-username"
-                            className="settings-input"
+                            className={`settings-input ${errors.username ? 'settings-input--error' : ''}`}
                             type="text"
                             value={form.username}
-                            onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))}
+                            onChange={e => {
+                                const newUsername = e.target.value;
+                                setForm(prev => ({ ...prev, username: newUsername }));
+                                const newErrors = validateForm(newUsername);
+                                setErrors(newErrors);
+                            }}
                             placeholder="username"
                         />
+                        {errors.username && <p className="settings-error-message">{errors.username}</p>}
+                        <p className="settings-hint">{USERNAME_MIN}-{USERNAME_MAX} characters</p>
                     </div>
 
                     <div className="settings-field">
@@ -196,22 +265,29 @@ function SettingsPage() {
                 </div>
 
                 <div className="settings-footer">
-                    <button
-                        className="settings-cancel-btn"
-                        onClick={() => navigate(-1)}
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="settings-save-btn"
-                        onClick={handleSave}
-                        type="button"
-                        disabled={isSaving}
-                    >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                </div>
+                <button
+                    className="settings-cancel-btn"
+                    onClick={() => navigate(-1)}
+                    type="button"
+                >
+                    Cancel
+                </button>
+                <button
+                    className="settings-delete-btn"
+                    onClick={handleDeleteAccount}
+                    type="button"
+                >
+                    🗑 Delete My Account
+                </button>
+                <button
+                    className="settings-save-btn"
+                    onClick={handleSave}
+                    type="button"
+                    disabled={isSaving || Object.keys(errors).length > 0}
+                >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+            </div>
             </div>
         </div>
     );

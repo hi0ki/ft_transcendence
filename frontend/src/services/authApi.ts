@@ -8,6 +8,7 @@ const USER_KEY = 'auth_user';
 export interface AuthUser {
     id: number;
     email: string;
+    role?: string;
     username?: string;
     avatarUrl?: string | null;
 }
@@ -86,31 +87,75 @@ class AuthAPI {
         }
     }
 
+    async refreshToken(): Promise<void> {
+        const token = this.getToken();
+        if (!token) return;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+    
+            // If 401 — user was deleted or token is invalid → logout
+            if (response.status === 401 || response.status === 403) {
+                this.logout();
+                window.location.href = '/login'; // force redirect to login
+                return;
+            }
+    
+            if (!response.ok) return;
+    
+            const data = await response.json();
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+        } catch {
+            return;
+        }
+    }
+
     // Get current user info from token
     getCurrentUser(): AuthUser | null {
         const token = this.getToken();
         if (!token) return null;
-
+    
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             return {
                 id: payload.id,
                 email: payload.email,
+                role: payload.role || 'USER',
                 username: payload.username,
-                avatarUrl: payload.avatarUrl || null,
+                avatarUrl: null, // ← always get avatarUrl from getMyProfile() instead
             };
         } catch {
             return null;
         }
     }
 
+    async reLoginWithFreshToken(): Promise<void> {
+        const token = this.getToken();
+        if (!token) return;
+    
+        const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    
+        if (!response.ok) {
+            this.logout();
+            window.location.href = '/login';
+            return;
+        }
+    
+        const data = await response.json();
+        localStorage.setItem(TOKEN_KEY, data.access_token);
+    }
+    
     // Fetch current user's profile (including avatarUrl) from the backend
     async getMyProfile(): Promise<UserProfile | null> {
         const token = this.getToken();
         if (!token) return null;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/profiles/me`, {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (!response.ok) return null;
@@ -120,10 +165,58 @@ class AuthAPI {
         }
     }
 
+    // Fetch any user's profile by username
+    async getProfile(username: string): Promise<any | null> {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/${username}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch {
+            return null;
+        }
+    }
+
+    async updateProfile(data: { 
+        username?: string; 
+        bio?: string; 
+        skills?: string[];
+        avatarUrl?: string | null;
+    }): Promise<UserProfile | null> {
+        const token = this.getToken();
+        if (!token) return null;
+    
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) return null;
+            const result = await response.json();
+            
+            // ← Clear cache so Navbar fetches fresh profile with new avatar
+            sessionStorage.removeItem('user_profile');
+            
+            return result;
+        } catch {
+            return null;
+        }
+    }
+
+
     // Logout — clear stored data
     logout(): void {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        sessionStorage.removeItem('user_profile');
     }
 }
 

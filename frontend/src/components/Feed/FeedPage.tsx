@@ -1,24 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FeedHeader from './FeedHeader';
 import FilterTabs from './FilterTabs';
 import PostCard from './PostCard';
 import type { Post } from './PostCard';
 import CreatePostModal from './CreatePostModal';
+import PostDetailModal from './PostDetailModal';
 import CommentsModal from './CommentsModal';
-import type { Comment } from './CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
+import { commentsAPI } from '../../services/commentsApi';
+import { useAuth } from '../../auth/authContext';
 import './FeedPage.css';
+import { useLocation } from 'react-router-dom';
+
+// Extended Mock Data targeting to visually recreate screenshot values including nested comments
+interface ExtendedPost extends Post {
+    commentList: Comment[];
+}
 
 const FeedPage: React.FC = () => {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('All');
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isPostDetailOpen, setIsPostDetailOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Interaction Modal States
+
     const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
     const [activeSharePostId, setActiveSharePostId] = useState<string | null>(null);
 
@@ -26,10 +36,23 @@ const FeedPage: React.FC = () => {
         const currentUser = authAPI.getCurrentUser();
         if (!currentUser) return;
 
-        // Still fetch profile for other potential uses (like navbar or future features)
         authAPI.getMyProfile();
     }, []);
 
+    useEffect(() => {
+        if (posts.length === 0) return;
+    
+        const params = new URLSearchParams(window.location.search);
+        const postId = params.get('post');
+        if (!postId) return;
+    
+        // Filter to show only the shared post
+        const sharedPost = posts.find(p => p.id === postId);
+        if (sharedPost) {
+            setPosts([sharedPost]); // ← show only that post
+        }
+    }, [posts.length]); 
+    
     useEffect(() => {
         let isMounted = true;
 
@@ -41,6 +64,10 @@ const FeedPage: React.FC = () => {
                 const fetchedPosts = await postsAPI.getAllPosts();
 
                 if (!isMounted) return;
+                const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
+                    ...post,
+                    commentList: []
+                }));
 
                 // Filter by active tab
                 if (activeTab === 'All') {
@@ -63,7 +90,41 @@ const FeedPage: React.FC = () => {
         return () => { isMounted = false; };
     }, [activeTab]);
 
-    const handleCreatePost = async (newPostData: { type: string; content: string; tags: string[] }) => {
+    // Fetch real comments from backend when modal opens
+    const fetchComments = useCallback(async (postId: string) => {
+        const numericId = parseInt(postId);
+        if (isNaN(numericId)) return;
+
+        try {
+            const backendComments = await commentsAPI.getCommentsByPost(numericId);
+            const commentCount = await commentsAPI.getCommentCount(numericId);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        commentList: backendComments.map(c => ({
+                            id: c.id,
+                            userId: c.userId,
+                            author: c.author,
+                            timeAgo: c.timeAgo,
+                            content: c.content,
+                        })),
+                        comments: commentCount,
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to fetch comments:', err);
+        }
+    }, []);
+
+    const handleOpenComments = useCallback((postId: string) => {
+        setActiveCommentPostId(postId);
+        fetchComments(postId);
+    }, [fetchComments]);
+
+    const handleCreatePost = async (newPostData: { type: string; title: string; content: string; tags: string[]; imageFile?: File; contentUrl?: string }) => {
         try {
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
@@ -71,11 +132,12 @@ const FeedPage: React.FC = () => {
 
             const createdPost = await postsAPI.createPost({
                 type: backendType,
-                content: newPostData.content
+                title: newPostData.title,
+                content: newPostData.content,
+                imageFile: newPostData.imageFile,
+                contentUrl: newPostData.contentUrl
             });
 
-            // The backend now returns the full post including user profile.
-            // postsAPI.createPost already transforms this into our Post interface.
             const newPost: Post = {
                 ...createdPost,
                 tags: newPostData.tags.map(t => t.startsWith('#') ? t : `#${t}`),
@@ -98,10 +160,113 @@ const FeedPage: React.FC = () => {
         console.log(`Liked post ${postId}`);
     };
 
-    const handleAddComment = (content: string) => {
-        // Mocking comment addition removed as per user request (no backend yet)
-        console.log(`Add comment to post ${activeCommentPostId}: ${content}`);
+    const handleShowMore = (post: Post) => {
+        setSelectedPost(post);
+        setIsPostDetailOpen(true);
     };
+    const handleAddComment = async (content: string) => {
+        if (!activeCommentPostId) return;
+
+        const numericPostId = parseInt(activeCommentPostId);
+        if (isNaN(numericPostId)) return;
+
+        try {
+            // Create comment via backend API — returns real comment with real user data
+            const created = await commentsAPI.createComment(numericPostId, content);
+
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    const newCommentObj: Comment = {
+                        id: created.id,
+                        userId: created.userId,
+                        author: created.author,
+                        timeAgo: created.timeAgo,
+                        content: created.content,
+                    };
+                    return {
+                        ...post,
+                        comments: post.comments + 1,
+                        commentList: [...post.commentList, newCommentObj]
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to add comment:', err);
+        }
+    };
+
+    const handleEditComment = async (commentId: string, newContent: string) => {
+        if (!activeCommentPostId) return;
+        const numericPostId = parseInt(activeCommentPostId);
+        const numericCommentId = parseInt(commentId);
+        if (isNaN(numericPostId) || isNaN(numericCommentId)) return;
+
+        try {
+            const updated = await commentsAPI.updateComment(numericCommentId, numericPostId, newContent);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    return {
+                        ...post,
+                        commentList: post.commentList.map(c =>
+                            c.id === commentId ? { ...c, content: updated.content } : c
+                        ),
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to edit comment:', err);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!activeCommentPostId) return;
+        const numericPostId = parseInt(activeCommentPostId);
+        const numericCommentId = parseInt(commentId);
+        if (isNaN(numericPostId) || isNaN(numericCommentId)) return;
+
+        try {
+            await commentsAPI.deleteComment(numericCommentId, numericPostId);
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === activeCommentPostId) {
+                    return {
+                        ...post,
+                        comments: Math.max(0, post.comments - 1),
+                        commentList: post.commentList.filter(c => c.id !== commentId),
+                    };
+                }
+                return post;
+            }));
+        } catch (err) {
+            console.error('Failed to delete comment:', err);
+        }
+    };
+
+    // Get the active post for comments modal
+    const activeCommentPost = posts.find(p => p.id === activeCommentPostId);
+
+    const location = useLocation();
+
+    // Scroll to post if redirected from search
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const postId = params.get('postId');
+        if (postId) {
+            // Wait for posts to render then scroll
+            const tryScroll = (attempts = 0) => {
+                const el = document.getElementById(`post-${postId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('post-highlight');
+                    setTimeout(() => el.classList.remove('post-highlight'), 2500);
+                } else if (attempts < 10) {
+                    setTimeout(() => tryScroll(attempts + 1), 300);
+                }
+            };
+            tryScroll();
+        }
+    }, [location.search]);
 
     return (
         <div className="feed-page">
@@ -123,16 +288,17 @@ const FeedPage: React.FC = () => {
                     ) : posts.length > 0 ? (
                         posts.map(post => (
                             <PostCard
+                                onShowMore={handleShowMore}
                                 key={post.id}
                                 post={post}
-                                onLike={handleLikePost}
-                                onComment={(id: string) => setActiveCommentPostId(id)}
+                                commentCount={post.comments}
+                                onComment={(id: string) => handleOpenComments(id)}
                                 onShare={(id: string) => setActiveSharePostId(id)}
                             />
                         ))
                     ) : (
                         <div className="feed-empty">
-                            <p>No posts found in this section yet. Be the first to start a conversation!</p>
+                            <p>No posts found in this section yet. Be the first to post a POOOST!</p>
                         </div>
                     )}
                 </div>
@@ -147,18 +313,34 @@ const FeedPage: React.FC = () => {
             <CommentsModal
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
-                comments={[]}
-                currentUserAvatar={getAvatarSrc(null, 'me')} // Simplified fallback, as we don't have backend comments yet
+                comments={activeCommentPost?.commentList || []}
+                currentUserAvatar={getAvatarSrc(null, 'me')}
+                currentUserId={user?.id ?? null}
                 onAddComment={handleAddComment}
+                onEditComment={handleEditComment}
+                onDeleteComment={handleDeleteComment}
             />
 
             <ShareModal
                 isOpen={!!activeSharePostId}
                 onClose={() => setActiveSharePostId(null)}
-                postUrl={`http://localhost:8080/post/${activeSharePostId}`} // Mock sharing link targeting active environment
+                postUrl={`${window.location.origin}/home?post=${activeSharePostId}`}
             />
+
+            {selectedPost && (
+                <PostDetailModal
+                    isOpen={isPostDetailOpen}
+                    onClose={() => {
+                        setIsPostDetailOpen(false);
+                        setSelectedPost(null);
+                    }}
+                    post={selectedPost}
+                />
+            )}
         </div>
     );
 };
 
 export default FeedPage;
+
+

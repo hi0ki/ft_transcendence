@@ -17,7 +17,46 @@ export class ReactionsService {
      * - If the user has a different type → update to new type
      */
     async toggle(userId: number, postId: number, type: string) {
-        // Try to create the reaction
+        // First check if user already has a reaction on this post
+        try {
+            const { data: existing } = await firstValueFrom(
+                this.http.get(`${this.authUrl}/reactions/user/${userId}/post/${postId}`),
+            );
+
+            if (existing && existing.type) {
+                if (existing.type === type) {
+                    // Same type → remove (toggle off)
+                    await firstValueFrom(
+                        this.http.delete(`${this.authUrl}/reactions`, {
+                            data: { userId, postId },
+                        }),
+                    );
+                    return { action: 'removed', reaction: null };
+                } else {
+                    // Different type → update
+                    const { data: updated } = await firstValueFrom(
+                        this.http.put(`${this.authUrl}/reactions/update`, {
+                            userId,
+                            postId,
+                            type,
+                        }),
+                    );
+                    return { action: 'updated', reaction: updated };
+                }
+            }
+        } catch (err) {
+            // 404 or null means no existing reaction → fall through to create
+            if (err.response?.status !== 404) {
+                // If it's not a "not found" error, check if the response is null/empty
+                // which also means no reaction exists
+                const data = err.response?.data;
+                if (data !== null && data !== '' && err.response?.status >= 400) {
+                    // Only throw for real errors, not for "no reaction found"
+                }
+            }
+        }
+
+        // No existing reaction → create
         try {
             const { data } = await firstValueFrom(
                 this.http.post(`${this.authUrl}/reactions`, {
@@ -28,50 +67,28 @@ export class ReactionsService {
             );
             return { action: 'created', reaction: data };
         } catch (err) {
-            // If duplicate (unique constraint), the reaction already exists
             const status = err.response?.status;
             const message = JSON.stringify(err.response?.data || '');
 
-            // Prisma P2002 = unique constraint violation → reaction already exists
+            // Prisma P2002 = unique constraint → already exists, delete it
             if (status === 500 && message.includes('P2002')) {
-                return this.handleExistingReaction(userId, postId, type);
+                try {
+                    await firstValueFrom(
+                        this.http.delete(`${this.authUrl}/reactions`, {
+                            data: { userId, postId },
+                        }),
+                    );
+                    return { action: 'removed', reaction: null };
+                } catch (delErr) {
+                    throw new HttpException(
+                        delErr.response?.data || 'Failed to remove reaction',
+                        delErr.response?.status || 500,
+                    );
+                }
             }
             throw new HttpException(
                 err.response?.data || 'Failed to toggle reaction',
                 status || 500,
-            );
-        }
-    }
-
-    /**
-     * When a reaction already exists for this user+post:
-     * We don't know the current type (auth has no get-by-id endpoint),
-     * so we try to update. If the type is the same, the user wants to remove it.
-     * Strategy: try update to the requested type, then if the caller
-     * toggles the same type we delete instead.
-     *
-     * Since we can't read the current type, we use a two-step approach:
-     * 1. Try to update to the new type
-     * 2. If update succeeds and returned type equals requested type,
-     *    it might be the same — so we compare. If caller calls toggle
-     *    with the same type twice, second call deletes.
-     *
-     * Simpler approach: always delete on conflict, let the user re-toggle.
-     * This makes toggle = create-or-remove (Instagram-style like button).
-     */
-    private async handleExistingReaction(userId: number, postId: number, type: string) {
-        try {
-            // Delete the existing reaction (toggle off)
-            const { data } = await firstValueFrom(
-                this.http.delete(`${this.authUrl}/reactions`, {
-                    data: { userId, postId },
-                }),
-            );
-            return { action: 'removed', reaction: null };
-        } catch (err) {
-            throw new HttpException(
-                err.response?.data || 'Failed to remove reaction',
-                err.response?.status || 500,
             );
         }
     }
@@ -98,7 +115,7 @@ export class ReactionsService {
     }
 
     /**
-     * Get reaction counts grouped by type for a post.
+     * Get reaction count for a post (plain number).
      */
     async countByPost(postId: number) {
         try {
@@ -109,6 +126,37 @@ export class ReactionsService {
         } catch (err) {
             throw new HttpException(
                 err.response?.data || 'Failed to fetch reaction count',
+                err.response?.status || 500,
+            );
+        }
+    }
+
+    /**
+     * Get the current user's reaction on a post.
+     */
+    async getMyReaction(userId: number, postId: number) {
+        try {
+            const { data } = await firstValueFrom(
+                this.http.get(`${this.authUrl}/reactions/user/${userId}/post/${postId}`),
+            );
+            return data;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    /**
+     * Get all reactions for a post with user profiles.
+     */
+    async getReactionsByPost(postId: number) {
+        try {
+            const { data } = await firstValueFrom(
+                this.http.get(`${this.authUrl}/reactions/post/${postId}`),
+            );
+            return data;
+        } catch (err) {
+            throw new HttpException(
+                err.response?.data || 'Failed to fetch reactions',
                 err.response?.status || 500,
             );
         }

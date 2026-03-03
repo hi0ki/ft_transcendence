@@ -22,6 +22,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
+    const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
     const currentUserIdRef = useRef(currentUserId);
     const activeConversationRef = useRef(activeConversation);
@@ -215,20 +216,21 @@ const ChatApp: React.FC<ChatAppProps> = () => {
             const messages = await chatAPI.getConversationMessages(existingConv.id, currentUserId);
             setActiveMessages(messages);
             if (connected) socketService.joinRoom(existingConv.id);
+            setMobileView('chat');
             return;
         }
 
         if (connected) {
             socketService.createRoom(user.id);
+            setMobileView('chat');
         } else {
             try {
                 const conv = await chatAPI.findOrCreateConversation(currentUserId, user.id);
-                // Don't add to sidebar — only set as active
-                // It will appear in sidebar when first message is sent
                 setActiveConversation(conv);
                 setSearchQuery(''); // Clear search on selection
                 const messages = await chatAPI.getConversationMessages(conv.id, currentUserId);
                 setActiveMessages(messages);
+                setMobileView('chat');
             } catch (error) {
                 console.error('Failed to create conversation via REST:', error);
             }
@@ -245,6 +247,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
         const messages = await chatAPI.getConversationMessages(conversation.id, currentUserId || undefined);
         setActiveMessages(messages);
         if (connected) socketService.joinRoom(conversation.id);
+        setMobileView('chat');
     };
 
     const handleSendMessage = async (message: string, type?: string, fileUrl?: string) => {
@@ -327,12 +330,13 @@ const ChatApp: React.FC<ChatAppProps> = () => {
     return (
         <div className="chat-layout-wrapper">
             <div className="chat-global-header">
-                <h1>Messages</h1>
-                <p>Chat with your peers</p>
+                <h1>Conversations</h1>
+                <p>Connect with your study partners</p>
             </div>
 
             <div className="chat-app-container">
-                <div className="chat-card chat-card--left">
+                {/* Left panel: conversation list — hidden on mobile when in chat view */}
+                <div className={`chat-card chat-card--left ${mobileView === 'chat' ? 'chat-panel-hidden-mobile' : ''}`}>
                     <div className="chat-search">
                         <span className="chat-search-icon">🔍</span>
                         <input
@@ -344,10 +348,6 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     </div>
 
                     <div className="chat-conversations">
-                        {/* 
-                            Show search results for both users and conversations.
-                            If not searching, prioritize conversations.
-                        */}
                         {searchQuery && filteredUsers.length > 0 && (
                             <UserList
                                 users={filteredUsers}
@@ -367,7 +367,19 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     </div>
                 </div>
 
-                <div className="chat-card chat-card--right">
+                {/* Right panel: chat room — hidden on mobile when in list view */}
+                <div className={`chat-card chat-card--right ${mobileView === 'list' ? 'chat-panel-hidden-mobile' : ''}`}>
+                    {/* Mobile back button */}
+                    <button
+                        className="chat-mobile-back"
+                        onClick={() => setMobileView('list')}
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                        Back
+                    </button>
+
                     {activeConversation ? (
                         <ChatRoom
                             conversation={activeConversation}

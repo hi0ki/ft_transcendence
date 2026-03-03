@@ -3,15 +3,11 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import { AuthGuard } from '../guards/auth.guard'; 
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
-
-    @Get()
-    hello(): string {
-        return "Hello Auth";
-    }
 
     @Post('register')
     async register(@Body() registerDto: RegisterDto) {
@@ -23,17 +19,23 @@ export class AuthController {
         return this.authService.login(loginDto.email, loginDto.password);
     }
 
+    @Get('refresh')
+    @UseGuards(AuthGuard)
+    async refresh(@Req() req: any) {
+        return this.authService.refreshToken(req.user.id);
+    }
 
     @Get('42')
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoAuth() { }
 
-    // step 2 — 42 redirects back here after login
+
     @Get('42/callback')
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoCallback(@Req() req: any, @Res() res: any) {
         const token = req.user.access_token;
-        res.redirect(`http://localhost:8080/callback?token=${token}`);
+        res.redirect(`https://localhost/callback?token=${token}`);
     }
 
 }
+
