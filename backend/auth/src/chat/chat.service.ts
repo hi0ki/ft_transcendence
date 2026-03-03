@@ -134,13 +134,6 @@ export class ChatService {
                     { user1Id: userId },
                     { user2Id: userId },
                 ],
-                messages: {
-                    some: {
-                        NOT: {
-                            deletedFor: { has: userId }
-                        }
-                    }
-                }
             },
             include: {
                 user1: {
@@ -170,9 +163,6 @@ export class ChatService {
                     },
                 },
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
         });
 
         return conversations.map((conversation) => {
@@ -185,7 +175,7 @@ export class ChatService {
                 createdAt: conversation.createdAt,
                 lastMessage: visibleMessages[0] || null,
             };
-        });
+        }).filter(conv => conv.lastMessage !== null);
     }
 
     // Get unread count for a conversation

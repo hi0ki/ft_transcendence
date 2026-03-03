@@ -27,6 +27,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(private readonly chatService: ChatService) { }
 
+    afterInit() {
+        // Broadacst online users every 5 seconds as a "self-healing" mechanism
+        // for clients that might have missed a connection/disconnection event
+        setInterval(() => {
+            if (this.server) {
+                this.broadcastOnlineUsers();
+            }
+        }, 1000);
+    }
+
     async handleConnection(client: Socket) {
         try {
             // Extract JWT token from handshake
@@ -41,7 +51,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             // Decode JWT to get user info
             const payload: any = jwt.verify(token, this.JWT_SECRET);
-            const userId = payload.id || payload.sub;
+            // Cast to Number to prevent string vs number mismatch on the frontend
+            const userId = Number(payload.id || payload.sub);
             const email = payload.email;
             const username = payload.username;
 
@@ -255,7 +266,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     private broadcastOnlineUsers() {
-        const onlineUserIds = this.chatService.getOnlineUserIds();
+        // Deduplicate in case a user has multiple sockets open
+        const onlineUserIds = [...new Set(this.chatService.getOnlineUserIds())];
         this.server.emit('online_users', onlineUserIds);
+    }
+
+    @SubscribeMessage('heartbeat')
+    handleHeartbeat(@ConnectedSocket() client: Socket) {
+        // Touch the user's last-seen time (currently just a no-op ACK).
+        // The periodic broadcastOnlineUsers interval keeps guests informed.
+        const user = this.chatService.getConnectedUser(client.id);
+        if (user) {
+            // Respond to the sender so they know they are still registered
+            client.emit('heartbeat_ack', { userId: user.userId });
+        }
+    }
+
+    @SubscribeMessage('request_online_users')
+    handleRequestOnlineUsers(@ConnectedSocket() client: Socket) {
+        const currentUser = this.chatService.getConnectedUser(client.id);
+        if (currentUser) {
+            const onlineUserIds = this.chatService.getOnlineUserIds();
+            client.emit('online_users', onlineUserIds);
+        }
     }
 }

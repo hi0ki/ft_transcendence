@@ -17,6 +17,7 @@ const UserList: React.FC<UserListProps> = ({ users, currentUserId, onlineUserIds
     };
 
     const isOnline = (userId: number): boolean => {
+        if (!onlineUserIds || !Array.isArray(onlineUserIds)) return false;
         return onlineUserIds.includes(userId);
     };
 

@@ -7,6 +7,7 @@ interface ChatRoomProps {
     conversation: DBConversation;
     messages: DBMessage[];
     currentUserId: number | null;
+    onlineUserIds: number[];
     onSendMessage: (message: string, type?: string, fileUrl?: string) => void;
     onUpdateMessage: (messageId: number, content: string) => void;
     onDeleteMessage: (messageId: number, type: 'FOR_ME' | 'FOR_ALL') => void;
@@ -16,6 +17,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     conversation,
     messages,
     currentUserId,
+    onlineUserIds,
     onSendMessage,
     onUpdateMessage,
     onDeleteMessage,
@@ -287,6 +289,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
     const otherUser = getOtherUser();
     const otherName = otherUser.profile?.username || otherUser.email.split('@')[0];
+    const isOtherUserOnline = onlineUserIds.includes(otherUser.id);
 
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -404,16 +407,31 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
             {/* Header */}
             <div className="chatroom-header">
                 <div className="chatroom-header-user">
-                    <div className="chatroom-header-avatar">
+                    <div className="chatroom-header-avatar" style={{ position: 'relative', display: 'inline-block' }}>
                         <img
                             src={getAvatarUrl(otherUser.profile?.avatarUrl, otherName)}
                             alt={otherName}
                         />
+                        {isOtherUserOnline && (
+                            <span style={{
+                                position: 'absolute',
+                                bottom: '2px',
+                                right: '2px',
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                background: '#22c55e',
+                                border: '2px solid #0f172a',
+                                display: 'block',
+                            }} />
+                        )}
                     </div>
                     <div>
                         <h3 className="chatroom-header-name">{otherName}</h3>
                         <p className="chatroom-header-handle" style={{ display: 'inline', marginRight: '8px' }}>@{otherName}</p>
-                        <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>• Online</span>
+                        <span style={{ fontSize: '0.75rem', color: isOtherUserOnline ? '#22c55e' : '#64748b' }}>
+                            {isOtherUserOnline ? '• Online' : '• Offline'}
+                        </span>
                     </div>
                 </div>
             </div>
