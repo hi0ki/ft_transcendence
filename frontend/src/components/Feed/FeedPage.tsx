@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FeedHeader from './FeedHeader';
 import FilterTabs from './FilterTabs';
-import PostCard from './PostCard';
 import type { Post } from './PostCard';
+import PostList from './PostList';
 import CreatePostModal from './CreatePostModal';
 import PostDetailModal from './PostDetailModal';
-import CommentsModal from './CommentsModal';
+import CommentsModal from '../Comments/CommentsModal';
 import ShareModal from './ShareModal';
 import { postsAPI } from '../../services/postsApi';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
@@ -275,32 +275,14 @@ const FeedPage: React.FC = () => {
                 <FilterTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
                 <div className="feed-content">
-                    {loading ? (
-                        <div className="feed-loading">
-                            <div className="spinner"></div>
-                            <p>Loading your feed...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="feed-error">
-                            <p>{error}</p>
-                            <button onClick={() => window.location.reload()}>Retry</button>
-                        </div>
-                    ) : posts.length > 0 ? (
-                        posts.map(post => (
-                            <PostCard
-                                onShowMore={handleShowMore}
-                                key={post.id}
-                                post={post}
-                                commentCount={post.comments}
-                                onComment={(id: string) => handleOpenComments(id)}
-                                onShare={(id: string) => setActiveSharePostId(id)}
-                            />
-                        ))
-                    ) : (
-                        <div className="feed-empty">
-                            <p>No posts found in this section yet. Be the first to post a POOOST!</p>
-                        </div>
-                    )}
+                    <PostList
+                        loading={loading}
+                        error={error}
+                        posts={posts}
+                        onShowMore={handleShowMore}
+                        onComment={handleOpenComments}
+                        onShare={(id) => setActiveSharePostId(id)}
+                    />
                 </div>
             </div>
 

@@ -6,8 +6,8 @@ import { friendsAPI, type FriendshipStatusResponse, type Friend } from '../../se
 import { reactionsAPI, REACTION_EMOJI, REACTION_LABELS } from '../../services/reactionsApi';
 import { commentsAPI } from '../../services/commentsApi';
 import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi';
-import CommentsModal from '../Feed/CommentsModal';
-import type { Comment } from '../Feed/CommentsModal';
+import CommentsModal from '../Comments/CommentsModal';
+import type { Comment } from '../Comments/CommentsModal';
 import PostDetailModal from '../Feed/PostDetailModal';
 import { getAchievementProgress, type AchievementProgress } from '../../services/achievementsApi';
 import './ProfilePage.css';
