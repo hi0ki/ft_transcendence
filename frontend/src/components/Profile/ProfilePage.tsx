@@ -9,6 +9,7 @@ import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi
 import CommentsModal from '../Feed/CommentsModal';
 import type { Comment } from '../Feed/CommentsModal';
 import PostDetailModal from '../Feed/PostDetailModal';
+import { getAchievementProgress, type AchievementProgress } from '../../services/achievementsApi';
 import './ProfilePage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
@@ -121,7 +122,7 @@ interface ProfilePostCardProps {
     username: string;
     isOwner: boolean;
     onDelete?: (postId: number) => void;
-    onEdit?: (postId: number, data: { title: string; content: string; contentUrl?: string }) => void;
+    onEdit?: (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => void;
     currentUserId: number | null;
     currentUserAvatar: string;
 }
@@ -167,7 +168,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                 await onEdit(post.id, {
                     title: editTitle.trim(),
                     content: editContent.trim(),
-                    contentUrl: editContentUrl.trim() || undefined,
+                    contentUrl: editContentUrl.trim() || null,
                 });
             }
             setShowEditModal(false);
@@ -553,29 +554,35 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                             </button>
                         </div>
                         <div className="ppc-edit-body">
-                            <label className="ppc-edit-label">Title</label>
-                            <input
-                                className="ppc-edit-input"
-                                value={editTitle}
-                                onChange={e => setEditTitle(e.target.value)}
-                                placeholder="Post title"
-                                maxLength={200}
-                            />
-                            <label className="ppc-edit-label">Content</label>
-                            <textarea
-                                className="ppc-edit-textarea"
-                                value={editContent}
-                                onChange={e => setEditContent(e.target.value)}
-                                placeholder="Post content"
-                                rows={5}
-                            />
-                            <label className="ppc-edit-label">Link (optional)</label>
-                            <input
-                                className="ppc-edit-input"
-                                value={editContentUrl}
-                                onChange={e => setEditContentUrl(e.target.value)}
-                                placeholder="https://..."
-                            />
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Title</label>
+                                <input
+                                    className="ppc-edit-input"
+                                    value={editTitle}
+                                    onChange={e => setEditTitle(e.target.value)}
+                                    placeholder="Post title"
+                                    maxLength={200}
+                                />
+                            </div>
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Content</label>
+                                <textarea
+                                    className="ppc-edit-textarea"
+                                    value={editContent}
+                                    onChange={e => setEditContent(e.target.value)}
+                                    placeholder="Post content"
+                                    rows={5}
+                                />
+                            </div>
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Link (optional)</label>
+                                <input
+                                    className="ppc-edit-input"
+                                    value={editContentUrl}
+                                    onChange={e => setEditContentUrl(e.target.value)}
+                                    placeholder="https://..."
+                                />
+                            </div>
                         </div>
                         <div className="ppc-edit-footer">
                             <button className="ppc-edit-cancel" onClick={() => setShowEditModal(false)}>Cancel</button>
@@ -594,6 +601,36 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         </div>
     );
 };
+
+// ── Achievement Badge ────────────────────────────────────────────────────────
+interface AchBadgeProps {
+    icon:     string;
+    label:    string;
+    earned:   boolean;
+    progress: number;
+    total:    number;
+    color:    string;
+}
+function AchievementBadge({ icon, label, earned, progress, total, color }: AchBadgeProps) {
+    return (
+        <div
+            className={`achv-badge ${earned ? 'achv-badge--earned' : 'achv-badge--locked'}`}
+            style={earned ? {
+                background:  `${color}18`,
+                borderColor: `${color}88`,
+                boxShadow:   `0 0 10px ${color}33`,
+            } : {}}
+        >
+            <span className="achv-icon">{icon}</span>
+            <div className="achv-tooltip">
+                <span className="achv-tooltip-label">{label}</span>
+                <span className="achv-tooltip-progress">
+                    {Math.min(progress, total)}/{total}
+                </span>
+            </div>
+        </div>
+    );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 function ProfilePage() {
@@ -616,6 +653,7 @@ function ProfilePage() {
     // Friend request state
     const [friendStatus, setFriendStatus] = useState<FriendshipStatusResponse>({ status: 'NONE' });
     const [friendLoading, setFriendLoading] = useState(false);
+    const [achievements, setAchievements] = useState<AchievementProgress | null>(null);
 
     // Friends list popup
     const [showFriendsPopup, setShowFriendsPopup] = useState(false);
@@ -654,6 +692,14 @@ function ProfilePage() {
                 // Fetch friendship status for other users' profiles
                 if (!isOwner && data.user?.id) {
                     friendsAPI.getStatus(data.user.id).then(setFriendStatus).catch(() => {});
+                }
+                // Fetch achievements — use profile user id, fall back to JWT id for owner
+                const targetId = data.user?.id;
+                const tok = authAPI.getToken();
+                if (targetId && tok) {
+                    getAchievementProgress(targetId, tok)
+                        .then(setAchievements)
+                        .catch(() => {});
                 }
             }
             setLoading(false);
@@ -695,7 +741,7 @@ function ProfilePage() {
         }
     };
 
-    const handleEditPost = async (postId: number, data: { title: string; content: string; contentUrl?: string }) => {
+    const handleEditPost = async (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => {
         const token = authAPI.getToken();
         const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
             method: 'PATCH',
@@ -786,6 +832,33 @@ function ProfilePage() {
                                     <span className="stat-value">{profileData?.user?.friendsCount ?? 0}</span>
                                     <span className="stat-label">Friends</span>
                                 </button>
+                            </div>
+
+                            <div className="profile-achievements">
+                                <AchievementBadge
+                                    icon="✍️"
+                                    label="First Poster"
+                                    earned={achievements?.earned.includes('FIRST_POSTER') ?? false}
+                                    progress={achievements?.posts ?? 0}
+                                    total={5}
+                                    color="#f59e0b"
+                                />
+                                <AchievementBadge
+                                    icon="⚡"
+                                    label="Reaction Master"
+                                    earned={achievements?.earned.includes('REACTION_MASTER') ?? false}
+                                    progress={achievements?.reactions ?? 0}
+                                    total={5}
+                                    color="#6366f1"
+                                />
+                                <AchievementBadge
+                                    icon="💬"
+                                    label="Comment King"
+                                    earned={achievements?.earned.includes('COMMENT_KING') ?? false}
+                                    progress={achievements?.comments ?? 0}
+                                    total={15}
+                                    color="#10b981"
+                                />
                             </div>
 
                             {skills.length > 0 && (
