@@ -13,9 +13,22 @@ export class AchievementsService {
 
     async getProgress(userId: number) {
         const [posts, reactions, comments] = await Promise.all([
+            // Posts created by user
             this.prisma.post.count({ where: { userId } }),
-            this.prisma.like.count({ where: { userId } }),
-            this.prisma.comment.count({ where: { userId } }),
+            // Reactions given by user on OTHER people's posts only
+            this.prisma.like.count({
+                where: {
+                    userId,
+                    post: { userId: { not: userId } },
+                },
+            }),
+            // Comments written by user on OTHER people's posts only
+            this.prisma.comment.count({
+                where: {
+                    userId,
+                    post: { userId: { not: userId } },
+                },
+            }),
         ]);
 
         const earned: string[] = [];
