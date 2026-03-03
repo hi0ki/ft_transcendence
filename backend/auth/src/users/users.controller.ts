@@ -11,6 +11,13 @@ import { Roles, Role } from '../decorators/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  //temsah
+  // @Get()
+  // @Roles(Role.ADMIN)
+  // findAll() {
+  //   return this.usersService.findAll();
+  // }
+
   @Get()
   @Roles(Role.ADMIN)
   async findAll() {

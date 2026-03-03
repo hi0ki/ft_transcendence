@@ -11,6 +11,7 @@ import ProfilePage from './components/Profile/ProfilePage'
 import SettingsPage from './components/Settings/SettingsPage'
 import AdminPage from './components/Admin/AdminPage'
 import { PrivacyPolicyPage, TermsOfServicePage } from './components/Legal/LegalPages'
+import SearchPage from './components/Search/SearchPage'
 import './App.css'
 
 function LoginPage() {
@@ -191,17 +192,38 @@ function AdminPageWrapper() {
 function App() {
   const isAuthed = authAPI.isAuthenticated();
 
-  // Refresh token every 30 seconds to get latest role/data
+  // ── FIX: Debounced token refresh to prevent 429 rate limiting errors ──
   useEffect(() => {
-    if (authAPI.isAuthenticated()) {
-      authAPI.refreshToken(); // refresh once on load
-    }
+    let lastRefreshTime = 0;
+    const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh calls
 
-    const interval = setInterval(() => {
-      if (authAPI.isAuthenticated()) {
-        authAPI.refreshToken();
+    const debouncedRefresh = async () => {
+      if (!authAPI.isAuthenticated()) return;
+
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime;
+
+      // If less than 120 seconds since last refresh, skip this attempt
+      if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
+        return;
       }
-    }, 30 * 1000); // every 30 seconds
+
+      lastRefreshTime = now;
+      try {
+        await authAPI.refreshToken();
+      } catch (err) {
+        // Silently handle rate limit errors - token is probably still valid
+        if (err instanceof Error && !err.message.includes('429')) {
+          console.error('Token refresh failed:', err);
+        }
+      }
+    };
+
+    // DON'T refresh on load - just start the interval
+    // debouncedRefresh(); ← Removed this
+
+    // Check every 30 seconds (but actual refresh respects 120 second cooldown)
+    const interval = setInterval(debouncedRefresh, 30 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -219,7 +241,7 @@ function App() {
 
         <Route path="/home" element={<ProtectedLayout><FeedPage /></ProtectedLayout>} />
         <Route path="/chat" element={<ProtectedLayout><ChatApp /></ProtectedLayout>} />
-        <Route path="/search" element={<ProtectedLayout><PlaceholderPage title="Search" /></ProtectedLayout>} />
+        <Route path="/search" element={<ProtectedLayout><SearchPage /></ProtectedLayout>} />
         <Route path="/notifications" element={<ProtectedLayout><PlaceholderPage title="Notifications" /></ProtectedLayout>} />
         <Route path="/profile" element={<ProfilePageWrapper />} />
         <Route path="/profile/:username" element={<ProfilePageWrapper />} />

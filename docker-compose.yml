@@ -18,7 +18,7 @@ services:
     build: ./backend/nginx
     restart: always
     ports:
-      - "8080:80"
+      - "443:443" # I will remove this port mapping later, as it's only for development and testing purposes  
     depends_on:
       - frontend
       - auth_service

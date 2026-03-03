@@ -59,7 +59,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
     };
     
     const handleOAuthClick = () => {
-        window.location.href = 'http://localhost:8080/auth/42';
+        window.location.href = 'https://localhost/auth/42';
     };
 
     return (

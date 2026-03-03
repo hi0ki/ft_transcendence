@@ -34,7 +34,7 @@ export class AuthController {
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoCallback(@Req() req: any, @Res() res: any) {
         const token = req.user.access_token;
-        res.redirect(`http://localhost:8080/callback?token=${token}`);
+        res.redirect(`https://localhost/callback?token=${token}`);
     }
 
 }

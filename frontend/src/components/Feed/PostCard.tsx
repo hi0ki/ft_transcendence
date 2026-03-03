@@ -31,14 +31,16 @@ interface PostCardProps {
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
     onShowMore?: (post: Post) => void;
+    onViewPost?: (postId: string) => void;
     commentCount?: number;
+    readOnly?: boolean;
 }
 
 const MAX_CONTENT_LENGTH = 200;
 const MAX_CONTENT_LINES = 8;//hhmmmmmmmmmmmmmmmmm
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
-const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, commentCount: externalCommentCount }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, onViewPost, commentCount: externalCommentCount, readOnly = false }) => {
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [myReaction, setMyReaction] = useState<ReactionType | null>(null);
     const [reactionCount, setReactionCount] = useState(post.likes);
@@ -87,23 +89,33 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
         const postId = parseInt(post.id);
         if (isNaN(postId)) return;
 
-        reactionsAPI.getMyReaction(postId).then(data => {
-            if (data && data.type) setMyReaction(data.type);
-        }).catch(() => { });
+        // On readOnly (search page) — skip ALL API calls to prevent 429
+        // The search page shows static data only, user redirects to home to interact
+        if (readOnly) return;
 
-        reactionsAPI.getCount(postId).then(count => {
-            if (typeof count === 'number') setReactionCount(count);
-        }).catch(() => { });
+        // Stagger based on postId to spread out requests on feed page
+        const delay = (postId % 10) * 150;
 
-        commentsAPI.getCommentCount(postId).then(count => {
-            if (typeof count === 'number') setCommentCount(count);
-        }).catch(() => { });
+        const timer = setTimeout(() => {
+            reactionsAPI.getMyReaction(postId).then(data => {
+                if (data && data.type) setMyReaction(data.type);
+            }).catch(() => { });
 
-        // Fetch reactions list for the inline summary
-        reactionsAPI.getReactionsByPost(postId).then(data => {
-            setReactionsUsers(data);
-        }).catch(() => { });
-    }, [post.id]);
+            reactionsAPI.getCount(postId).then(count => {
+                if (typeof count === 'number') setReactionCount(count);
+            }).catch(() => { });
+
+            commentsAPI.getCommentCount(postId).then(count => {
+                if (typeof count === 'number') setCommentCount(count);
+            }).catch(() => { });
+
+            reactionsAPI.getReactionsByPost(postId).then(data => {
+                setReactionsUsers(data);
+            }).catch(() => { });
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [post.id, readOnly]);
 
     const formatUrl = (url: string): string => {
         if (!url) return url;
@@ -196,12 +208,27 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                         </div>
                     </div>
                 </div>
-                {post.type && (
-                    <div className={'post-type-badge type-' + post.type.toLowerCase()}>
-                        {getTypeIcon(post.type)}
-                        {post.type}
-                    </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {post.type && (
+                        <div className={'post-type-badge type-' + post.type.toLowerCase()}>
+                            {getTypeIcon(post.type)}
+                            {post.type}
+                        </div>
+                    )}
+                    {onViewPost && (
+                        <button
+                            className="view-post-icon-btn"
+                            onClick={() => onViewPost(post.id)}
+                            title="View full post & comments"
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="post-content-container">
@@ -232,9 +259,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                 )}
 
                 {post.imageUrl && (
-                    <div className="post-image-container" onClick={() => setIsImageModalOpen(true)}>
-                        <img src={post.imageUrl} alt="Post content" className="post-image" />
-                    </div>
+                    <>
+                        <div className="post-image-container" onClick={() => setIsImageModalOpen(true)}>
+                            <img src={post.imageUrl} alt="Post content" className="post-image" />
+                        </div>
+                        <div className="post-has-image-indicator" onClick={() => onShowMore && onShowMore(post)}>
+                            📷 Image attached • Click "Show More" to view
+                        </div>
+                    </>
                 )}
 
                 {post.tags && post.tags.length > 0 && (
@@ -278,7 +310,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
             )}
 
             <div className="post-actions">
-                <div
+                {readOnly ? (
+                    <span className="action-btn" style={{ cursor: 'default', opacity: 0.75 }}>
+                        <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                        </svg>
+                        {reactionCount > 0 && <span>{reactionCount}</span>}
+                    </span>
+                ) : <div
                     className="reaction-wrapper"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
@@ -319,7 +358,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                             </span>
                         )}
                     </button>
-                </div>
+                </div>}
                 <button className="action-btn" onClick={() => onComment && onComment(post.id)}>
                     <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>

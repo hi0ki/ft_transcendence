@@ -30,7 +30,7 @@
     left: 0;
     width: 80px;
     height: 2px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.15), transparent);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.15), transparent);
     border-radius: 2px;
 }
 
@@ -283,7 +283,7 @@
 .chatroom-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 24px 20px 24px 20px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -303,16 +303,19 @@
     display: flex;
     flex-direction: column;
     max-width: 80%;
+    width: fit-content;
 }
 
 .msg--own {
     align-self: flex-end;
     align-items: flex-end;
+    margin-left: auto;
 }
 
 .msg--other {
     align-self: flex-start;
     align-items: flex-start;
+    margin-right: auto;
 }
 
 .msg-bubble {
@@ -386,6 +389,41 @@
     transform: scale(1.05);
 }
 
+.chatroom-voice-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.chatroom-voice-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+.chatroom-attach-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 4px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.chatroom-attach-btn:hover {
+    color: #f1f5f9;
+}
+
 /* ========================================
    Responsive
    ======================================== */
@@ -404,22 +442,23 @@
     .chat-layout-wrapper {
         padding: 0;
         height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        height: 100dvh;
+        /* Dynamic viewport height for mobile browsers */
     }
 
     .chat-global-header {
         margin-bottom: 0;
         padding: 14px 16px 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         flex-shrink: 0;
-        background: linear-gradient(180deg, #0b0f1a 0%, rgba(11,15,26,0.95) 100%);
+        background: linear-gradient(180deg, #0b0f1a 0%, rgba(11, 15, 26, 0.95) 100%);
     }
 
     .chat-global-header::after {
         bottom: -1px;
         width: 50px;
         height: 2px;
-        background: linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent);
     }
 
     .chat-global-header h1 {
@@ -453,7 +492,7 @@
         min-height: 0;
         border-radius: 0;
         border: none;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     /* Right panel (chat room) fills the screen too */
