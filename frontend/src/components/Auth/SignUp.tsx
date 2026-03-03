@@ -43,13 +43,10 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
         setLoading(true);
     
         try {
-            // 1️⃣ Register user
             await authAPI.register(email, password, username);
     
-            // 2️⃣ Automatically log them in
             await authAPI.login(email, password);
     
-            // 3️⃣ Now they are authenticated → go to home
             onSignUpSuccess();
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');

@@ -6,7 +6,7 @@ interface AuthContextType {
     user: AuthUser | null;
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string) => Promise<void>;
+    register: (email: string, password: string, username: string) => Promise<void>;
     logout: () => void;
 }
 
@@ -30,19 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
         }
 
-        // ── DEBOUNCING: Track last refresh time to prevent rate limiting ──
         let lastRefreshTime = 0;
         let refreshTimeout: NodeJS.Timeout | null = null;
-        const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh attempts
+        const REFRESH_COOLDOWN = 120000;
 
         const debouncedCheckRole = async () => {
-            // Clear any pending timeout
-            if (refreshTimeout) clearTimeout(refreshTimeout);
+            if (refreshTimeout) 
+                clearTimeout(refreshTimeout);
 
             const now = Date.now();
             const timeSinceLastRefresh = now - lastRefreshTime;
 
-            // If less than 120 seconds since last refresh, schedule for later
             if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
                 const delay = REFRESH_COOLDOWN - timeSinceLastRefresh;
                 refreshTimeout = setTimeout(() => {
@@ -51,10 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            // Safe to refresh
             lastRefreshTime = now;
 
-            if (!authAPI.isAuthenticated()) return;
+            if (!authAPI.isAuthenticated()) 
+                return;
 
             try {
                 const oldRole = authAPI.getCurrentUser()?.role;
@@ -65,7 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     try {
                         await authAPI.reLoginWithFreshToken();
                         setUser(authAPI.getCurrentUser());
-                        // Force a hard refresh instead of programmatic redirect
                         setTimeout(() => {
                             window.location.reload();
                         }, 500);

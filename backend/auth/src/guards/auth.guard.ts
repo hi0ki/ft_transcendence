@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
+
 //CanActive is an interface so ifyou implement it you MUST write this method. CanActive
 export class AuthGuard implements CanActivate{
     constructor(private jwtService: JwtService,
@@ -24,38 +25,10 @@ export class AuthGuard implements CanActivate{
                 throw new UnauthorizedException('JWT secret not configured');
               }        
             const payload = await this.jwtService.verifyAsync(token, { secret });
-            request.user = payload; // save user data
+            request.user = payload;
             return true;
           } catch (err) {
             throw new UnauthorizedException('Invalid or expired token');
           }
     }
 }
-
-//Checks if the token exists in Authorization header.
-
-// Verifies the JWT using JwtService.
-
-// Throws UnauthorizedException if missing/invalid.
-
-// Attaches payload to request.user.
-
-
-
-/*USER → normal user.
-
-ADMIN → full access.
-
-MODERATOR → limited admin access.*/
-
-
-
-
-
-//CanActivate
-// This is an interface in NestJS.
-// Any guard must implement this interface.
-
-//ExecutionContext
-
-// Represents the context of the current request.

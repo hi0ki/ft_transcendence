@@ -12,8 +12,7 @@ const AuthCallback: React.FC = () => {
         if (token) {
             console.log('Login successful, saving token...');
             localStorage.setItem('auth_token', token);
-            // Optional: You could fetch user data here if needed
-            navigate('/chat');
+            navigate('/home');
         } else {
             console.error('No token found in callback URL');
             navigate('/login');
