@@ -157,7 +157,7 @@ class PostsAPI {
 
     async getPost(id: string): Promise<Post> {
         try {
-            const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/posts/detail/${id}`, {
                 method: 'GET',
                 headers: this.getAuthHeader()
             });
