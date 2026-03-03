@@ -27,6 +27,7 @@ const ChatList: React.FC<ChatListProps> = ({
     };
 
     const isOnline = (userId: number): boolean => {
+        if (!onlineUserIds || !Array.isArray(onlineUserIds)) return false;
         return onlineUserIds.includes(userId);
     };
 

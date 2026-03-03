@@ -8,16 +8,20 @@ import ChatList from './ChatList';
 import ChatRoom from './ChatRoom';
 import './Chat.css';
 
-const ChatApp: React.FC = () => {
+interface ChatAppProps {
+    // onlineUserIds are now handled via subscription
+}
+
+const ChatApp: React.FC<ChatAppProps> = () => {
     const [connected, setConnected] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [users, setUsers] = useState<DBUser[]>([]);
-    const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
     const [conversations, setConversations] = useState<DBConversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<DBConversation | null>(null);
     const [activeMessages, setActiveMessages] = useState<DBMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
     const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
     const currentUserIdRef = useRef(currentUserId);
@@ -25,6 +29,14 @@ const ChatApp: React.FC = () => {
 
     useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
+
+    useEffect(() => {
+        // Subscribe to online status updates
+        const unsubscribe = socketService.subscribeOnlineUsers((ids) => {
+            setOnlineUserIds(ids);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         const authUser = authAPI.getCurrentUser();
@@ -55,35 +67,29 @@ const ChatApp: React.FC = () => {
 
         loadData();
 
-        const connectSocket = async () => {
-            try {
-                const socketData = await socketService.connect();
-                setConnected(true);
-                console.log('Socket connected as:', socketData);
-            } catch (error) {
-                console.warn('Socket connection failed, using REST fallback:', error);
-            }
-        };
+        // Socket is managed globally by App.tsx
+        const handleConnect = () => setConnected(true);
+        const handleDisconnect = () => setConnected(false);
 
-        connectSocket();
+        socketService.on('connect', handleConnect);
+        socketService.on('disconnect', handleDisconnect);
 
-        socketService.onOnlineUsers((userIds: number[]) => {
-            setOnlineUserIds(userIds);
-        });
+        if (socketService.isConnected()) {
+            setConnected(true);
+        }
 
-        socketService.onRoomCreated(async (data) => {
-            const userId = currentUserIdRef.current;
-            if (userId) {
-                // Don't add to sidebar yet — only set as active conversation
-                // It will be added to sidebar when the first message is sent
-                const userConvs = await chatAPI.getUserConversations(userId);
-                const newConv = userConvs.find(c => c.id === data.conversationId);
-                if (newConv) {
-                    setActiveConversation(newConv);
-                    const messages = await chatAPI.getConversationMessages(newConv.id);
-                    setActiveMessages(messages);
-                    socketService.joinRoom(newConv.id);
-                }
+        // Do NOT set onlineUserIds here — managed globally by App.tsx via prop
+
+        socketService.onRoomCreated(async (data: { conversationId: number; conversation: any; initiatorId?: number }) => {
+            if (data.initiatorId === currentUserIdRef.current) {
+                // Initiator (us): set as active chat window
+                setActiveConversation(data.conversation);
+                setActiveMessages([]);
+                setSearchQuery(''); // Clear search on selection
+            } else {
+                // Recipient: silently join the room so real-time messages work,
+                // but do NOT interrupt the conversation they're currently in.
+                socketService.joinRoom(data.conversationId);
             }
         });
 
@@ -136,22 +142,35 @@ const ChatApp: React.FC = () => {
         });
 
         socketService.onMessageDeleted((data: { messageId: number; conversationId: number; deleteType: string }) => {
+            // Remove from active chat window
             if (activeConversationRef.current?.id === data.conversationId) {
                 setActiveMessages(prev => prev.filter(m => m.id !== data.messageId));
             }
-            // Update sidebar (clear last message if it was the deleted one)
-            if (data.deleteType === 'FOR_ALL') {
-                setConversations(prev =>
-                    prev.map(conv =>
-                        conv.id === data.conversationId && conv.lastMessage?.id === data.messageId
-                            ? { ...conv, lastMessage: null }
-                            : conv
-                    )
+            // Update sidebar — reload from server to show the real previous lastMessage
+            const userId = currentUserIdRef.current;
+            setConversations(prev => {
+                const conv = prev.find(c => c.id === data.conversationId);
+                const wasLastMessage = conv?.lastMessage?.id === data.messageId;
+                if (wasLastMessage && userId) {
+                    // Re-fetch conversations from server to get the real previous lastMessage
+                    chatAPI.getUserConversations(userId).then(fresh => setConversations(fresh));
+                }
+                // Optimistically remove from current view while fetch is in-flight
+                return prev.map(c =>
+                    c.id === data.conversationId && c.lastMessage?.id === data.messageId
+                        ? { ...c, lastMessage: null }
+                        : c
                 );
-            }
+            });
         });
 
-        return () => { socketService.disconnect(); };
+        return () => {
+            socketService.off('connect', handleConnect);
+            socketService.off('disconnect', handleDisconnect);
+            // ⚠️ Do NOT disconnect the socket here.
+            // The socket is managed globally by useGlobalSocket in App.tsx
+            // and must stay alive when we navigate away from the chat page.
+        };
     }, []);
 
     // Helper: delete empty conversation (no messages sent) when switching away
@@ -159,20 +178,32 @@ const ChatApp: React.FC = () => {
         const conv = activeConversationRef.current;
         if (!conv) return;
 
-        // Check if the active conversation has 0 messages
         try {
-            const msgs = await chatAPI.getConversationMessages(conv.id, currentUserIdRef.current || undefined);
-            if (msgs.length === 0) {
+            // Check if the conversation has any messages globally
+            const messageCount = await chatAPI.getConversationMessages(conv.id, currentUserIdRef.current || undefined);
+            if (messageCount.length === 0) {
                 await chatAPI.deleteConversation(conv.id);
                 setConversations(prev => prev.filter(c => c.id !== conv.id));
+                // If we are still "on" this conversation, un-set it
+                if (activeConversationRef.current?.id === conv.id) {
+                    setActiveConversation(null);
+                    setActiveMessages([]);
+                }
             }
         } catch (e) {
-            // Silently ignore — conversation may already be deleted
+            // Ignore — likely already deleted or lacks permissions
         }
     };
 
     const handleUserClick = async (user: DBUser) => {
         if (!currentUserId) return;
+
+        // If we're already chatting with this user, just clear search and stay put
+        const isCurrentActive = activeConversation && (activeConversation.user1.id === user.id || activeConversation.user2.id === user.id);
+        if (isCurrentActive) {
+            setSearchQuery('');
+            return;
+        }
 
         // Clean up current empty conversation before switching
         await cleanupEmptyConversation();
@@ -196,6 +227,7 @@ const ChatApp: React.FC = () => {
             try {
                 const conv = await chatAPI.findOrCreateConversation(currentUserId, user.id);
                 setActiveConversation(conv);
+                setSearchQuery(''); // Clear search on selection
                 const messages = await chatAPI.getConversationMessages(conv.id, currentUserId);
                 setActiveMessages(messages);
                 setMobileView('chat');
@@ -211,6 +243,7 @@ const ChatApp: React.FC = () => {
             await cleanupEmptyConversation();
         }
         setActiveConversation(conversation);
+        setSearchQuery(''); // Clear search on a conversation selection
         const messages = await chatAPI.getConversationMessages(conversation.id, currentUserId || undefined);
         setActiveMessages(messages);
         if (connected) socketService.joinRoom(conversation.id);
@@ -277,9 +310,10 @@ const ChatApp: React.FC = () => {
     );
 
     const filteredConversations = conversations.filter(conv => {
+        if (!conv.lastMessage) return false; // Hide empty conversations
         const other = conv.user1.id === currentUserId ? conv.user2 : conv.user1;
-        const name = other.profile?.username || other.email;
-        return name.toLowerCase().includes(searchQuery.toLowerCase());
+        const name = (other.profile?.username || other.email).toLowerCase();
+        return name.includes(searchQuery.toLowerCase());
     });
 
     if (loading) {
@@ -351,6 +385,7 @@ const ChatApp: React.FC = () => {
                             conversation={activeConversation}
                             messages={activeMessages}
                             currentUserId={currentUserId}
+                            onlineUserIds={onlineUserIds}
                             onSendMessage={handleSendMessage}
                             onUpdateMessage={handleUpdateMessage}
                             onDeleteMessage={handleDeleteMessage}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { reactionsAPI, REACTION_EMOJI, REACTION_LABELS } from '../../services/reactionsApi';
 import { commentsAPI } from '../../services/commentsApi';
 import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi';
@@ -41,6 +42,7 @@ const MAX_CONTENT_LINES = 8;//hhmmmmmmmmmmmmmmmmm
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
 const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, onViewPost, commentCount: externalCommentCount, readOnly = false }) => {
+    const navigate = useNavigate();
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [myReaction, setMyReaction] = useState<ReactionType | null>(null);
     const [reactionCount, setReactionCount] = useState(post.likes);
@@ -190,7 +192,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
     return (
         <div className="post-card" id={`post-${post.id}`}>
             <div className="post-header-container">
-                <div className="post-author-info" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
+                <div
+                    className="post-author-info post-author-clickable"
+                    style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}
+                    onClick={() => {
+                        const handle = (post.author.handle || post.author.name).replace(/^@/, '');
+                        navigate(`/profile/${handle}`);
+                    }}
+                >
                     <img
                         src={post.author.avatar || 'https://via.placeholder.com/48'}
                         alt={post.author.name}
@@ -222,9 +231,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                             title="View full post & comments"
                         >
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                <polyline points="15 3 21 3 21 9"/>
-                                <line x1="10" y1="14" x2="21" y2="3"/>
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
                             </svg>
                         </button>
                     )}

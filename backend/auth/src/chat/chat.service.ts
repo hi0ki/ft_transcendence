@@ -152,7 +152,7 @@ export class ChatService {
                 },
                 messages: {
                     orderBy: { createdAt: 'desc' },
-                    take: 1, // only last message
+                    take: 5, // fetch a few so we have fallback when the last is deleted
                     include: {
                         sender: {
                             select: {
@@ -162,9 +162,6 @@ export class ChatService {
                         },
                     },
                 },
-            },
-            orderBy: {
-                createdAt: 'desc',
             },
         });
 
@@ -178,7 +175,7 @@ export class ChatService {
                 createdAt: conversation.createdAt,
                 lastMessage: visibleMessages[0] || null,
             };
-        });
+        }).filter(conv => conv.lastMessage !== null);
     }
 
     // Get unread count for a conversation

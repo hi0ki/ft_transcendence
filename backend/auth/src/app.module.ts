@@ -19,7 +19,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 10 },  // 100 req/min
+      { ttl: 60000, limit: 100 },
     ]),
     PrismaModule,
     UsersModule,

@@ -173,10 +173,10 @@ export default function AdminPage() {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-            .then((response: any) => { 
+            .then((response: any) => {
                 const users = response.data || response;
-                setUsers(users); 
-                setUsersLoading(false); 
+                setUsers(users);
+                setUsersLoading(false);
             })
             .catch(err => { setError(err.message); setUsersLoading(false); });
     };
@@ -332,12 +332,17 @@ export default function AdminPage() {
                                     <div key={post.id} className="mod-card">
                                         <div className="mod-card-header">
                                             <div className="mod-card-author">
-                                                <img src={getAvatarSrc(post)} alt={username} className="mod-card-avatar" />
-                                                <div className="mod-card-author-info">
-                                                    <span className="mod-card-name">{username}</span>
-                                                    <span className="mod-card-meta">
-                                                        @{username.toLowerCase().replace(/\s+/g, '')} · {timeAgo(post.createdAt)}
-                                                    </span>
+                                                <div
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/profile/${username}`); }}
+                                                >
+                                                    <img src={getAvatarSrc(post)} alt={username} className="mod-card-avatar" />
+                                                    <div className="mod-card-author-info">
+                                                        <span className="mod-card-name">{username}</span>
+                                                        <span className="mod-card-meta">
+                                                            @{username.toLowerCase().replace(/\s+/g, '')} · {timeAgo(post.createdAt)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <span className={`mod-type-badge mod-type-badge--${post.type.toLowerCase()}`}>{post.type}</span>
                                             </div>
@@ -410,7 +415,7 @@ export default function AdminPage() {
                 </>
             )}
 
-            {/* ── NEW: USERS SECTION ── */}
+            {/* ── USERS SECTION ── */}
             {activeMainTab === 'users' && (
                 <>
                     <div className="mod-stats">
@@ -435,118 +440,102 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* Admin Users Section */}
-                    {adminUsers.length > 0 && (
-                         <div style={{ marginBottom: '1rem', paddingLeft: '1rem' }}>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '0.5rem', fontSize: '1.3rem' }}>★</span> Admin Users ({adminUsers.length})
-                            </h2>
-                            <div className="mod-list">
-                                {adminUsers.map(user => {
-                                    const username = user.profile?.username || user.email.split('@')[0];
-                                    const isBusy = usersBusy === user.id;
-                                    const isCurrentUser = user.id === currentUser?.id;
+                    <div className="mod-list">
+                        {/* Admin Users Section */}
+                        {adminUsers.length > 0 && (
+                            <div className="mod-user-section">
+                                <h3 className="mod-user-section-title">
+                                    <span className="mod-user-section-icon">★</span> Admin Users ({adminUsers.length})
+                                </h3>
+                                <div className="mod-user-list">
+                                    {adminUsers.map(user => {
+                                        const username = user.profile?.username || user.email.split('@')[0];
+                                        const isCurrentUser = user.id === currentUser?.id;
 
-                                    return (
-                                        <div key={user.id} className="mod-card" style={{ borderLeftColor: '#a78bfa' }}>
-                                            <div className="mod-card-header">
-                                                <div className="mod-card-author">
-                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-card-avatar" />
-                                                    <div className="mod-card-author-info">
-                                                        <span className="mod-card-name">
+                                        return (
+                                            <div key={user.id} className="mod-user-row" onClick={() => navigate(`/profile/${username}`)} style={{ cursor: 'pointer' }}>
+                                                <div className="mod-user-identity">
+                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-user-avatar" />
+                                                    <div className="mod-user-info">
+                                                        <span className="mod-user-name">
                                                             {username}
                                                             {isCurrentUser && (
-                                                                <span style={{ marginLeft: '8px', fontSize: '0.7rem', color: '#0ea5e9', fontWeight: 600 }}>(you)</span>
+                                                                <span className="mod-user-you">(you)</span>
                                                             )}
                                                         </span>
-                                                        <span className="mod-card-meta">
+                                                        <span className="mod-user-meta">
                                                             {user.email} · joined {timeAgo(user.createdAt)}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <span className="mod-status-badge mod-status-badge--approved" style={{ fontSize: '0.85rem' }}>
-                                                    ADMIN
-                                                </span>
-                                            </div>
-
-                                            {/* User Stats */}
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Posts</div>
-                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{user.postCount}</div>
+                                                <div className="mod-user-stats">
+                                                    <div className="mod-user-stat">
+                                                        <span className="mod-user-stat-value mod-user-stat-value--posts">{user.postCount}</span>
+                                                        <span className="mod-user-stat-label">Posts</span>
+                                                    </div>
+                                                    <div className="mod-user-stat">
+                                                        <span className="mod-user-stat-value mod-user-stat-value--friends">{user.followerCount}</span>
+                                                        <span className="mod-user-stat-label">Friends</span>
+                                                    </div>
                                                 </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Followers</div>
-                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>{user.followerCount}</div>
-                                                </div>
+                                                <span className="mod-user-role mod-user-role--admin">ADMIN</span>
                                             </div>
-
-
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Regular Users Section */}
-                    {regularUsers.length > 0 && (
-                        <div style={{ paddingLeft: '1rem' }}>
-                            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '0.5rem', fontSize: '1.3rem' }}>◉</span> Regular Users ({regularUsers.length})
-                            </h2>
-                            <div className="mod-list">
-                                {regularUsers.map(user => {
-                                    const username = user.profile?.username || user.email.split('@')[0];
-                                    const isBusy = usersBusy === user.id;
+                        {/* Regular Users Section */}
+                        {regularUsers.length > 0 && (
+                            <div className="mod-user-section">
+                                <h3 className="mod-user-section-title">
+                                    <span className="mod-user-section-icon">◉</span> Regular Users ({regularUsers.length})
+                                </h3>
+                                <div className="mod-user-list">
+                                    {regularUsers.map(user => {
+                                        const username = user.profile?.username || user.email.split('@')[0];
 
-                                    return (
-                                        <div key={user.id} className="mod-card" style={{ borderLeftColor: '#3b82f6' }}>
-                                            <div className="mod-card-header">
-                                                <div className="mod-card-author">
-                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-card-avatar" />
-                                                    <div className="mod-card-author-info">
-                                                        <span className="mod-card-name">{username}</span>
-                                                        <span className="mod-card-meta">
+                                        return (
+                                            <div key={user.id} className="mod-user-row" onClick={() => navigate(`/profile/${username}`)} style={{ cursor: 'pointer' }}>
+                                                <div className="mod-user-identity">
+                                                    <img src={getUserAvatarSrc(user)} alt={username} className="mod-user-avatar" />
+                                                    <div className="mod-user-info">
+                                                        <span className="mod-user-name">{username}</span>
+                                                        <span className="mod-user-meta">
                                                             {user.email} · joined {timeAgo(user.createdAt)}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <span className="mod-status-badge mod-status-badge--pending" style={{ fontSize: '0.85rem' }}>
-                                                    USER
-                                                </span>
-                                            </div>
-
-                                            {/* User Stats */}
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Posts</div>
-                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{user.postCount}</div>
+                                                <div className="mod-user-stats">
+                                                    <div className="mod-user-stat">
+                                                        <span className="mod-user-stat-value mod-user-stat-value--posts">{user.postCount}</span>
+                                                        <span className="mod-user-stat-label">Posts</span>
+                                                    </div>
+                                                    <div className="mod-user-stat">
+                                                        <span className="mod-user-stat-value mod-user-stat-value--friends">{user.followerCount}</span>
+                                                        <span className="mod-user-stat-label">Friends</span>
+                                                    </div>
                                                 </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.5rem' }}>Followers</div>
-                                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>{user.followerCount}</div>
-                                                </div>
+                                                <span className="mod-user-role mod-user-role--user">USER</span>
                                             </div>
-
-                                            {/* No actions for regular users */}
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {usersLoading && (
-                        <div className="mod-loading"><div className="mod-spinner" /><span>Loading users…</span></div>
-                    )}
+                        {usersLoading && (
+                            <div className="mod-loading"><div className="mod-spinner" /><span>Loading users…</span></div>
+                        )}
 
-                    {!usersLoading && users.length === 0 && (
-                        <div className="mod-empty">
-                            <span className="mod-empty-icon">👤</span>
-                            <span>No users found</span>
-                        </div>
-                    )}
+                        {!usersLoading && users.length === 0 && (
+                            <div className="mod-empty">
+                                <span className="mod-empty-icon">👤</span>
+                                <span>No users found</span>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './PostDetailModal.css';
 
 interface PostDetailModalProps {
@@ -21,6 +22,7 @@ interface PostDetailModalProps {
 }
 
 const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post }) => {
+    const navigate = useNavigate();
     if (!isOpen) return null;
 
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,7 +53,13 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ isOpen, onClose, post
                     </button>
                 </div>
 
-                <div className="post-detail-author">
+                <div
+                    className="post-detail-author post-author-clickable"
+                    onClick={() => {
+                        const handle = (post.author.handle || post.author.name).replace(/^@/, '');
+                        navigate(`/profile/${handle}`);
+                    }}
+                >
                     <img src={post.author.avatar} alt={post.author.name} className="post-detail-avatar" />
                     <div>
                         <p className="post-detail-name">{post.author.name}</p>

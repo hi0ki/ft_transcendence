@@ -33,11 +33,13 @@ enum NotificationType {
 }
 
 enum MessageType {
-    TEXT
-    IMAGE
-    FILE
-    VOICE
-    OTHER
+	TEXT
+	IMAGE
+	VIDEO
+	FILE
+	VOICE
+	AUDIO
+	OTHER
 }
 
 enum ReactionType {

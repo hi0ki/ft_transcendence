@@ -342,13 +342,28 @@
     margin-top: 6px;
 }
 
-/* Input */
+/* Clickable links inside messages */
+.msg-link {
+    color: #38bdf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-all;
+    transition: color 0.15s;
+}
+
+.msg-link:hover {
+    color: #7dd3fc;
+}
+
+/* ── Input Bar ────────────────────────────────────────── */
 .chatroom-input {
-    padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, #0b0f1a 100%);
+    flex-shrink: 0;
 }
 
 .chatroom-emoji-btn {
@@ -356,25 +371,65 @@
     border: none;
     color: #64748b;
     cursor: pointer;
-    padding: 0;
+    padding: 4px;
+    font-size: 1.3rem;
+    line-height: 1;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.chatroom-emoji-btn:hover {
+    transform: scale(1.15);
+}
+
+.chatroom-attach-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatroom-attach-btn:hover {
+    color: #f1f5f9;
+    transform: scale(1.1);
 }
 
 .chatroom-input input {
     flex: 1;
+    min-width: 0;
     padding: 12px 18px;
-    background: #1f2937;
+    background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    border-radius: 24px;
     color: #f1f5f9;
     font-size: 0.95rem;
     outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s, background 0.2s;
 }
 
+.chatroom-input input::placeholder {
+    color: #475569;
+}
+
+.chatroom-input input:focus {
+    border-color: rgba(59, 130, 246, 0.4);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+/* Send button — filled blue gradient */
 .chatroom-send-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: #3b82f6;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
     display: flex;
@@ -382,20 +437,30 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .chatroom-send-btn:hover {
-    background: #2563eb;
-    transform: scale(1.05);
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.45);
 }
 
+.chatroom-send-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Voice button — outlined style */
 .chatroom-voice-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: #3b82f6;
-    color: white;
-    border: none;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    background: transparent;
+    color: #94a3b8;
+    border: 2px solid rgba(148, 163, 184, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -405,23 +470,39 @@
 }
 
 .chatroom-voice-btn:hover {
-    background: #2563eb;
-    transform: scale(1.05);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.08);
+    transform: scale(1.08);
 }
 
-.chatroom-attach-btn {
-    background: transparent;
-    border: none;
-    color: #64748b;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0 4px;
-    transition: color 0.2s;
+.chatroom-voice-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Recording bar — same height as input bar area */
+.recording-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(239, 68, 68, 0.08);
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
     flex-shrink: 0;
+    gap: 12px;
 }
 
-.chatroom-attach-btn:hover {
-    color: #f1f5f9;
+/* Own messages: actions appear to the LEFT */
+.msg--own .msg-actions {
+    right: 100%;
+    margin-right: 6px;
+}
+
+/* Other messages: actions appear to the RIGHT */
+.msg--other .msg-actions {
+    left: 100%;
+    margin-left: 6px;
 }
 
 /* ========================================
@@ -430,20 +511,9 @@
 
 @media (max-width: 1024px) {
     .chat-layout-wrapper {
-        padding: 20px;
-    }
-
-    .chat-card--left {
-        width: 300px;
-    }
-}
-
-@media (max-width: 768px) {
-    .chat-layout-wrapper {
         padding: 0;
         height: 100vh;
         height: 100dvh;
-        /* Dynamic viewport height for mobile browsers */
     }
 
     .chat-global-header {
@@ -479,7 +549,7 @@
         gap: 0;
     }
 
-    /* Panel switching: hide the inactive panel on mobile */
+    /* Panel switching: hide the inactive panel */
     .chat-panel-hidden-mobile {
         display: none !important;
     }
@@ -523,6 +593,58 @@
     .chatroom-input-wrapper {
         flex-shrink: 0;
     }
+
+    /* Responsive message bubbles */
+    .msg {
+        max-width: 85%;
+    }
+
+    .msg-bubble--media {
+        max-width: 280px;
+    }
+
+    /* Voice player: shrink */
+    .msg-voice-player {
+        max-width: 160px;
+    }
+
+    /* Audio player: fit container */
+    .msg-audio {
+        min-width: 0;
+    }
+
+    .msg-audio-player {
+        max-width: 100%;
+    }
+
+    /* Input bar: compact */
+    .chatroom-input {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .chatroom-input input {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .chatroom-send-btn,
+    .chatroom-voice-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+    }
+
+    /* Hide labels, keep icons only */
+    .msg-action-btn {
+        font-size: 0;
+        padding: 4px 6px;
+    }
+
+    .msg-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
 }
 
 /* ── Mobile Back Button ─────────────────────────────── */
@@ -530,7 +652,7 @@
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .chat-mobile-back {
         display: flex;
         align-items: center;
@@ -645,12 +767,18 @@
 /* Message Actions (Edit/Delete) */
 .msg-bubble {
     position: relative;
+    overflow: visible;
 }
 
+.msg {
+    position: relative;
+}
+
+/* Actions float beside the message, not overlapping content */
 .msg-actions {
     position: absolute;
-    top: -24px;
-    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     gap: 4px;
     opacity: 0;
@@ -660,10 +788,12 @@
     border-radius: 8px;
     padding: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 10;
+    z-index: 20;
+    white-space: nowrap;
 }
 
-.msg-bubble:hover .msg-actions {
+
+.msg:hover .msg-actions {
     opacity: 1;
 }
 
@@ -673,17 +803,85 @@
     color: #94a3b8;
     cursor: pointer;
     font-size: 0.9rem;
-    padding: 4px 6px;
+    padding: 4px 8px;
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    gap: 4px;
 }
 
 .msg-action-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #f1f5f9;
+}
+
+.msg-action-btn--edit:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+}
+
+.msg-action-btn--delete:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
+
+/* Delete confirm dialog — constrained inside the bubble column */
+.msg-delete-choices {
+    background: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    min-width: 180px;
+    max-width: 260px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.msg-delete-choices p {
+    margin: 0 0 10px;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    text-align: center;
+}
+
+.delete-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.delete-all-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: none;
+    background: #ef4444;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.delete-all-btn:hover {
+    background: #dc2626;
+}
+
+.cancel-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #f1f5f9 !important;
 }
 
 /* Editing Mode */
@@ -995,12 +1193,14 @@
 .msg-bubble--media {
     padding: 4px !important;
     max-width: 320px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .msg-media {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    border-radius: 10px;
 }
 
 .msg-media-image {
@@ -1049,12 +1249,57 @@
 
 .msg-voice-player {
     height: 36px;
-    width: 200px;
-    max-width: 100%;
+    flex: 1;
+    min-width: 0;
+    max-width: 200px;
 }
 
 .msg-voice-player::-webkit-media-controls-panel {
     background: rgba(255, 255, 255, 0.05);
+}
+
+/* Uploaded Audio Files (MP3 / AAC / FLAC) */
+.msg-audio {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.msg-audio-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.msg-audio-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.msg-audio-name {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.msg-audio-player {
+    width: 100%;
+    height: 36px;
+    border-radius: 8px;
+}
+
+.msg-audio-player::-webkit-media-controls-panel {
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 8px;
 }
 
 /* File Download */
