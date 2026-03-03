@@ -4,7 +4,7 @@ import { Role } from '../decorators/roles.decorator';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     async findAll() {
         const users = await this.prisma.user.findMany({
@@ -28,7 +28,7 @@ export class UsersService {
             },
             orderBy: { createdAt: 'desc' },
         });
-    
+
         return users.map((user) => ({
             id: user.id,
             email: user.email,
@@ -66,8 +66,6 @@ export class UsersService {
         if (!exists) {
             throw new NotFoundException(`User with id "${targetId}" not found`);
         }
-        await this.prisma.notification.deleteMany({ where: { userId: targetId } });
-        await this.prisma.notification.deleteMany({ where: { senderId: targetId } });
         await this.prisma.like.deleteMany({ where: { userId: targetId } });
         await this.prisma.comment.deleteMany({ where: { userId: targetId } });
 
@@ -104,7 +102,6 @@ export class UsersService {
 
         const userPosts = await this.prisma.post.findMany({ where: { userId: targetId } });
         for (const post of userPosts) {
-            await this.prisma.notification.deleteMany({ where: { postId: post.id } });
             await this.prisma.like.deleteMany({ where: { postId: post.id } });
             await this.prisma.comment.deleteMany({ where: { postId: post.id } });
         }

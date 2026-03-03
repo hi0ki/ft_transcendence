@@ -82,7 +82,6 @@ export class PostsService {
 		if (!post) throw new NotFoundException('Post not found');
 		await this.prisma.comment.deleteMany({ where: { postId: id } });
 		await this.prisma.like.deleteMany({ where: { postId: id } });
-		await this.prisma.notification.deleteMany({ where: { postId: id } });
 		return this.prisma.post.delete({ where: { id } });
 	}
 
@@ -90,7 +89,7 @@ export class PostsService {
 		const post = await this.prisma.post.findUnique({ where: { id } });
 		if (!post) throw new NotFoundException('Post not found');
 		if (post.userId !== userId) throw new ForbiddenException('You can only update your own posts');
-		
+
 		// Sanitize title and content to prevent XSS
 		const sanitizedData = { ...dto };
 		if (dto.title) {
@@ -99,7 +98,7 @@ export class PostsService {
 		if (dto.content) {
 			sanitizedData.content = sanitizeInput(dto.content);
 		}
-		
+
 		return this.prisma.post.update({ where: { id }, data: sanitizedData });
 	}
 
@@ -109,7 +108,6 @@ export class PostsService {
 		if (post.userId !== userId) throw new ForbiddenException('You can only delete your own posts');
 		await this.prisma.comment.deleteMany({ where: { postId: id } });
 		await this.prisma.like.deleteMany({ where: { postId: id } });
-		await this.prisma.notification.deleteMany({ where: { postId: id } });
 		return this.prisma.post.delete({ where: { id } });
 	}
 

@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class FriendsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService) { }
 
     /** Send a friend request from currentUserId → targetUserId */
     async sendRequest(currentUserId: number, targetUserId: number) {
@@ -44,16 +44,6 @@ export class FriendsService {
                 user2Id: hi,
                 requestedBy: currentUserId,
                 status: 'PENDING',
-            },
-        });
-
-        // Create a notification for the target user
-        await this.prisma.notification.create({
-            data: {
-                userId: targetUserId,
-                senderId: currentUserId,
-                type: 'FRIEND_REQUEST',
-                isRead: false,
             },
         });
 

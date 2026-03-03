@@ -24,13 +24,6 @@ enum PostStatus {
     APPROVED
 }
 
-enum NotificationType {
-    COMMENT
-    LIKE
-    MESSAGE
-    FRIEND_REQUEST
-    OTHER
-}
 
 enum MessageType {
 	TEXT
@@ -77,13 +70,11 @@ model User {
     posts                Post[]
     comments             Comment[]
     likes                Like[]
-    notifications        Notification[]
     conversationsAsUser1 Conversation[] @relation("ConversationUser1")
     conversationsAsUser2 Conversation[] @relation("ConversationUser2")
     messages             Message[]
     friendshipsAsUser1   Friendship[] @relation("UserFriendships1")
     friendshipsAsUser2   Friendship[] @relation("UserFriendships2")
-    sentNotifications    Notification[] @relation("NotificationSender")
     achievements         UserAchievement[]
 
     @@map("users")
@@ -115,7 +106,6 @@ model Post {
 
     comments      Comment[]
     likes         Like[]
-    notifications Notification[]
 
     @@index([userId])
     @@index([status])
@@ -147,22 +137,6 @@ model Like {
     @@id([userId, postId])
     @@index([postId])
     @@map("likes")
-}
-
-model Notification {
-    id        Int              @id @default(autoincrement())
-    userId    Int // who receives
-    user      User             @relation(fields: [userId], references: [id])
-    senderId  Int? // who triggered (nullable)
-    sender    User?            @relation("NotificationSender", fields: [senderId], references: [id])
-    postId    Int?
-    post      Post?            @relation(fields: [postId], references: [id])
-    type      NotificationType
-    isRead    Boolean          @default(false)
-    createdAt DateTime         @default(now()) @db.Timestamptz(6)
-
-    @@index([userId])
-    @@map("notifications")
 }
 
 model Conversation {
