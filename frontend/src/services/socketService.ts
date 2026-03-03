@@ -74,29 +74,23 @@ class SocketService {
 
             // ── online_users is handled DIRECTLY by the service ──────────
             this.socket.on('online_users', (userIds: number[]) => {
-                // Ensure all IDs are numbers (guard against string IDs from JWT)
                 const numericIds = userIds.map(Number);
                 this.notifyOnlineUsers(numericIds);
             });
 
-            // Fetch fresh list every time we (re)connect
+            // Resolve the promise as soon as the TCP connection is confirmed.
+            // This is deterministic — 'connect' always fires before 'welcome'.
+            // Also immediately request the online list so components get fresh
+            // data as early as possible.
             this.socket.on('connect', () => {
                 console.log('[socket] connected', this.socket?.id);
                 this.socket?.emit('request_online_users');
+                resolve({ socketId: this.socket?.id || '', userId: 0, email: '', username: '' });
             });
 
-            const timeout = setTimeout(() => {
-                if (this.socket?.connected) {
-                    resolve({ socketId: this.socket.id || '', userId: 0, email: '', username: '' });
-                } else {
-                    reject(new Error('Socket connection timed out'));
-                }
-            }, 5000);
-
+            // 'welcome' carries user info — keep logging it but don't gate on it
             this.socket.on('welcome', (data: { socketId: string; userId: number; email: string; username?: string }) => {
-                clearTimeout(timeout);
                 console.log('[socket] welcome', data);
-                resolve(data);
             });
 
             this.socket.on('disconnect', (reason) => {
@@ -109,9 +103,15 @@ class SocketService {
 
             this.socket.on('connect_error', (error: any) => {
                 console.error('[socket] connect_error', error.message);
-                clearTimeout(timeout);
                 reject(error);
             });
+
+            // Safety fallback: if connect_error is never fired but we never connect
+            setTimeout(() => {
+                if (!this.socket?.connected) {
+                    reject(new Error('Socket connection timed out'));
+                }
+            }, 8000);
         });
     }
 
@@ -121,8 +121,12 @@ class SocketService {
             this.socket.disconnect();
             this.socket = null;
         }
-        // Clear online state on explicit disconnect (logout)
-        this.notifyOnlineUsers([]);
+        // Do NOT clear onlineUserIds here — keeping the last known list avoids
+        // a flash of "Offline" during reconnects and brief network interruptions.
+        // The list will be refreshed by the next 'online_users' broadcast.
+        // Only reset on an actual logout (where the user navigates away from chat).
+        this.onlineUserIds = [];
+        this.onlineUsersSubscribers.forEach(cb => cb([]));
     }
 
     isConnected(): boolean {
