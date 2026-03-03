@@ -29,9 +29,11 @@ const ChatApp: React.FC<ChatAppProps> = () => {
 
     const currentUserIdRef = useRef(currentUserId);
     const activeConversationRef = useRef(activeConversation);
+    const conversationsRef = useRef(conversations); // used in socket callbacks (stale closure guard)
 
     useEffect(() => { currentUserIdRef.current = currentUserId; }, [currentUserId]);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
+    useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
     useEffect(() => {
         // Subscribe to online status updates
@@ -84,6 +86,11 @@ const ChatApp: React.FC<ChatAppProps> = () => {
             try {
                 const userConversations = await chatAPI.getUserConversations(authUser.id);
                 setConversations(userConversations);
+                // Join ALL existing conversation rooms immediately so the user
+                // receives real-time messages without needing to click each chat.
+                if (socketService.isConnected()) {
+                    userConversations.forEach(conv => socketService.joinRoom(conv.id));
+                }
             } catch (error) {
                 console.error('Failed to load conversations:', error);
             }
@@ -94,7 +101,12 @@ const ChatApp: React.FC<ChatAppProps> = () => {
         loadData();
 
         // Socket is managed globally by App.tsx
-        const handleConnect = () => setConnected(true);
+        const handleConnect = () => {
+            setConnected(true);
+            // Re-join all conversation rooms after a (re)connect so we never
+            // miss real-time messages for any existing conversation.
+            conversationsRef.current.forEach(conv => socketService.joinRoom(conv.id));
+        };
         const handleDisconnect = () => setConnected(false);
 
         socketService.on('connect', handleConnect);
