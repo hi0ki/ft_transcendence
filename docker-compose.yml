@@ -4,8 +4,6 @@ services:
     build: ./frontend
     container_name: frontend
     restart: always
-    ports:
-      - "5173:5173" # I will remove this port mapping later, as it's only for development and testing purposes
     networks:
       - my-app-network
     volumes:
@@ -18,7 +16,7 @@ services:
     build: ./backend/nginx
     restart: always
     ports:
-      - "443:443" # I will remove this port mapping later, as it's only for development and testing purposes  
+      - "443:443"
     depends_on:
       - frontend
       - auth_service
@@ -34,7 +32,7 @@ services:
     build: ./backend/database
     restart: always
     ports:
-      - "5433:5432" # I will remove this port mapping later, as it's only for development and testing purposes
+      - "5433:5432"
     networks:
       - my-app-network
     volumes:
@@ -53,8 +51,6 @@ services:
       - ./backend/auth/.env
     environment:
       - AUTH_SERVICE_URL=http://auth_service:3000
-    ports:
-      - "3000:3000" # I will remove this port mapping later, as it's only for development and testing purposes
     depends_on:
       - auth_service
     networks:
@@ -69,8 +65,6 @@ services:
     restart: always
     environment:
       - JWT_SECRET=super_secret_key
-    ports:
-      - "3001:3000" # I will remove this port mapping later, as it's only for development and testing purposes
     depends_on:
       - auth_service
     networks:
@@ -79,8 +73,6 @@ services:
     container_name: auth_service
     build: backend/auth
     restart: always
-    ports:
-      - "3002:3000" # I will remove this port mapping later, as it's only for development and testing purposes
     depends_on:
       - postgres
     networks:
