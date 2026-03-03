@@ -1,6 +1,5 @@
 import { Controller, Get, Patch, Delete, Param, Body, UseGuards, Req, HttpCode, HttpStatus, ParseIntPipe} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles, Role } from '../decorators/roles.decorator';
@@ -11,12 +10,6 @@ import { Roles, Role } from '../decorators/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //temsah
-  // @Get()
-  // @Roles(Role.ADMIN)
-  // findAll() {
-  //   return this.usersService.findAll();
-  // }
 
   @Get()
   @Roles(Role.ADMIN)
@@ -30,26 +23,11 @@ export class UsersController {
   }
 
 
-  //temsah
-  // @Get('me')
-  // getMe(@Req() req: any) {
-  //   return this.usersService.findOne(req.user.id);
-  // }
-
-
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.usersService.findOne(id);
   }
   
-  
-  //temsaah
-  // @Patch(':id')
-  // update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
-  // {
-  //   return this.usersService.update(id, dto, req.user);
-  // }
-
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
@@ -58,7 +36,6 @@ export class UsersController {
     return this.usersService.remove(id, req.user);
   }
 
- 
 
   @Patch(':id/role')
   @Roles(Role.ADMIN)

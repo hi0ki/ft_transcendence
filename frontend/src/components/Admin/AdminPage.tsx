@@ -22,7 +22,7 @@ interface AdminPost {
     };
 }
 
-// ── NEW ──
+
 interface AdminUser {
     id: number;
     email: string;
@@ -67,7 +67,7 @@ function formatUrl(url: string): string {
     return 'https://' + url;
 }
 
-/** Full-post modal rendered in a portal */
+
 function PostDetailModal({ post, onClose }: { post: AdminPost; onClose: () => void }) {
     const username = post.user?.profile?.username || post.user?.email?.split('@')[0] || 'Unknown';
 
@@ -148,7 +148,7 @@ export default function AdminPage() {
     const [busy, setBusy] = useState<number | null>(null);
     const [selectedPost, setSelectedPost] = useState<AdminPost | null>(null);
 
-    // ── NEW: main tab + users state ──
+
     const [activeMainTab, setActiveMainTab] = useState<'posts' | 'users'>('posts');
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [usersLoading, setUsersLoading] = useState(false);
@@ -166,7 +166,7 @@ export default function AdminPage() {
             .catch(err => { setError(err.message); setLoading(false); });
     };
 
-    // ── NEW ──
+
     const fetchUsers = () => {
         setUsersLoading(true);
         fetch(`${API_BASE_URL}/api/users`, {
@@ -219,11 +219,10 @@ export default function AdminPage() {
         } finally { setBusy(null); }
     };
 
-    // ── NEW ──
     const handleChangeRole = async (userId: number, newRole: string) => {
         setUsersBusy(userId);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+            const res = await fetch(`${API_BASE_URL}/api{userId}/role`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: newRole }),
@@ -242,7 +241,7 @@ export default function AdminPage() {
     const approved = posts.filter(p => p.status === 'APPROVED');
     const displayed = activeTab === 'PENDING' ? pending : approved;
 
-    // ── NEW: Filter users by role ──
+
     const adminUsers = users.filter(u => u.role === 'ADMIN');
     const regularUsers = users.filter(u => u.role === 'USER');
 

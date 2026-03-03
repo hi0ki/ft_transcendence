@@ -79,7 +79,6 @@ export class AuthService {
     
         const profile = await this.prisma.profile.findUnique({ where: { userId } });
     
-        // Sign a fresh token with latest role
         const token = this.jwtService.sign({
             id: user.id,
             email: user.email,
@@ -104,11 +103,11 @@ export class AuthService {
                 where: { email: data.email }
             });
             if (existingEmailUser) {
-                // Handle duplicate email (return error, link, or skip)
                 throw new Error('Email already exists');
             }
     
-            user = await this.prisma.user.create({
+            user = await this.prisma.user.create(
+                {
                 data: {
                     email: data.email,
                     oauthProvider: '42',
