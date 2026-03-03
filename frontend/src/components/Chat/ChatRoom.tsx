@@ -44,6 +44,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const isCancelledRef = useRef(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -165,6 +166,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
             mediaRecorder.onstop = async () => {
                 stream.getTracks().forEach(track => track.stop());
+                if (isCancelledRef.current) {
+                    isCancelledRef.current = false;
+                    return; // don't send — user cancelled
+                }
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
                 if (audioBlob.size > 0) {
@@ -205,9 +210,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
     const cancelRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+            isCancelledRef.current = true; // signal onstop to bail out
+            audioChunksRef.current = [];   // discard buffered data
             mediaRecorderRef.current.stop();
-            audioChunksRef.current = [];
             setIsRecording(false);
             setRecordingTime(0);
             if (recordingTimerRef.current) {
@@ -579,7 +584,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                 {isRecording ? (
                     <div className="recording-bar">
                         <div className="recording-indicator">
-                            <span className="recording-dot"></span>
+                            <div className="recording-wave-bars">
+                                <span className="rwb rwb--1"></span>
+                                <span className="rwb rwb--2"></span>
+                                <span className="rwb rwb--3"></span>
+                                <span className="rwb rwb--4"></span>
+                                <span className="rwb rwb--5"></span>
+                            </div>
                             <span className="recording-time">{formatRecordingTime(recordingTime)}</span>
                             <span className="recording-label">Recording...</span>
                         </div>
@@ -601,71 +612,54 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                             style={{ display: 'none' }}
                         />
 
-                        {/* Attachment button */}
-                        <button
-                            type="button"
-                            className="chatroom-attach-btn"
-                            onClick={handleFileSelect}
-                            title="Attach file"
-                        >
-                            {/* Paperclip SVG */}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                            </svg>
-                        </button>
-
-                        {/* Emoji button */}
-                        <button
-                            type="button"
-                            className={`chatroom-emoji-btn ${showEmojiPicker ? 'chatroom-emoji-btn--active' : ''}`}
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            style={{ fontSize: '1.2rem', padding: '0 6px' }}
-                        >
-                            😊
-                        </button>
-
-                        {/* Text input */}
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            placeholder={selectedFile ? "Add a caption..." : "Type a message..."}
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            style={{ borderRadius: '20px', paddingLeft: '15px' }}
-                            autoFocus
-                        />
-
-                        {/* Voice button (only when no text and no file) */}
-                        {!inputMessage.trim() && !selectedFile ? (
+                        {/* Input pill: attach + emoji + text */}
+                        <div className="chatroom-input-pill">
                             <button
                                 type="button"
-                                className="chatroom-voice-btn"
-                                onClick={startRecording}
-                                title="Record voice message"
+                                className="chatroom-pill-btn"
+                                onClick={handleFileSelect}
+                                title="Attach file"
                             >
-                                {/* Microphone SVG */}
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="2" width="6" height="13" rx="3" />
-                                    <path d="M5 10a7 7 0 0 0 14 0" />
-                                    <line x1="12" y1="19" x2="12" y2="22" />
-                                    <line x1="8" y1="22" x2="16" y2="22" />
+                                📎
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`chatroom-pill-btn chatroom-pill-btn--emoji ${showEmojiPicker ? 'chatroom-pill-btn--active' : ''}`}
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                title="Emoji"
+                            >
+                                😊
+                            </button>
+
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                className="chatroom-pill-input"
+                                placeholder={selectedFile ? "Add a caption..." : "Type a message..."}
+                                value={inputMessage}
+                                onChange={(e) => setInputMessage(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+
+                        {/* Send / mic button outside the pill */}
+                        {isUploading ? (
+                            <button type="button" className="chatroom-send-circle chatroom-send-circle--send" disabled>
+                                <span className="upload-spinner"></span>
+                            </button>
+                        ) : (inputMessage.trim() || selectedFile) ? (
+                            <button type="submit" className="chatroom-send-circle chatroom-send-circle--send" title="Send">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path fill="white" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                                 </svg>
                             </button>
                         ) : (
-                            <button
-                                type="submit"
-                                className="chatroom-send-btn"
-                                disabled={isUploading}
-                            >
-                                {isUploading ? (
-                                    <span className="upload-spinner"></span>
-                                ) : (
-                                    /* Paper plane SVG */
-                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="22" y1="2" x2="11" y2="13" />
-                                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                                    </svg>
-                                )}
+                            <button type="button" className="chatroom-send-circle chatroom-send-circle--mic" onClick={startRecording} title="Record">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path fill="white" d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" />
+                                    <path fill="white" d="M19 10a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.08A7 7 0 0 0 19 10z" />
+                                </svg>
                             </button>
                         )}
                     </form>
