@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import './CommentsModal.css';
 
 export interface Comment {
@@ -32,6 +33,7 @@ const CommentItem: React.FC<{
     onEdit?: (commentId: string, newContent: string) => void;
     onDelete?: (commentId: string) => void;
 }> = ({ comment, index, isOwner, onEdit, onDelete }) => {
+    const navigate = useNavigate();
     const [showMenu, setShowMenu] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
@@ -73,7 +75,15 @@ const CommentItem: React.FC<{
 
     return (
         <div className="comment-item" style={{ animationDelay: `${index * 0.05}s` }}>
-            <img src={comment.author.avatar} alt={comment.author.name} className="comment-avatar" />
+            <img
+                src={comment.author.avatar}
+                alt={comment.author.name}
+                className="comment-avatar post-author-clickable"
+                onClick={() => {
+                    const handle = (comment.author.handle || comment.author.name).replace(/^@/, '');
+                    navigate(`/profile/${handle}`);
+                }}
+            />
             <div className="comment-body">
                 <div className="comment-meta">
                     <span className="comment-author-name">{comment.author.name}</span>

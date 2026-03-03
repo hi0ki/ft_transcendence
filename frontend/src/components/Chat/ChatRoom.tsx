@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { DBMessage, DBConversation } from '../../services/chatApi';
 import { chatAPI } from '../../services/chatApi';
 import { getAvatarUrl } from '../../utils/avatarUtils';
@@ -22,6 +23,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     onUpdateMessage,
     onDeleteMessage,
 }) => {
+    const navigate = useNavigate();
     const [inputMessage, setInputMessage] = useState('');
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editContent, setEditContent] = useState('');
@@ -406,7 +408,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         <div className="chatroom">
             {/* Header */}
             <div className="chatroom-header">
-                <div className="chatroom-header-user">
+                <div
+                    className="chatroom-header-user"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/profile/${otherName}`)}
+                >
                     <div className="chatroom-header-avatar" style={{ position: 'relative', display: 'inline-block' }}>
                         <img
                             src={getAvatarUrl(otherUser.profile?.avatarUrl, otherName)}
