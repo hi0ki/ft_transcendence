@@ -48,8 +48,24 @@ export interface SearchParams {
     limit?: number;
 }
 
+export interface UserResult {
+    userId: number;
+    username: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    skills: string[];
+}
+
 export interface SearchResponse {
     data: Post[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
+
+export interface UserSearchResponse {
+    data: UserResult[];
     total: number;
     page: number;
     limit: number;
@@ -143,6 +159,25 @@ class SearchAPI {
             limit: json.limit,
             totalPages: json.totalPages,
         };
+    }
+
+    async searchUsers(params: { q?: string; page?: number; limit?: number }): Promise<UserSearchResponse> {
+        const qs = new URLSearchParams();
+        if (params.q) qs.set('q', params.q);
+        if (params.page) qs.set('page', params.page.toString());
+        if (params.limit) qs.set('limit', params.limit.toString());
+
+        const response = await fetch(`${API_BASE_URL}/profiles/search?${qs.toString()}`, {
+            method: 'GET',
+            headers: this.getAuthHeader(),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'User search failed' }));
+            throw new Error(error.message || `HTTP ${response.status}: User search failed`);
+        }
+
+        return response.json();
     }
 }
 
