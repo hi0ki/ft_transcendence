@@ -126,6 +126,10 @@ const FeedPage: React.FC = () => {
 
     const handleCreatePost = async (newPostData: { type: string; title: string; content: string; tags: string[]; imageFile?: File; contentUrl?: string }) => {
         try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('post')) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
 
             const backendType = newPostData.type.toUpperCase() as 'HELP' | 'RESOURCE' | 'MEME';
 
