@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { SearchPostsDto } from './dto/search-posts.dto';
+import { sanitizeInput } from '../utils/sanitize';
 
 const POST_INCLUDE = {
 	user: {
@@ -30,9 +31,15 @@ export class PostsService {
 		imageUrl?: string;
 		contentUrl?: string;
 	}) {
+		// Sanitize title and content to prevent XSS
+		const sanitizedTitle = sanitizeInput(data.title);
+		const sanitizedContent = sanitizeInput(data.content);
+
 		return this.prisma.post.create({
 			data: {
 				...data,
+				title: sanitizedTitle,
+				content: sanitizedContent,
 				status: 'PENDING', // explicit — new posts always start as pending
 			},
 			include: POST_INCLUDE,
@@ -83,7 +90,17 @@ export class PostsService {
 		const post = await this.prisma.post.findUnique({ where: { id } });
 		if (!post) throw new NotFoundException('Post not found');
 		if (post.userId !== userId) throw new ForbiddenException('You can only update your own posts');
-		return this.prisma.post.update({ where: { id }, data: dto });
+		
+		// Sanitize title and content to prevent XSS
+		const sanitizedData = { ...dto };
+		if (dto.title) {
+			sanitizedData.title = sanitizeInput(dto.title);
+		}
+		if (dto.content) {
+			sanitizedData.content = sanitizeInput(dto.content);
+		}
+		
+		return this.prisma.post.update({ where: { id }, data: sanitizedData });
 	}
 
 	async remove(id: number, userId: number) {

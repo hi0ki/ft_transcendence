@@ -10,7 +10,8 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProfilesModule } from './profiles/profiles.module';
 import { PostsModule } from './posts/posts.module';
-// import { FriendsModule } from './friends/friends.module';
+import { FriendsModule } from './friends/friends.module';
+import { AchievementsModule } from './achievements/achievements.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -19,7 +20,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 100 },
+      { ttl: 60000, limit: 100 },  // 100 req/min
     ]),
     PrismaModule,
     UsersModule,
@@ -29,8 +30,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     AuthModule,
     ProfilesModule,
     PostsModule,
-    // FriendsModule,
-
+    FriendsModule,
+    AchievementsModule,
   ],
   controllers: [ReactionsController],
   providers: [ReactionsService,

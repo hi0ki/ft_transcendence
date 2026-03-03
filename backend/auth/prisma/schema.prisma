@@ -57,6 +57,12 @@ enum FriendshipStatus {
     BLOCKED
 }
 
+enum AchievementType {
+    FIRST_POSTER      //after creating 5 posts
+    REACTION_MASTER   //after giving 5 reactions
+    COMMENT_KING      //after writing 15 comments
+}
+
 // models
 model User {
     id            Int      @id @default(autoincrement())
@@ -78,6 +84,7 @@ model User {
     friendshipsAsUser1   Friendship[] @relation("UserFriendships1")
     friendshipsAsUser2   Friendship[] @relation("UserFriendships2")
     sentNotifications    Notification[] @relation("NotificationSender")
+    achievements         UserAchievement[]
 
     @@map("users")
 }
@@ -205,4 +212,16 @@ model Friendship {
 
     @@id([user1Id, user2Id])
     @@map("friendships")
+}
+
+model UserAchievement {
+    id         Int             @id @default(autoincrement())
+    userId     Int
+    user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    type       AchievementType
+    unlockedAt DateTime        @default(now()) @db.Timestamptz(6)
+
+    @@unique([userId, type])
+    @@index([userId])
+    @@map("user_achievements")
 }

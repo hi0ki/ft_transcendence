@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
+import { friendsAPI, type FriendshipStatusResponse, type Friend } from '../../services/friendsApi';
 import { reactionsAPI, REACTION_EMOJI, REACTION_LABELS } from '../../services/reactionsApi';
 import { commentsAPI } from '../../services/commentsApi';
 import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi';
-import CommentsModal from '../Feed/CommentsModal';
-import type { Comment } from '../Feed/CommentsModal';
+import CommentsModal from '../Comments/CommentsModal';
+import type { Comment } from '../Comments/CommentsModal';
 import PostDetailModal from '../Feed/PostDetailModal';
+import { getAchievementProgress, type AchievementProgress } from '../../services/achievementsApi';
 import './ProfilePage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
@@ -105,6 +107,14 @@ interface ProfileData {
 
 type TabType = 'HELP' | 'RESOURCE' | 'MEME';
 
+// ── Edit Icon ──────────────────────────────────────────────────────────────────
+const EditIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+);
+
 // ── ProfilePostCard ───────────────────────────────────────────────────────────
 interface ProfilePostCardProps {
     post: BackendPost;
@@ -112,12 +122,13 @@ interface ProfilePostCardProps {
     username: string;
     isOwner: boolean;
     onDelete?: (postId: number) => void;
+    onEdit?: (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => void;
     currentUserId: number | null;
     currentUserAvatar: string;
 }
 
 const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
-    post, avatarSrc, username, isOwner, onDelete, currentUserId, currentUserAvatar
+    post, avatarSrc, username, isOwner, onDelete, onEdit, currentUserId, currentUserAvatar
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [myReaction, setMyReaction] = useState<ReactionType | null>(null);
@@ -129,7 +140,44 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
     const [loadingReactions, setLoadingReactions] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
+    const [showMenu, setShowMenu] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editTitle, setEditTitle] = useState(post.title);
+    const [editContent, setEditContent] = useState(post.content);
+    const [editContentUrl, setEditContentUrl] = useState(post.contentUrl || '');
+    const [editSaving, setEditSaving] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
     const pickerTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Close menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setShowMenu(false);
+            }
+        };
+        if (showMenu) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showMenu]);
+
+    const handleEditSave = async () => {
+        if (!editTitle.trim() || !editContent.trim()) return;
+        setEditSaving(true);
+        try {
+            if (onEdit) {
+                await onEdit(post.id, {
+                    title: editTitle.trim(),
+                    content: editContent.trim(),
+                    contentUrl: editContentUrl.trim() || null,
+                });
+            }
+            setShowEditModal(false);
+        } catch {
+            alert('Failed to update post');
+        } finally {
+            setEditSaving(false);
+        }
+    };
 
     // Show More if content is long OR if post has an image (image will be shown in the modal)
     const isContentTruncated = (post.content && post.content.length > MAX_CONTENT_LENGTH) || !!post.imageUrl;
@@ -264,13 +312,46 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                     <span className="ppc-time">{formatTimeAgo(post.createdAt)}</span>
                 </div>
                 {isOwner && (
-                    <button
-                        className="ppc-delete-btn"
-                        title="Delete post"
-                        onClick={() => onDelete && onDelete(post.id)}
-                    >
-                        <TrashIcon />
-                    </button>
+                    <div className="ppc-menu-container" ref={menuRef}>
+                        <button
+                            className="ppc-menu-btn"
+                            title="Post options"
+                            onClick={() => setShowMenu(prev => !prev)}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="2" />
+                                <circle cx="12" cy="12" r="2" />
+                                <circle cx="12" cy="19" r="2" />
+                            </svg>
+                        </button>
+                        {showMenu && (
+                            <div className="ppc-menu-dropdown">
+                                <button
+                                    className="ppc-menu-item"
+                                    onClick={() => {
+                                        setShowMenu(false);
+                                        setEditTitle(post.title);
+                                        setEditContent(post.content);
+                                        setEditContentUrl(post.contentUrl || '');
+                                        setShowEditModal(true);
+                                    }}
+                                >
+                                    <EditIcon />
+                                    <span>Edit</span>
+                                </button>
+                                <button
+                                    className="ppc-menu-item ppc-menu-item--danger"
+                                    onClick={() => {
+                                        setShowMenu(false);
+                                        onDelete && onDelete(post.id);
+                                    }}
+                                >
+                                    <TrashIcon />
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -459,9 +540,97 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                 />,
                 document.body
             )}
+
+            {/* Edit post modal */}
+            {showEditModal && createPortal(
+                <div className="ppc-edit-backdrop" onClick={() => setShowEditModal(false)}>
+                    <div className="ppc-edit-modal" onClick={e => e.stopPropagation()}>
+                        <div className="ppc-edit-header">
+                            <h3>Edit Post</h3>
+                            <button className="ppc-edit-close" onClick={() => setShowEditModal(false)}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="ppc-edit-body">
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Title</label>
+                                <input
+                                    className="ppc-edit-input"
+                                    value={editTitle}
+                                    onChange={e => setEditTitle(e.target.value)}
+                                    placeholder="Post title"
+                                    maxLength={200}
+                                />
+                            </div>
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Content</label>
+                                <textarea
+                                    className="ppc-edit-textarea"
+                                    value={editContent}
+                                    onChange={e => setEditContent(e.target.value)}
+                                    placeholder="Post content"
+                                    rows={5}
+                                />
+                            </div>
+                            <div className="ppc-edit-group">
+                                <label className="ppc-edit-label">Link (optional)</label>
+                                <input
+                                    className="ppc-edit-input"
+                                    value={editContentUrl}
+                                    onChange={e => setEditContentUrl(e.target.value)}
+                                    placeholder="https://..."
+                                />
+                            </div>
+                        </div>
+                        <div className="ppc-edit-footer">
+                            <button className="ppc-edit-cancel" onClick={() => setShowEditModal(false)}>Cancel</button>
+                            <button
+                                className="ppc-edit-save"
+                                onClick={handleEditSave}
+                                disabled={editSaving || !editTitle.trim() || !editContent.trim()}
+                            >
+                                {editSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
+
+// ── Achievement Badge ────────────────────────────────────────────────────────
+interface AchBadgeProps {
+    icon:     string;
+    label:    string;
+    earned:   boolean;
+    progress: number;
+    total:    number;
+    color:    string;
+}
+function AchievementBadge({ icon, label, earned, progress, total, color }: AchBadgeProps) {
+    return (
+        <div
+            className={`achv-badge ${earned ? 'achv-badge--earned' : 'achv-badge--locked'}`}
+            style={earned ? {
+                background:  `${color}18`,
+                borderColor: `${color}88`,
+                boxShadow:   `0 0 10px ${color}33`,
+            } : {}}
+        >
+            <span className="achv-icon">{icon}</span>
+            <div className="achv-tooltip">
+                <span className="achv-tooltip-label">{label}</span>
+                <span className="achv-tooltip-progress">
+                    {Math.min(progress, total)}/{total}
+                </span>
+            </div>
+        </div>
+    );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 function ProfilePage() {
@@ -481,10 +650,35 @@ function ProfilePage() {
     const [avatarReady, setAvatarReady] = useState(false);
     const [posts, setPosts] = useState<BackendPost[]>([]);
 
+    // Friend request state
+    const [friendStatus, setFriendStatus] = useState<FriendshipStatusResponse>({ status: 'NONE' });
+    const [friendLoading, setFriendLoading] = useState(false);
+    const [achievements, setAchievements] = useState<AchievementProgress | null>(null);
+
+    // Friends list popup
+    const [showFriendsPopup, setShowFriendsPopup] = useState(false);
+    const [friendsList, setFriendsList] = useState<Friend[]>([]);
+    const [friendsListLoading, setFriendsListLoading] = useState(false);
+
+    const openFriendsPopup = async () => {
+        if (!profileData?.user?.id) return;
+        setShowFriendsPopup(true);
+        setFriendsListLoading(true);
+        try {
+            const list = await friendsAPI.getFriendsByUser(profileData.user.id);
+            setFriendsList(list);
+        } catch {
+            setFriendsList([]);
+        } finally {
+            setFriendsListLoading(false);
+        }
+    };
+
     useEffect(() => {
         setLoading(true);
         setNotFound(false);
         setAvatarReady(false);
+        setFriendStatus({ status: 'NONE' });
 
         const fetchProfile = async () => {
             const data: ProfileData | null = isOwner
@@ -495,6 +689,18 @@ function ProfilePage() {
             else {
                 setProfileData(data);
                 setPosts(data.user?.posts || []);
+                // Fetch friendship status for other users' profiles
+                if (!isOwner && data.user?.id) {
+                    friendsAPI.getStatus(data.user.id).then(setFriendStatus).catch(() => {});
+                }
+                // Fetch achievements — use profile user id, fall back to JWT id for owner
+                const targetId = data.user?.id;
+                const tok = authAPI.getToken();
+                if (targetId && tok) {
+                    getAchievementProgress(targetId, tok)
+                        .then(setAchievements)
+                        .catch(() => {});
+                }
             }
             setLoading(false);
         };
@@ -535,6 +741,24 @@ function ProfilePage() {
         }
     };
 
+    const handleEditPost = async (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => {
+        const token = authAPI.getToken();
+        const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        if (res.ok) {
+            const updated = await res.json();
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...updated } : p));
+        } else {
+            throw new Error('Failed to update post');
+        }
+    };
+
     if (loading) {
         return (
             <div className="profile-page">
@@ -560,6 +784,7 @@ function ProfilePage() {
     }
 
     return (
+        <>
         <div className="profile-page">
             <div className="profile-container">
 
@@ -599,10 +824,41 @@ function ProfilePage() {
                                     <span className="stat-value">{posts.length}</span>
                                     <span className="stat-label">Posts</span>
                                 </div>
-                                <div className="stat-item">
+                                <button
+                                    className="stat-item stat-item--clickable"
+                                    type="button"
+                                    onClick={openFriendsPopup}
+                                >
                                     <span className="stat-value">{profileData?.user?.friendsCount ?? 0}</span>
                                     <span className="stat-label">Friends</span>
-                                </div>
+                                </button>
+                            </div>
+
+                            <div className="profile-achievements">
+                                <AchievementBadge
+                                    icon="✍️"
+                                    label="First Poster"
+                                    earned={achievements?.earned.includes('FIRST_POSTER') ?? false}
+                                    progress={achievements?.posts ?? 0}
+                                    total={5}
+                                    color="#f59e0b"
+                                />
+                                <AchievementBadge
+                                    icon="⚡"
+                                    label="Reaction Master"
+                                    earned={achievements?.earned.includes('REACTION_MASTER') ?? false}
+                                    progress={achievements?.reactions ?? 0}
+                                    total={5}
+                                    color="#6366f1"
+                                />
+                                <AchievementBadge
+                                    icon="💬"
+                                    label="Comment King"
+                                    earned={achievements?.earned.includes('COMMENT_KING') ?? false}
+                                    progress={achievements?.comments ?? 0}
+                                    total={15}
+                                    color="#10b981"
+                                />
                             </div>
 
                             {skills.length > 0 && (
@@ -623,9 +879,95 @@ function ProfilePage() {
                                     Edit Profile
                                 </button>
                             ) : (
-                                <button className="profile-follow-btn" type="button">
-                                    Follow
-                                </button>
+                                (() => {
+                                    const s = friendStatus.status;
+                                    const isMeRequester = friendStatus.requestedBy === currentUserId;
+
+                                    if (s === 'ACCEPTED') {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--friends"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    if (!window.confirm(`Remove @${username} as a friend?`)) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.removeFriend(profileData.user.id);
+                                                        setFriendStatus({ status: 'NONE' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : '✓ Friends · Remove'}
+                                            </button>
+                                        );
+                                    }
+                                    if (s === 'PENDING' && isMeRequester) {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--pending"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.rejectRequest(profileData.user.id);
+                                                        setFriendStatus({ status: 'NONE' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : 'Request Sent · Cancel'}
+                                            </button>
+                                        );
+                                    }
+                                    if (s === 'PENDING' && !isMeRequester) {
+                                        return (
+                                            <button
+                                                className="profile-follow-btn profile-follow-btn--accept"
+                                                type="button"
+                                                disabled={friendLoading}
+                                                onClick={async () => {
+                                                    if (!profileData?.user?.id) return;
+                                                    setFriendLoading(true);
+                                                    try {
+                                                        await friendsAPI.acceptRequest(profileData.user.id);
+                                                        setFriendStatus({ status: 'ACCEPTED' });
+                                                    } catch { /* ignore */ } finally {
+                                                        setFriendLoading(false);
+                                                    }
+                                                }}
+                                            >
+                                                {friendLoading ? '...' : 'Accept Request'}
+                                            </button>
+                                        );
+                                    }
+                                    // NONE
+                                    return (
+                                        <button
+                                            className="profile-follow-btn"
+                                            type="button"
+                                            disabled={friendLoading}
+                                            onClick={async () => {
+                                                if (!profileData?.user?.id) return;
+                                                setFriendLoading(true);
+                                                try {
+                                                    await friendsAPI.sendRequest(profileData.user.id);
+                                                    setFriendStatus({ status: 'PENDING', requestedBy: currentUserId ?? undefined });
+                                                } catch { /* ignore */ } finally {
+                                                    setFriendLoading(false);
+                                                }
+                                            }}
+                                        >
+                                            {friendLoading ? '...' : 'Send Friend Request'}
+                                        </button>
+                                    );
+                                })()
                             )}
 
                             {/* Delete button — only visible to ADMIN, only for non-admin users */}
@@ -688,6 +1030,7 @@ function ProfilePage() {
                                 username={username}
                                 isOwner={isOwner}
                                 onDelete={handleDeletePost}
+                                onEdit={handleEditPost}
                                 currentUserId={currentUserId}
                                 currentUserAvatar={currentUserAvatarSrc}
                             />
@@ -697,6 +1040,50 @@ function ProfilePage() {
 
             </div>
         </div>
+
+        {/* ── Friends List Popup ── */}
+        {showFriendsPopup && createPortal(
+            <div className="friends-popup-backdrop" onClick={() => setShowFriendsPopup(false)}>
+                <div className="friends-popup" onClick={e => e.stopPropagation()}>
+                    <div className="friends-popup-header">
+                        <h3 className="friends-popup-title">Friends</h3>
+                        <button className="friends-popup-close" onClick={() => setShowFriendsPopup(false)} aria-label="Close">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div className="friends-popup-body">
+                        {friendsListLoading ? (
+                            <div className="friends-popup-empty">Loading...</div>
+                        ) : friendsList.length === 0 ? (
+                            <div className="friends-popup-empty">No friends yet</div>
+                        ) : (
+                            <div className="friends-popup-list">
+                                {friendsList.map(f => (
+                                    <button
+                                        key={f.id}
+                                        className="friends-popup-item"
+                                        type="button"
+                                        onClick={() => { setShowFriendsPopup(false); navigate(`/profile/${f.username}`); }}
+                                    >
+                                        <img
+                                            src={f.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(f.username)}`}
+                                            alt={f.username}
+                                            className="friends-popup-avatar"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(f.username)}`;
+                                            }}
+                                        />
+                                        <span className="friends-popup-name">@{f.username}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+        </>
     );
 }
 

@@ -356,71 +356,117 @@
 }
 
 /* ── Input Bar ────────────────────────────────────────── */
+/* ── Input bar ── */
 .chatroom-input {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, #0b0f1a 100%);
+    background: #0d1117;
     flex-shrink: 0;
 }
 
-.chatroom-emoji-btn {
+/* Pill container (attach + emoji + text field) */
+.chatroom-input-pill {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    background: #1c2333;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    padding: 0 8px 0 6px;
+    transition: border-color 0.2s;
+}
+
+.chatroom-input-pill:focus-within {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Icon buttons inside the pill */
+.chatroom-pill-btn {
+    flex-shrink: 0;
     background: transparent;
     border: none;
-    color: #64748b;
+    color: #ffffff;
     cursor: pointer;
-    padding: 4px;
-    font-size: 1.3rem;
-    line-height: 1;
-    transition: transform 0.2s;
-    flex-shrink: 0;
-}
-
-.chatroom-emoji-btn:hover {
-    transform: scale(1.15);
-}
-
-.chatroom-attach-btn {
-    background: transparent;
-    border: none;
-    color: #64748b;
-    cursor: pointer;
-    padding: 4px;
-    transition: color 0.2s, transform 0.2s;
-    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.4rem;
+    line-height: 1;
+    transition: background 0.18s, transform 0.18s;
 }
 
-.chatroom-attach-btn:hover {
-    color: #f1f5f9;
-    transform: scale(1.1);
+.chatroom-pill-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.15);
 }
 
-.chatroom-input input {
+.chatroom-pill-btn--active,
+.chatroom-pill-btn--emoji.chatroom-pill-btn--active {
+    color: #3b82f6;
+}
+
+/* Text field inside pill */
+.chatroom-pill-input {
     flex: 1;
     min-width: 0;
-    padding: 12px 18px;
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 24px;
+    background: transparent;
+    border: none;
+    outline: none;
     color: #f1f5f9;
     font-size: 0.95rem;
-    outline: none;
     font-family: inherit;
-    transition: border-color 0.2s, background 0.2s;
+    padding: 10px 8px;
+    line-height: 1.5;
 }
 
-.chatroom-input input::placeholder {
+.chatroom-pill-input::placeholder {
     color: #475569;
 }
 
-.chatroom-input input:focus {
-    border-color: rgba(59, 130, 246, 0.4);
-    background: rgba(30, 41, 59, 0.9);
+/* The round send / mic button outside the pill */
+.chatroom-send-circle {
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.chatroom-send-circle--send {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    box-shadow: 0 3px 14px rgba(59, 130, 246, 0.55);
+}
+
+.chatroom-send-circle--send:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(59, 130, 246, 0.7);
+}
+
+.chatroom-send-circle--mic {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    box-shadow: 0 3px 14px rgba(99, 102, 241, 0.45);
+}
+
+.chatroom-send-circle--mic:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(99, 102, 241, 0.65);
+}
+
+.chatroom-send-circle:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Send button — filled blue gradient */
@@ -479,6 +525,66 @@
 .chatroom-voice-btn svg {
     width: 20px;
     height: 20px;
+}
+
+/* ── Unified action button (send / mic) ────────────────────── */
+.chatroom-action-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    outline: none;
+}
+
+.chatroom-action-btn svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+}
+
+/* Send state: filled blue */
+.chatroom-action-btn--send {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.5);
+}
+
+.chatroom-action-btn--send:hover:not(:disabled) {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    transform: scale(1.1);
+    box-shadow: 0 4px 18px rgba(59, 130, 246, 0.65);
+}
+
+.chatroom-action-btn--send:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mic state: visible ghost style */
+.chatroom-action-btn--mic {
+    background: rgba(59, 130, 246, 0.1);
+    color: #94a3b8;
+    border: 2px solid rgba(148, 163, 184, 0.35);
+}
+
+.chatroom-action-btn--mic:hover {
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(59, 130, 246, 0.15);
+    transform: scale(1.08);
+}
+
+.chatroom-action-btn--mic:active {
+    transform: scale(0.94);
+    background: rgba(59, 130, 246, 0.22);
 }
 
 /* Recording bar — same height as input bar area */
@@ -1056,50 +1162,25 @@
 
 /* Attachment Button */
 .chatroom-attach-btn {
-    background: none;
+    background: transparent;
     border: none;
-    font-size: 1.3rem;
+    color: #64748b;
     cursor: pointer;
-    padding: 0 8px;
-    opacity: 0.7;
-    transition: opacity 0.2s, transform 0.2s;
-}
-
-.chatroom-attach-btn:hover {
-    opacity: 1;
-    transform: scale(1.15);
-}
-
-/* Voice and Send Buttons */
-.chatroom-voice-btn {
-    background-color: #1f2937;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s, transform 0.2s;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
 }
 
-.chatroom-voice-btn:hover {
-    background-color: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
-    border-color: rgba(59, 130, 246, 0.3);
+.chatroom-attach-btn:hover {
+    color: #f1f5f9;
+    transform: scale(1.1);
 }
 
-.chatroom-voice-btn:active {
-    transform: scale(0.95);
-}
+/* Voice and Send Buttons — see .chatroom-action-btn rules above */
 
-.chatroom-voice-btn svg {
-    width: 24px;
-    height: 24px;
-}
 
 /* File Preview Bar */
 .file-preview-bar {
@@ -1411,12 +1492,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    position: relative;
+    z-index: 10;
+    pointer-events: all;
+    flex-shrink: 0;
 }
 
 .recording-cancel-btn:hover {
     background: rgba(239, 68, 68, 0.3);
     color: #ef4444;
+    transform: scale(1.1);
 }
 
 .recording-stop-btn {

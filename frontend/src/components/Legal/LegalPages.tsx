@@ -1,10 +1,25 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './LegalPages.css';
+
+const CloseButton: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <button
+      className="legal-close-btn"
+      onClick={() => navigate(-1)}
+      aria-label="Close"
+    >
+      ✕
+    </button>
+  );
+};
 
 const PrivacyPolicyPage: React.FC = () => {
   return (
     <div className="legal-page">
       <div className="legal-card">
+        <CloseButton />
         <h1>Privacy Policy</h1>
         <p className="legal-updated">Last updated: March 2, 2026</p>
 
@@ -77,6 +92,7 @@ const TermsOfServicePage: React.FC = () => {
   return (
     <div className="legal-page">
       <div className="legal-card">
+        <CloseButton />
         <h1>Terms of Service</h1>
         <p className="legal-updated">Last updated: March 2, 2026</p>
 

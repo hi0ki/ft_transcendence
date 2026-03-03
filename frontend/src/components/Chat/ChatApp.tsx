@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { socketService } from '../../services/socketService';
 import { chatAPI } from '../../services/chatApi';
 import { authAPI } from '../../services/authApi';
+import { friendsAPI } from '../../services/friendsApi';
+import type { Friend } from '../../services/friendsApi';
 import type { DBUser, DBConversation, DBMessage } from '../../services/chatApi';
 import UserList from './UserList';
 import ChatList from './ChatList';
@@ -16,6 +18,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
     const [connected, setConnected] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [users, setUsers] = useState<DBUser[]>([]);
+    const [friends, setFriends] = useState<Friend[]>([]);
     const [conversations, setConversations] = useState<DBConversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<DBConversation | null>(null);
     const [activeMessages, setActiveMessages] = useState<DBMessage[]>([]);
@@ -53,6 +56,13 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                 setUsers(allUsers);
             } catch (error) {
                 console.error('Failed to load users:', error);
+            }
+
+            try {
+                const myFriends = await friendsAPI.getFriends();
+                setFriends(myFriends);
+            } catch (error) {
+                console.error('Failed to load friends:', error);
             }
 
             try {
@@ -303,8 +313,10 @@ const ChatApp: React.FC<ChatAppProps> = () => {
     };
 
     // Filtered lists
+    const friendIds = new Set(friends.map(f => f.id));
     const filteredUsers = users.filter(u =>
         u.id !== currentUserId &&
+        friendIds.has(u.id) &&
         (u.profile?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             u.email.toLowerCase().includes(searchQuery.toLowerCase()))
     );
