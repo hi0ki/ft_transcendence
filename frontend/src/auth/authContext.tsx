@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const now = Date.now();
             const timeSinceLastRefresh = now - lastRefreshTime;
 
-            // If less than 30 seconds since last refresh, schedule for later
+            // If less than 120 seconds since last refresh, schedule for later
             if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
                 const delay = REFRESH_COOLDOWN - timeSinceLastRefresh;
                 refreshTimeout = setTimeout(() => {
@@ -62,12 +62,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const newRole = authAPI.getCurrentUser()?.role;
 
                 if (oldRole && newRole && oldRole !== newRole) {
-                    await authAPI.reLoginWithFreshToken();
-                    setUser(authAPI.getCurrentUser());
-                    window.location.href = '/home';
+                    try {
+                        await authAPI.reLoginWithFreshToken();
+                        setUser(authAPI.getCurrentUser());
+                        // Force a hard refresh instead of programmatic redirect
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } catch (err) {
+                        console.error('Role change redirect failed:', err);
+                        window.location.reload();
+                    }
                 }
             } catch (err) {
-                console.error('Error checking role:', err);
+                console.error('Token refresh failed:', err);
             }
         };
 
@@ -94,8 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(authAPI.getCurrentUser());
     };
 
-    const register = async (email: string, password: string) => {
-        await authAPI.register(email, password);
+    const register = async (email: string, password: string, username: string) => {
+        await authAPI.register(email, password, username);
     };
 
     const logout = () => {

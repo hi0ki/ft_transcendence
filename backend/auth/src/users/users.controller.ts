@@ -21,7 +21,6 @@ export class UsersController {
   @Get()
   @Roles(Role.ADMIN)
   async findAll() {
-    console.log('✓ findAll() called'); // ← Add this
     const users = await this.usersService.findAll();
     return {
       success: true,
@@ -30,7 +29,8 @@ export class UsersController {
     };
   }
 
-//temsah
+
+  //temsah
   // @Get('me')
   // getMe(@Req() req: any) {
   //   return this.usersService.findOne(req.user.id);
@@ -41,8 +41,9 @@ export class UsersController {
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.usersService.findOne(id);
   }
-
- //temsah
+  
+  
+  //temsaah
   // @Patch(':id')
   // update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
   // {

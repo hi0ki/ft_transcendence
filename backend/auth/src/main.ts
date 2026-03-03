@@ -37,7 +37,6 @@ async function bootstrap() {
   app.useStaticAssets('/app/uploads', { prefix: '/uploads/' });
 
   app.useGlobalInterceptors(new XssInterceptor());
-  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -100,6 +100,14 @@ export class AuthService {
         });
 
         if (!user) {
+            const existingEmailUser = await this.prisma.user.findUnique({
+                where: { email: data.email }
+            });
+            if (existingEmailUser) {
+                // Handle duplicate email (return error, link, or skip)
+                throw new Error('Email already exists');
+            }
+    
             user = await this.prisma.user.create({
                 data: {
                     email: data.email,
@@ -109,13 +117,13 @@ export class AuthService {
                     role: 'USER',
                 }
             });
-
+    
             let username = data.username;
             const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
             if (existingProfile) {
                 username = `${data.username}_${Math.floor(1000 + Math.random() * 9000)}`;
             }
-
+    
             await this.prisma.profile.create({
                 data: {
                     userId: user.id,
@@ -125,9 +133,9 @@ export class AuthService {
                 }
             });
         }
-
+    
         const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
-
+    
         const token = this.jwtService.sign({
             id: user.id,
             email: user.email,
