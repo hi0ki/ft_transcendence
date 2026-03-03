@@ -27,7 +27,7 @@ services:
     networks:
       - my-app-network
     volumes:
-      - uploads_data:/app/uploads
+      - uploads_data:/app/uploads:ro
   # Database
   postgres:
     container_name: postgres
