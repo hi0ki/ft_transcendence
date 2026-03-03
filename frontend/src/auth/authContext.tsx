@@ -36,11 +36,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await authAPI.refreshToken();
             const newRole = authAPI.getCurrentUser()?.role;
             if (oldRole && newRole && oldRole !== newRole) {
-                // Don't logout — just refresh token and update user state
-                await authAPI.reLoginWithFreshToken();
-                setUser(authAPI.getCurrentUser());
-                window.location.href = '/home';
+                try {
+                    await authAPI.reLoginWithFreshToken();
+                    setUser(authAPI.getCurrentUser());
+                    // Force a hard refresh instead of programmatic redirect
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } catch (err) {
+                    console.error('Role change redirect failed:', err);
+                    window.location.reload();
+                }
             }
+            
         };
     
         const handleVisibilityChange = () => {

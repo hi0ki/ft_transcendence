@@ -13,28 +13,35 @@ export class UsersController {
 
   @Get()
   @Roles(Role.ADMIN)
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    const users = await this.usersService.findAll();
+    return {
+      success: true,
+      data: users,
+      message: 'Users retrieved successfully',
+    };
   }
 
 
-  @Get('me')
-  getMe(@Req() req: any) {
-    return this.usersService.findOne(req.user.id);
-  }
+  //temsah
+  // @Get('me')
+  // getMe(@Req() req: any) {
+  //   return this.usersService.findOne(req.user.id);
+  // }
 
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.usersService.findOne(id);
   }
-
-
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
-  {
-    return this.usersService.update(id, dto, req.user);
-  }
+  
+  
+  //temsaah
+  // @Patch(':id')
+  // update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Req() req: any)
+  // {
+  //   return this.usersService.update(id, dto, req.user);
+  // }
 
 
   @Delete(':id')
