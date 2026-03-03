@@ -38,7 +38,23 @@ const ChatApp: React.FC<ChatAppProps> = () => {
         const unsubscribe = socketService.subscribeOnlineUsers((ids) => {
             setOnlineUserIds(ids);
         });
-        return () => unsubscribe();
+
+        // If the socket is already connected when this component mounts,
+        // request the fresh list immediately — the last broadcast may have
+        // happened before we subscribed (e.g. right after login).
+        if (socketService.isConnected()) {
+            socketService.emit('request_online_users');
+        }
+
+        // Also listen for (re)connect so we always get a fresh list after
+        // a disconnect/reconnect while the chat page is open.
+        const handleConnect = () => socketService.emit('request_online_users');
+        socketService.on('connect', handleConnect);
+
+        return () => {
+            unsubscribe();
+            socketService.off('connect', handleConnect);
+        };
     }, []);
 
     useEffect(() => {
@@ -323,7 +339,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
 
     const filteredConversations = conversations.filter(conv => {
         if (!conv.lastMessage) return false; // Hide empty conversations
-        const other = conv.user1.id === currentUserId ? conv.user2 : conv.user1;
+        const other = Number(conv.user1.id) === Number(currentUserId) ? conv.user2 : conv.user1;
         const name = (other.profile?.username || other.email).toLowerCase();
         return name.includes(searchQuery.toLowerCase());
     });

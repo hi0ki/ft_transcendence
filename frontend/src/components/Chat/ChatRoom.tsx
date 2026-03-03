@@ -291,12 +291,16 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
     };
 
     const getOtherUser = () => {
-        return conversation.user1.id === currentUserId ? conversation.user2 : conversation.user1;
+        // Use Number() coercion — currentUserId from JWT may be a string while
+        // conversation.user1.id from the REST API is a number.
+        return Number(conversation.user1.id) === Number(currentUserId)
+            ? conversation.user2
+            : conversation.user1;
     };
 
     const otherUser = getOtherUser();
     const otherName = otherUser.profile?.username || otherUser.email.split('@')[0];
-    const isOtherUserOnline = onlineUserIds.includes(otherUser.id);
+    const isOtherUserOnline = onlineUserIds.some(id => Number(id) === Number(otherUser.id));
 
     const formatTime = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -455,7 +459,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                     </div>
                 ) : (
                     messages.map((message, index) => {
-                        const isOwn = message.senderId === currentUserId;
+                        const isOwn = Number(message.senderId) === Number(currentUserId);
                         const prevMessage = index > 0 ? messages[index - 1] : null;
                         const showTime = !prevMessage || (new Date(message.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() > 300000);
                         const isEditing = editingMessageId === message.id;

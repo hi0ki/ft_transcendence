@@ -18,7 +18,11 @@ const ChatList: React.FC<ChatListProps> = ({
     onConversationClick,
 }) => {
     const getOtherUser = (conversation: DBConversation) => {
-        return conversation.user1.id === currentUserId ? conversation.user2 : conversation.user1;
+        // Use Number() coercion — currentUserId from JWT may be a string while
+        // conversation.user1.id from the REST API is a number.
+        return Number(conversation.user1.id) === Number(currentUserId)
+            ? conversation.user2
+            : conversation.user1;
     };
 
     const getDisplayName = (conversation: DBConversation): string => {
@@ -28,7 +32,8 @@ const ChatList: React.FC<ChatListProps> = ({
 
     const isOnline = (userId: number): boolean => {
         if (!onlineUserIds || !Array.isArray(onlineUserIds)) return false;
-        return onlineUserIds.includes(userId);
+        // Coerce both sides to Number to handle string IDs from JWT vs numeric IDs from DB
+        return onlineUserIds.some(id => Number(id) === Number(userId));
     };
 
     const getLastMessagePreview = (conversation: DBConversation): string => {

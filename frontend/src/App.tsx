@@ -50,9 +50,15 @@ function useGlobalSocket(isAuthenticated: boolean) {
     }
 
     if (!socketService.isConnected()) {
-      socketService.connect().catch((err: any) => {
-        console.warn('Global socket connection failed:', err);
-      });
+      socketService.connect()
+        .then(() => {
+          // Socket is now connected — request the fresh online list immediately
+          // instead of waiting up to 1s for the server's periodic broadcast.
+          socketService.emit('request_online_users');
+        })
+        .catch((err: any) => {
+          console.warn('Global socket connection failed:', err);
+        });
     } else {
       // Already connected — request fresh online list immediately
       socketService.emit('request_online_users');
