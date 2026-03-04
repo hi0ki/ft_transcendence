@@ -145,7 +145,6 @@ const FeedPage: React.FC = () => {
 
             setIsCreateModalOpen(false);
         } catch (e: any) {
-            console.error('Error creating post:', e);
             alert(e.message || 'Failed to create post. Please try again.');
         }
     };

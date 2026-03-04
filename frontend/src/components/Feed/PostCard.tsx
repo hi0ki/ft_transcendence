@@ -153,7 +153,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                 await reactionsAPI.toggle(postId, type);
             }
         } catch (err) {
-            console.error('Failed to toggle reaction:', err);
             setMyReaction(null);
             const count = await reactionsAPI.getCount(postId).catch(() => 0);
             setReactionCount(count);

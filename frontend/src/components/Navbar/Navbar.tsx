@@ -81,7 +81,7 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 					sessionStorage.setItem('user_profile', JSON.stringify(profileData));
 				}
 			} catch (error) {
-				console.error('Failed to fetch profile:', error);
+				// Error handled silently
 			} finally {
 				setLoading(false);
 			}

@@ -150,7 +150,6 @@ class PostsAPI {
             const data: BackendPost[] = await response.json();
             return data.map(post => this.transformPost(post));
         } catch (error) {
-            console.error('Error fetching posts:', error);
             throw error;
         }
     }
@@ -170,7 +169,6 @@ class PostsAPI {
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error fetching post:', error);
             throw error;
         }
     }
@@ -228,7 +226,6 @@ class PostsAPI {
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error updating post:', error);
             throw error;
         }
     }
@@ -246,7 +243,6 @@ class PostsAPI {
                 throw new Error(error.message || `HTTP ${response.status}: Failed to delete post`);
             }
         } catch (error) {
-            console.error('Error deleting post:', error);
             throw error;
         }
     }
