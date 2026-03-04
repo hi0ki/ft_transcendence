@@ -27,16 +27,15 @@ export class AuthService {
             }
         });
 
-        let finalUsername = username;
         const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
         if (existingProfile) {
-            finalUsername = `${username}_${Math.floor(1000 + Math.random() * 9000)}`;
+            throw new ConflictException('Username already exists');
         }
 
         const profile = await this.prisma.profile.create({
             data: {
                 userId: user.id,
-                username: finalUsername,
+                username: username,
                 avatarUrl: null,
                 bio: null,
             }
@@ -117,16 +116,15 @@ export class AuthService {
                 }
             });
     
-            let username = data.username;
-            const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
+            const existingProfile = await this.prisma.profile.findUnique({ where: { username: data.username } });
             if (existingProfile) {
-                username = `${data.username}_${Math.floor(1000 + Math.random() * 9000)}`;
+                throw new ConflictException('Username already exists');
             }
     
             await this.prisma.profile.create({
                 data: {
                     userId: user.id,
-                    username: username,
+                    username: data.username,
                     avatarUrl: data.avatar,
                     bio: null,
                 }

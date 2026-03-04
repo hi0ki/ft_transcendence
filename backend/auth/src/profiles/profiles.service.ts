@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -117,6 +117,17 @@ export class ProfilesService {
     }
 
     async updateProfile(userId: number, dto: UpdateProfileDto) {
+        // Check if username is being changed and if it already exists
+        if (dto.username) {
+            const existingProfile = await this.prisma.profile.findUnique({ 
+                where: { username: dto.username } 
+            });
+            // Only throw error if the username exists AND belongs to a different user
+            if (existingProfile && existingProfile.userId !== userId) {
+                throw new ConflictException('Username already exists');
+            }
+        }
+        
         return this.prisma.profile.update({
             where: { userId },
             data: {
