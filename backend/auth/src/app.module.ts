@@ -19,7 +19,7 @@ import { HealthController } from './health/health.controller';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 10, blockDuration: 300000 },  // 10 req/min, block 5min
+      { ttl: 60000, limit: 100,blockDuration: 300000 },  // 10 req/min, block 5min
     ]),
     PrismaModule,
     UsersModule,

@@ -143,7 +143,7 @@ export class ChatController {
     }
 
     @Put('message')
-    updateMessage(@Body() body: UpdateMessageDto) {
+    updateMessage(@Body() body: any) {
         const { userId, ...updateMessageDto } = body;
         return this.chatService.updateMessage(userId, updateMessageDto);
     }

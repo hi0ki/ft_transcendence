@@ -14,7 +14,7 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
     cors: {
-        origin: ['https://localhost', 'http://localhost:5173', 'http://localhost:3000'],
+        origin: ['https://localhost'],
         credentials: true,
     },
 })
@@ -23,7 +23,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
 
     private readonly logger = new Logger(ChatGateway.name);
-    private readonly JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key';
+    private readonly JWT_SECRET = process.env.JWT_SECRET;
 
     constructor(private readonly chatService: ChatService) { }
 

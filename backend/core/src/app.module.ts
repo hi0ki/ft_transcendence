@@ -13,7 +13,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{
       ttl: 60000,
-      limit: 10,
+      limit: 100,
       blockDuration: 300000, // Block for 5 minutes after exceeding limit
     }]),
     JwtModule.registerAsync({
