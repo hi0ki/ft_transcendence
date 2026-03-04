@@ -70,7 +70,6 @@ const FeedPage: React.FC = () => {
             } catch (e: any) {
                 if (!isMounted) return;
                 setError(e.message || 'Failed to fetch posts. Please try again later.');
-                console.error('Error fetching posts:', e);
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -106,7 +105,7 @@ const FeedPage: React.FC = () => {
                 return post;
             }));
         } catch (err) {
-            console.error('Failed to fetch comments:', err);
+            // Error handled silently
         }
     }, []);
 
@@ -181,7 +180,7 @@ const FeedPage: React.FC = () => {
                 return post;
             }));
         } catch (err) {
-            console.error('Failed to add comment:', err);
+            // Error handled silently
         }
     };
 
@@ -205,7 +204,7 @@ const FeedPage: React.FC = () => {
                 return post;
             }));
         } catch (err) {
-            console.error('Failed to edit comment:', err);
+            // Error handled silently
         }
     };
 
@@ -228,7 +227,7 @@ const FeedPage: React.FC = () => {
                 return post;
             }));
         } catch (err) {
-            console.error('Failed to delete comment:', err);
+            // Error handled silently
         }
     };
 

@@ -62,7 +62,6 @@ const ChatApp: React.FC<ChatAppProps> = () => {
     useEffect(() => {
         const authUser = authAPI.getCurrentUser();
         if (!authUser) {
-            console.error('No auth user found - not logged in');
             setLoading(false);
             return;
         }
@@ -73,14 +72,14 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                 const allUsers = await chatAPI.getUsers();
                 setUsers(allUsers);
             } catch (error) {
-                console.error('Failed to load users:', error);
+                // Error handled silently
             }
 
             try {
                 const myFriends = await friendsAPI.getFriends();
                 setFriends(myFriends);
             } catch (error) {
-                console.error('Failed to load friends:', error);
+                // Error handled silently
             }
 
             try {
@@ -92,7 +91,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     userConversations.forEach(conv => socketService.joinRoom(conv.id));
                 }
             } catch (error) {
-                console.error('Failed to load conversations:', error);
+                // Error handled silently
             }
 
             setLoading(false);
@@ -270,7 +269,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                 setActiveMessages(messages);
                 setMobileView('chat');
             } catch (error) {
-                console.error('Failed to create conversation via REST:', error);
+                // Error handled silently
             }
         }
     };
@@ -307,7 +306,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     );
                 });
             } catch (error) {
-                console.error('Failed to send message via REST:', error);
+                // Error handled silently
             }
         }
     };
@@ -321,7 +320,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                 const updatedMsg = await chatAPI.updateMessage(messageId, currentUserId!, content);
                 setActiveMessages(prev => prev.map(m => m.id === messageId ? updatedMsg : m));
             } catch (error) {
-                console.error('Failed to update message via REST:', error);
+                // Error handled silently
             }
         }
     };
@@ -335,7 +334,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                 await chatAPI.deleteMessage(messageId, currentUserId!, deleteType);
                 setActiveMessages(prev => prev.filter(m => m.id !== messageId));
             } catch (error) {
-                console.error('Failed to delete message via REST:', error);
+                // Error handled silently
             }
         }
     };

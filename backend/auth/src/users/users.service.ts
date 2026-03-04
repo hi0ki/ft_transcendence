@@ -22,6 +22,7 @@ export class UsersService {
                 _count: {
                     select: {
                         posts: true,
+                        friendshipsAsUser1: true,
                         friendshipsAsUser2: true,
                     },
                 },
@@ -36,7 +37,7 @@ export class UsersService {
             createdAt: user.createdAt,
             profile: user.profile,
             postCount: user._count.posts,
-            followerCount: user._count.friendshipsAsUser2,  // ← Change this
+            followerCount: user._count.friendshipsAsUser1 + user._count.friendshipsAsUser2,
         }));
     }
 

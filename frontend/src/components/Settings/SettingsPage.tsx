@@ -106,7 +106,6 @@ function SettingsPage() {
             });
             navigate('/profile');
         } catch (err) {
-            console.error('Failed to save:', err);
             if (err instanceof Error) {
                 setErrors({ username: err.message });
             }

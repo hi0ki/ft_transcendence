@@ -50,12 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Removed the 500ms setTimeout — reload happens immediately
             window.location.reload();
           } catch (err) {
-            console.error('Role change redirect failed:', err);
             window.location.reload();
           }
         }
       } catch (err) {
-        console.error('Token refresh failed during role check:', err);
+        // Error handled silently
       }
     };
 
@@ -87,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await handleRoleChange();
         }
       } catch (err) {
-        console.error('Token refresh failed:', err);
+        // Error handled silently
       }
     };
 

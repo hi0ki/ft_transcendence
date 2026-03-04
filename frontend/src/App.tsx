@@ -57,7 +57,7 @@ function useGlobalSocket(isAuthenticated: boolean) {
           socketService.emit('request_online_users');
         })
         .catch((err: any) => {
-          console.warn('Global socket connection failed:', err);
+          // Error handled silently
         });
     } else {
       // Already connected — request fresh online list immediately
@@ -252,9 +252,6 @@ function App() {
         await authAPI.refreshToken();
       } catch (err) {
         // Silently handle rate limit errors - token is probably still valid
-        if (err instanceof Error && !err.message.includes('429')) {
-          console.error('Token refresh failed:', err);
-        }
       }
     };
 
