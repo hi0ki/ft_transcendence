@@ -23,7 +23,6 @@ async function bootstrap() {
   });
 
   await app.listen(3000, '0.0.0.0');
-  console.log('Chat service is running on https://localhost:3000');
 }
 
 bootstrap();
