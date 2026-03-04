@@ -194,15 +194,21 @@ class AuthAPI {
                 },
                 body: JSON.stringify(data),
             });
-            if (!response.ok) return null;
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to update profile' }));
+                throw new Error(errorData.message || 'Failed to update profile');
+            }
+            
             const result = await response.json();
 
             // ← Clear cache so Navbar fetches fresh profile with new avatar
             sessionStorage.removeItem('user_profile');
 
             return result;
-        } catch {
-            return null;
+        } catch (error) {
+            // Re-throw the error so it can be caught by the component
+            throw error;
         }
     }
 
