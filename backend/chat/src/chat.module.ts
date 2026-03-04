@@ -11,8 +11,8 @@ import * as https from 'https';
     imports: [
         ThrottlerModule.forRoot([{
             ttl: 60000,
-            limit: 100
-            blockDuration: 300000, // Block for 5 minutes after exceeding limit
+            limit: 100,
+            blockDuration: 60000, // 100 req/min, block 1min
         }]),
         HttpModule.register({
             httpsAgent: new https.Agent({
