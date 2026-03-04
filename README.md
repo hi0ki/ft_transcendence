@@ -223,31 +223,30 @@ The application runs entirely via **Docker Compose** with six containerized serv
 
 | # | Feature | Description | Team Member(s) |
 |---|---------|-------------|----------------|
-| 1 | **User Registration** | Email/password sign-up with username, hashed passwords (bcrypt) | eel-ansa, felhafid |
-| 2 | **42 OAuth Login** | Single Sign-On via 42's OAuth2 API (passport-42) | eel-ansa |
-| 3 | **JWT Authentication** | Token-based auth with refresh endpoint, protected routes | eel-ansa |
-| 4 | **Social Feed** | Browse posts (HELP/RESOURCE/MEME) with filter tabs, create new posts with image upload | mjadid, felhafid |
-| 5 | **Post CRUD** | Create, read, update, delete posts with file upload validation (magic-byte checks) | felhafid, mjadid |
-| 6 | **Post Approval Workflow** | New posts start as PENDING; admins approve them before they appear in the feed | eel-ansa, hanebaro |
-| 7 | **Rich Reactions** | 6 reaction types (Like, Love, Haha, Wow, Sad, Angry) with toggle behavior and emoji picker | ykamboua, mjadid |
-| 8 | **Comments System** | Full CRUD on comments: create, edit, delete with real-time count updates | ykamboua, felhafid |
-| 9 | **Real-time Chat** | WebSocket-based 1:1 messaging with Socket.IO, online presence, message delivery | eel-ansa, ykamboua |
-| 10 | **File Sharing in Chat** | Upload and share images, videos, audio, voice messages, documents (up to 50MB) | eel-ansa, ykamboua |
-| 11 | **Message Management** | Edit messages, delete for all or delete for me, mark as read | ykamboua |
-| 12 | **User Profiles** | Profile pages with bio, skills, avatar, post history, friend count | mjadid, felhafid |
-| 13 | **Profile Editing** | Update username, bio, skills, avatar via settings page | mjadid |
-| 14 | **Friend System** | Send/accept/reject friend requests, unfriend, view mutual friends | hanebaro, felhafid |
-| 15 | **Search (Posts)** | Full-text search with type filters, sorting (date/reactions), pagination | mjadid, felhafid |
+| 1 | **User Registration** | Email/password sign-up with username, hashed passwords (bcrypt) | felhafid |
+| 2 | **42 OAuth Login** | Single Sign-On via 42's OAuth2 API (passport-42) | felhafid |
+| 3 | **JWT Authentication** | Token-based auth with refresh endpoint, protected routes | felhafid |
+| 4 | **Social Feed** | Browse posts (HELP/RESOURCE/MEME) with filter tabs, create new posts with image upload | ykamboua |
+| 5 | **Post CRUD** | Create, read, update, delete posts with file upload validation (magic-byte checks) | hanebaro , ykamboua, eel-ansa |
+| 6 | **Post Approval Workflow** | New posts start as PENDING; admins approve them before they appear in the feed | eel-ansa, felhafid |
+| 7 | **Rich Reactions** | 6 reaction types (Like, Love, Haha, Wow, Sad, Angry) with toggle behavior and emoji picker | mjadid |
+| 8 | **Comments System** | Full CRUD on comments: create, edit, delete with real-time count updates | eel-ansa |
+| 9 | **Real-time Chat** | WebSocket-based 1:1 messaging with Socket.IO, online presence, message delivery | hanebaro |
+| 10 | **File Sharing in Chat** | Upload and share images, videos, audio, voice messages, documents | ykamboua , hanebaro |
+| 11 | **Message Management** | Edit messages, delete for all or delete for me, mark as read | hanebaro |
+| 12 | **User Profiles** | Profile pages with bio, skills, avatar, post history, friend count | felhafid , eel-ansa |
+| 13 | **Profile Editing** | Update username, bio, skills, avatar via settings page | felhafid |
+| 14 | **Friend System** | Send/accept/reject friend requests, unfriend, view mutual friends | felhafid |
+| 15 | **Search (Posts)** | Full-text search with type filters, sorting (date/reactions), pagination | mjadid |
 | 16 | **Search (Users)** | Search users by username with paginated results | mjadid |
-| 17 | **Admin Panel** | Post moderation (approve/reject), user management, role assignment, statistics | hanebaro, eel-ansa |
-| 18 | **Rate Limiting** | ThrottlerModule: 100 requests/minute per IP to prevent abuse | eel-ansa |
-| 19 | **XSS Protection** | Global XSS sanitization interceptor on all inputs | eel-ansa |
-| 20 | **Achievements** | Gamification badges: First Poster (5 posts), Reaction Master (5 reactions), Comment King (15 comments) | ykamboua |
-| 21 | **Online Presence** | Real-time online/offline status via WebSocket heartbeat (1s interval) | eel-ansa, ykamboua |
-| 22 | **Notifications** | In-app notifications for comments, likes, friend requests | hanebaro |
-| 23 | **Post Detail Modal** | Expandable post view with full content, images, and links | mjadid |
-| 24 | **Privacy & Terms Pages** | Legal pages for privacy policy and terms of service | hanebaro |
-| 25 | **Responsive Dark UI** | Hand-crafted dark theme with CSS, mobile-responsive layout | mjadid, felhafid |
+| 17 | **Admin Panel** | Post moderation (approve/reject), user management, role assignment, statistics | felhafid , eel-ansa |
+| 18 | **Rate Limiting** | ThrottlerModule: 100 requests/minute per IP to prevent abuse | felhafid, ykamboua |
+| 19 | **XSS Protection** | Global XSS sanitization interceptor on all inputs | felhafid, ykamboua, hanebaro |
+| 20 | **Achievements** | Gamification badges: First Poster (5 posts), Reaction Master (5 reactions), Comment King (15 comments) | eel-ansa |
+| 21 | **Online Presence** | Real-time online/offline status via WebSocket heartbeat (1s interval) | hanebaro |
+| 23 | **Post Detail Modal** | Expandable post view with full content, images, and links | ykamboua |
+| 24 | **Privacy & Terms Pages** | Legal pages for privacy policy and terms of service | ykamboua |
+| 25 | **Responsive Dark UI** | Hand-crafted dark theme with CSS, mobile-responsive layout | ykamboua , hanebaro , eel-ansa , mjadid, felhafid |
 
 ---
 
