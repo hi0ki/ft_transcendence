@@ -83,26 +83,24 @@ class SocketService {
             // Also immediately request the online list so components get fresh
             // data as early as possible.
             this.socket.on('connect', () => {
-                console.log('[socket] connected', this.socket?.id);
                 this.socket?.emit('request_online_users');
                 resolve({ socketId: this.socket?.id || '', userId: 0, email: '', username: '' });
             });
 
             // 'welcome' carries user info — keep logging it but don't gate on it
-            this.socket.on('welcome', (data: { socketId: string; userId: number; email: string; username?: string }) => {
-                console.log('[socket] welcome', data);
+            this.socket.on('welcome', () => {
+                // Connection successful
             });
 
             this.socket.on('disconnect', (reason) => {
-                console.log('[socket] disconnected', reason);
+                // Socket disconnected
             });
 
             this.socket.on('error', (error: any) => {
-                console.error('[socket] error', error);
+                // Socket error occurred
             });
 
             this.socket.on('connect_error', (error: any) => {
-                console.error('[socket] connect_error', error.message);
                 reject(error);
             });
 

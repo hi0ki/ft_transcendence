@@ -14,7 +14,7 @@ export class ChatService {
     private userTokens: Map<number, string> = new Map();
 
     // Auth service base URL (internal Docker network)
-    private readonly AUTH_SERVICE_URL = 'http://auth_service:3000';
+    private readonly AUTH_SERVICE_URL = 'https://auth_service:3000';
 
     constructor(private readonly httpService: HttpService) { }
 

@@ -4,7 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import helmet from 'helmet'; 
 import { XssInterceptor } from './utils/xss.interceptor'; 
 
@@ -18,7 +18,12 @@ async function bootstrap() {
     }
   }
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    httpsOptions: {
+      key: readFileSync('/app/ssl/key.pem'),
+      cert: readFileSync('/app/ssl/cert.pem'),
+    },
+  });
 
   app.use(helmet()); 
 
