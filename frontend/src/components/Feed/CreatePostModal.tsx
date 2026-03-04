@@ -109,13 +109,19 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                 </div>
 
                 <div className="input-group">
-                    <label className="input-label">Title</label>
+                    <label className="input-label">
+                        Title
+                        <span style={{ marginLeft: '8px', fontSize: '12px', color: title.length > 50 ? '#ef4444' : '#6b7280' }}>
+                            {title.length}/50
+                        </span>
+                    </label>
                     <input
                         type="text"
                         className="custom-input"
                         placeholder="Give your post a clear title..."
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        maxLength={50}
                     />
                 </div>
 

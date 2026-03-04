@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsIn, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsIn, IsOptional, MaxLength } from 'class-validator';
 
 export class CreatePostDto 
 {
@@ -7,6 +7,7 @@ export class CreatePostDto
 
 	@IsString()
 	@IsNotEmpty()
+	@MaxLength(50, { message: 'Title must not exceed 50 characters' })
 	title: string;
 
 	@IsString()

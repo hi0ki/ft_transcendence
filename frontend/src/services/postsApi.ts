@@ -199,14 +199,14 @@ class PostsAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Faiiled to create post' }));
-                throw new Error(error.message || `HTTP ${response.status}: Faiiled to create post`);
+                const error = await response.json().catch(() => ({ message: 'Failed to create post' }));
+                const errorMessage = error.message || (Array.isArray(error.message) ? error.message.join(', ') : `HTTP ${response.status}: Failed to create post`);
+                throw new Error(errorMessage);
             }
 
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error creating post:', error);
             throw error;
         }
     }
