@@ -27,7 +27,7 @@ const ALLOWED_MIME_TYPES = [
     'text/plain',
 ];
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — videos need more room
+const MAX_FILE_SIZE = 20* 1024 * 1024; // 20MB — videos need more room
 
 const UPLOAD_BASE = '/app/uploads/chat';
 
@@ -143,7 +143,7 @@ export class ChatController {
     }
 
     @Put('message')
-    updateMessage(@Body() body: any) {
+    updateMessage(@Body() body: UpdateMessageDto) {
         const { userId, ...updateMessageDto } = body;
         return this.chatService.updateMessage(userId, updateMessageDto);
     }
