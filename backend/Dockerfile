@@ -1,7 +1,8 @@
 FROM node:20-slim
 
 RUN apt update && apt install -y curl \
-    wget
+    wget \
+    openssl
 
 ARG app_name
 
@@ -13,4 +14,6 @@ RUN npm install
 
 COPY ${app_name}/ .
 
-CMD [ "npm" , "run", "start" ]
+RUN chmod +x /app/setup-service.sh
+
+CMD ["sh", "/app/setup-service.sh"]

@@ -2,7 +2,6 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { AppService } from './app.service';
 import { PostsModule } from './posts/posts.module';
 import { HttpModule } from '@nestjs/axios';
 import { CommentsModule } from './comments/comments.module';
@@ -27,7 +26,6 @@ import { ReactionsModule } from './reactions/reactions.module';
   ],
   controllers: [],
   providers: [
-    AppService,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({ whitelist: true, transform: true }),

@@ -1,0 +1,12 @@
+.env
+*.log
+.DS_Store
+node_modules/
+dist/
+build/
+*.pem
+*.key
+*.crt
+ssl/
+.vscode/
+.idea/
