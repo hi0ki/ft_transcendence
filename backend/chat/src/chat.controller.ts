@@ -23,3 +23,15 @@ export class ChatController {
         return this.chatService.getConversationMessages(conversationId);
     }
 }
+
+@Controller()
+export class HealthController {
+    @Get('health')
+    health() {
+        return {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            service: 'chat_service',
+        };
+    }
+}

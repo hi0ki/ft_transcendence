@@ -120,13 +120,6 @@ function ProtectedLayout({
   );
 }
 
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="placeholder-content" style={{ padding: '40px', color: 'white', width: '100%', height: '100%' }}>
-    <h2>{title} Page</h2>
-    <p>This is a placeholder for the {title.toLowerCase()} functionality.</p>
-  </div>
-);
-
 function SettingsPageWrapper({ onLogout }: { onLogout: () => void }) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

@@ -38,7 +38,7 @@ interface PostCardProps {
 }
 
 const MAX_CONTENT_LENGTH = 200;
-const MAX_CONTENT_LINES = 8;//hhmmmmmmmmmmmmmmmmm
+const MAX_CONTENT_LINES = 8;
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 
 const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, onViewPost, commentCount: externalCommentCount, readOnly = false }) => {

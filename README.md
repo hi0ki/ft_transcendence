@@ -412,14 +412,14 @@ docker compose up --build -d
 
 This will start 6 services:
 
-| Service | Internal Port | External Port | Description |
-|---------|--------------|---------------|-------------|
-| **frontend** | 5173 | 5173 | Vite dev server |
-| **nginx** | 443 | 443 | HTTPS reverse proxy |
-| **auth_service** | 3000 | 3002 | Main REST API |
-| **chat_service** | 3000 | 3001 | WebSocket server |
-| **core_service** | 3000 | 3000 | Additional API layer |
-| **postgres** | 5432 | 5433 | PostgreSQL database |
+| Service | Internal Port | Description |
+|---------|--------------|-------------|
+| **frontend** | 5173 | Vite dev server |
+| **nginx** | 443 | HTTPS reverse proxy |
+| **auth_service** | 3000 | Main REST API |
+| **chat_service** | 3000 | WebSocket server |
+| **core_service** | 3000 | Additional API layer |
+| **postgres** | 5432 | PostgreSQL database |
 
 ### Access the Application
 

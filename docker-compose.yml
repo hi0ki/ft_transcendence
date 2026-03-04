@@ -17,15 +17,18 @@ services:
     restart: always
     ports:
       - "443:443"
-    depends_on:
-      - frontend
-      - auth_service
-      - chat_service
-      - core_service
     networks:
       - my-app-network
     volumes:
       - uploads_data:/app/uploads:ro
+    depends_on:
+      auth_service:
+        condition: service_healthy
+      chat_service:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+
   # Database
   postgres:
     container_name: postgres
@@ -35,10 +38,38 @@ services:
       - "5433:5432"
     networks:
       - my-app-network
+    env_file:
+      - ./backend/database/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ft_transc"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # # backend Services
+  auth_service:
+    container_name: auth_service
+    build: backend/auth
+    restart: always
+    networks:
+      - my-app-network
+    env_file:
+      - ./backend/auth/.env
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/auth/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   core_service:
     container_name: core_service
     build:
@@ -50,11 +81,13 @@ services:
     env_file:
       - ./backend/auth/.env
     environment:
-      - AUTH_SERVICE_URL=http://auth_service:3000
-    depends_on:
-      - auth_service
+      - AUTH_SERVICE_URL=https://auth_service:3000
     networks:
       - my-app-network
+    depends_on:
+      auth_service:
+        condition: service_healthy
+
   chat_service:
     container_name: chat_service
     build:
@@ -63,22 +96,19 @@ services:
       args:
         - app_name=chat
     restart: always
-    environment:
-      - JWT_SECRET=super_secret_key
-    depends_on:
-      - auth_service
+    env_file:
+      - ./backend/auth/.env
     networks:
       - my-app-network
-  auth_service:
-    container_name: auth_service
-    build: backend/auth
-    restart: always
     depends_on:
-      - postgres
-    networks:
-      - my-app-network
-    volumes:
-      - uploads_data:/app/uploads
+      auth_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
 # Volumes
 volumes:

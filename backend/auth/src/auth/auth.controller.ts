@@ -37,5 +37,9 @@ export class AuthController {
         res.redirect(`https://localhost/callback?token=${token}`);
     }
 
+    @Get('health')
+    health() {
+    return { status: 'ok' };
+    }
 }
 

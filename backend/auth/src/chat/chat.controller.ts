@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -6,8 +6,8 @@ import { randomUUID } from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
+import { AuthGuard } from '../guards/auth.guard';
 
 // Allowed file types
 const ALLOWED_MIME_TYPES = [
@@ -45,6 +45,7 @@ function generateUniqueFilename(originalName: string): string {
     return `${randomUUID()}${ext}`;
 }
 
+@UseGuards(AuthGuard)
 @Controller('chat')
 export class ChatController {
     constructor(private readonly chatService: ChatService) { }

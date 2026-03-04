@@ -7,7 +7,9 @@ RUN apk add --no-cache \
     openssl \
     libc6-compat \
     postgresql-client \
-    netcat-openbsd
+    netcat-openbsd \
+    curl \
+    wget
 
 COPY package*.json ./
 

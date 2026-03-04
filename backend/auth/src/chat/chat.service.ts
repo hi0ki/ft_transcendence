@@ -4,7 +4,6 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
-import { sanitizeInput } from '../utils/sanitize';
 
 @Injectable()
 export class ChatService {
@@ -191,14 +190,11 @@ export class ChatService {
 
 
     async sendMessage(sendMessageDto: SendMessageDto) {
-        // Sanitize message content to prevent XSS
-        const sanitizedContent = sendMessageDto.content ? sanitizeInput(sendMessageDto.content) : null;
-
         return this.prisma.message.create({
             data: {
                 conversationId: sendMessageDto.conversationId,
                 senderId: sendMessageDto.senderId,
-                content: sanitizedContent,
+                content: sendMessageDto.content ?? null,
                 type: sendMessageDto.type,
                 fileUrl: sendMessageDto.fileUrl || null,
             },
@@ -228,13 +224,10 @@ export class ChatService {
             throw new Error('You can only update your own messages');
         }
 
-        // Sanitize updated content to prevent XSS
-        const sanitizedContent = sanitizeInput(updateMessageDto.content);
-
         return this.prisma.message.update({
             where: { id: updateMessageDto.messageId },
             data: {
-                content: sanitizedContent,
+                content: updateMessageDto.content,
                 type: updateMessageDto.type,
             },
         });

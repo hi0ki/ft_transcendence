@@ -7,7 +7,6 @@ import { AppModule } from './app.module';
 async function bootstrap()
 {
 	const app = await NestFactory.create(AppModule);
-	///////idonnntttt knoooow to back here laterrrrr :)))))
 	app.use(json({ limit: '10mb' }));
 	app.use(urlencoded({ extended: true, limit: '10mb' }));
 	

@@ -14,7 +14,7 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
     cors: {
-        origin: ['https://localhost', 'http://localhost:5173', 'http://localhost:3001'],
+        origin: ['https://localhost', 'http://localhost:5173', 'http://localhost:3000'],
         credentials: true,
     },
 })
@@ -28,7 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly chatService: ChatService) { }
 
     afterInit() {
-        // Broadacst online users every 5 seconds as a "self-healing" mechanism
+        // Broadcast online users every 5 seconds as a "self-healing" mechanism
         // for clients that might have missed a connection/disconnection event
         setInterval(() => {
             if (this.server) {
@@ -63,8 +63,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
-            // Register connected user
-            const user = this.chatService.addConnectedUser(client.id, userId, email, username);
+            // Register connected user with token
+            const user = this.chatService.addConnectedUser(client.id, userId, email, username, token);
 
             // Send welcome with user info
             client.emit('welcome', {

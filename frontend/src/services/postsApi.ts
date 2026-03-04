@@ -45,7 +45,7 @@ export interface Post {
 
 export interface CreatePostPayload {
     type: 'HELP' | 'RESOURCE' | 'MEME';
-    title: string;///////heeemmmm to reviewww this 
+    title: string;
     content: string;
     imageFile?: File;
     contentUrl?: string;
@@ -62,7 +62,7 @@ class PostsAPI {
     }
 
     private transformPost(backendPost: BackendPost): Post {
-        // Get currentuser's username from JWT as fallback hmmmmmmmmmmm aah to this//////////////////
+        // Get current user's username from JWT as fallback
         const currentUser = authAPI.getCurrentUser();
         const fallbackName = currentUser?.username || currentUser?.email?.split('@')[0] || 'Anonymous';
 
@@ -163,14 +163,14 @@ class PostsAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Faiiiiiiiiiiiled to fetch post </3' }));
-                throw new Error(error.message || `HTTP ${response.status}: Faiiiiiiiiiiiled to fetch post </3`);
+                const error = await response.json().catch(() => ({ message: 'Failed to fetch post' }));
+                throw new Error(error.message || `HTTP ${response.status}: Failed to fetch post`);
             }
 
             const data: BackendPost = await response.json();
             return this.transformPost(data);
         } catch (error) {
-            console.error('Error fetching pooowst:', error);
+            console.error('Error fetching post:', error);
             throw error;
         }
     }

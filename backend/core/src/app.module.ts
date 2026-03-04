@@ -2,7 +2,6 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PostsModule } from './posts/posts.module';
 import { HttpModule } from '@nestjs/axios';
@@ -26,7 +25,7 @@ import { ReactionsModule } from './reactions/reactions.module';
     CommentsModule,
     ReactionsModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
     AppService,
     {

@@ -175,38 +175,7 @@ export class FriendsService {
 
     /** Get accepted friends list for any user (public) */
     async getUserFriends(userId: number) {
-        const friendships = await this.prisma.friendship.findMany({
-            where: {
-                status: 'ACCEPTED',
-                OR: [
-                    { user1Id: userId },
-                    { user2Id: userId },
-                ],
-            },
-            include: {
-                user1: {
-                    select: {
-                        id: true,
-                        profile: { select: { username: true, avatarUrl: true } },
-                    },
-                },
-                user2: {
-                    select: {
-                        id: true,
-                        profile: { select: { username: true, avatarUrl: true } },
-                    },
-                },
-            },
-        });
-
-        return friendships.map((f) => {
-            const friend = f.user1Id === userId ? f.user2 : f.user1;
-            return {
-                id: friend.id,
-                username: friend.profile?.username ?? 'Unknown',
-                avatarUrl: friend.profile?.avatarUrl ?? null,
-            };
-        });
+        return this.getFriends(userId);
     }
 
     /** Unfriend (delete an accepted friendship) */

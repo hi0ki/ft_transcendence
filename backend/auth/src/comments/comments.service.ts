@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { sanitizeInput } from '../utils/sanitize';
 
 @Injectable()
 export class CommentsService {
@@ -11,14 +10,11 @@ export class CommentsService {
 
   // Create a new comment
   async create(createCommentDto: CreateCommentDto, userId: number) {
-    
-    const sanitizedContent = sanitizeInput(createCommentDto.content);
-
     return this.prisma.comment.create({
       data: {
         postId: createCommentDto.postId,
         userId: userId,
-        content: sanitizedContent,
+        content: createCommentDto.content,
       },
       include: {
         author: {
@@ -38,11 +34,9 @@ export class CommentsService {
   // update a comment by its ID
   async update(updateCommentDto: UpdateCommentDto)
   {
-    const sanitizedContent = sanitizeInput(updateCommentDto.content);
-
     return this.prisma.comment.update({
       where: { id : updateCommentDto.commentId },
-      data: { content: sanitizedContent },
+      data: { content: updateCommentDto.content },
       include: {
         author: {
           select: {
@@ -60,7 +54,6 @@ export class CommentsService {
 
   // Get all comments for a specific post
   async findAllByPost(postId: number) {
-    console.log("Finding comments for post ID:", postId);
     return this.prisma.comment.findMany({
       where: { postId },
       orderBy: { createdAt: 'desc' },

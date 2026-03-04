@@ -3,7 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-//CanActive is an interface so ifyou implement it you MUST write this method. CanActive
 export class AuthGuard implements CanActivate{
     constructor(private jwtService: JwtService,
         private configService: ConfigService) {}

@@ -1,6 +1,7 @@
 FROM node:20-slim
 
-RUN apt update
+RUN apt update && apt install -y curl \
+    wget
 
 ARG app_name
 

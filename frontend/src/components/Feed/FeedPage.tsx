@@ -14,11 +14,6 @@ import { useAuth } from '../../auth/authContext';
 import './FeedPage.css';
 import { useLocation } from 'react-router-dom';
 
-// Extended Mock Data targeting to visually recreate screenshot values including nested comments
-interface ExtendedPost extends Post {
-    commentList: Comment[];
-}
-
 const FeedPage: React.FC = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('All');
@@ -64,10 +59,6 @@ const FeedPage: React.FC = () => {
                 const fetchedPosts = await postsAPI.getAllPosts();
 
                 if (!isMounted) return;
-                const postsWithComments: ExtendedPost[] = fetchedPosts.map(post => ({
-                    ...post,
-                    commentList: []
-                }));
 
                 // Filter by active tab
                 if (activeTab === 'All') {
@@ -157,11 +148,6 @@ const FeedPage: React.FC = () => {
             console.error('Error creating post:', e);
             alert(e.message || 'Failed to create post. Please try again.');
         }
-    };
-
-    const handleLikePost = (postId: string) => {
-
-        console.log(`Liked post ${postId}`);
     };
 
     const handleShowMore = (post: Post) => {

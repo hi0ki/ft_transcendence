@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Delete, Req, Put, UseGuards, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Delete, Req, Put, UseGuards } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -31,7 +31,7 @@ export class CommentsController {
     }
 
     @Delete(':id')
-    delete(@Req() req: Request, @Param('id', ParseIntPipe) commentId: number, @Query('postId', ParseIntPipe) postId: number) {
+    delete(@Req() req: Request, @Param('id', ParseIntPipe) commentId: number) {
         const userId = (req as any).user?.id;
         return this.commentsService.delete(commentId, userId);
     }

@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
-import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import helmet from 'helmet'; 
 import { XssInterceptor } from './utils/xss.interceptor'; 
