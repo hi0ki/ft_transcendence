@@ -375,13 +375,19 @@
 }
 
 .friend-req-backdrop {
-    display: none;
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 1999;
 }
 
 .friend-req-panel {
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 0;
+    position: fixed;
+    left: 276px;
+    /* sidebar width (260) + 16px gap */
+    top: 120px;
+    /* roughly below the Friend Requests nav item */
     width: 300px;
     background: #1a1e2e;
     border: 1px solid rgba(255, 255, 255, 0.08);

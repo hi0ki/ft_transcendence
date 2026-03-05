@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
 import { friendsAPI, type PendingRequest } from '../../services/friendsApi';
@@ -56,6 +57,7 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	const [showFriendPanel, setShowFriendPanel] = useState(false);
 	const [friendActionLoading, setFriendActionLoading] = useState<number | null>(null);
 	const friendPanelRef = useRef<HTMLDivElement>(null);
+	const friendPanelContentRef = useRef<HTMLDivElement>(null);
 
 	// Fetch profile on component mount
 	useEffect(() => {
@@ -113,7 +115,9 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 	useEffect(() => {
 		if (!showFriendPanel) return;
 		const handleClick = (e: MouseEvent) => {
-			if (friendPanelRef.current && !friendPanelRef.current.contains(e.target as Node)) {
+			const inNavWrap = friendPanelRef.current?.contains(e.target as Node);
+			const inPanel = friendPanelContentRef.current?.contains(e.target as Node);
+			if (!inNavWrap && !inPanel) {
 				setShowFriendPanel(false);
 			}
 		};
@@ -197,67 +201,6 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 									isActive={showFriendPanel}
 									onClick={() => setShowFriendPanel(v => !v)}
 								/>
-								{showFriendPanel && (
-									<>
-										{/* Mobile overlay backdrop */}
-										<div className="friend-req-backdrop" onClick={() => setShowFriendPanel(false)} />
-										<div className="friend-req-panel">
-											<div className="friend-req-panel-header">
-												<span>Friend Requests</span>
-												<div className="friend-req-panel-header-right">
-													{pendingRequests.length > 0 && (
-														<span className="friend-req-panel-count">{pendingRequests.length}</span>
-													)}
-													<button className="friend-req-close" onClick={() => setShowFriendPanel(false)} aria-label="Close">
-														<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-													</button>
-												</div>
-											</div>
-											{pendingRequests.length === 0 ? (
-												<div className="friend-req-empty">No pending requests</div>
-											) : (
-												<div className="friend-req-list">
-													{pendingRequests.map(req => (
-														<div key={req.senderId} className="friend-req-item">
-															<img
-																src={req.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`}
-																alt={req.username}
-																className="friend-req-avatar"
-																onError={(e) => {
-																	(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`;
-																}}
-															/>
-															<div className="friend-req-info">
-																<button
-																	className="friend-req-username"
-																	onClick={() => { navigate(`/profile/${req.username}`); setShowFriendPanel(false); }}
-																>
-																	@{req.username}
-																</button>
-																<div className="friend-req-actions">
-																	<button
-																		className="friend-req-accept"
-																		disabled={friendActionLoading === req.senderId}
-																		onClick={() => handleAccept(req.senderId)}
-																	>
-																		{friendActionLoading === req.senderId ? '...' : 'Accept'}
-																	</button>
-																	<button
-																		className="friend-req-reject"
-																		disabled={friendActionLoading === req.senderId}
-																		onClick={() => handleReject(req.senderId)}
-																	>
-																		{friendActionLoading === req.senderId ? '...' : 'Decline'}
-																	</button>
-																</div>
-															</div>
-														</div>
-													))}
-												</div>
-											)}
-										</div>
-									</>
-								)}
 							</div>
 						) : (
 							<NavItem
@@ -326,6 +269,69 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 					</button>
 				))}
 			</nav>
+
+			{/* Friend Requests Portal — rendered at document.body to escape sidebar CSS transform */}
+			{showFriendPanel && ReactDOM.createPortal(
+				<>
+					<div className="friend-req-backdrop" onClick={() => setShowFriendPanel(false)} />
+					<div className="friend-req-panel" ref={friendPanelContentRef}>
+						<div className="friend-req-panel-header">
+							<span>Friend Requests</span>
+							<div className="friend-req-panel-header-right">
+								{pendingRequests.length > 0 && (
+									<span className="friend-req-panel-count">{pendingRequests.length}</span>
+								)}
+								<button className="friend-req-close" onClick={() => setShowFriendPanel(false)} aria-label="Close">
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+								</button>
+							</div>
+						</div>
+						{pendingRequests.length === 0 ? (
+							<div className="friend-req-empty">No pending requests</div>
+						) : (
+							<div className="friend-req-list">
+								{pendingRequests.map(req => (
+									<div key={req.senderId} className="friend-req-item">
+										<img
+											src={req.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`}
+											alt={req.username}
+											className="friend-req-avatar"
+											onError={(e) => {
+												(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(req.username)}`;
+											}}
+										/>
+										<div className="friend-req-info">
+											<button
+												className="friend-req-username"
+												onClick={() => { navigate(`/profile/${req.username}`); setShowFriendPanel(false); }}
+											>
+												@{req.username}
+											</button>
+											<div className="friend-req-actions">
+												<button
+													className="friend-req-accept"
+													disabled={friendActionLoading === req.senderId}
+													onClick={() => handleAccept(req.senderId)}
+												>
+													{friendActionLoading === req.senderId ? '...' : 'Accept'}
+												</button>
+												<button
+													className="friend-req-reject"
+													disabled={friendActionLoading === req.senderId}
+													onClick={() => handleReject(req.senderId)}
+												>
+													{friendActionLoading === req.senderId ? '...' : 'Decline'}
+												</button>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				</>,
+				document.body
+			)}
 		</>
 	);
 }
