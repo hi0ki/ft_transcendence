@@ -75,6 +75,8 @@ function Navbar({ username, onLogout, isOpen, onClose }: NavbarProps) {
 					const profileData = {
 						username: data.username,
 						avatarUrl: data.avatarUrl || null,
+						bio: data.bio || null,
+						skills: data.skills || [],
 					};
 					setProfile(profileData);
 					// Cache it so re-renders don't re-fetch

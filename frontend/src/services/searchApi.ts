@@ -19,6 +19,10 @@ interface BackendPost {
             avatarUrl: string;
         };
     };
+    _count?: {
+        likes: number;
+        comments: number;
+    };
 }
 
 export interface Post {
@@ -92,8 +96,8 @@ class SearchAPI {
             timeAgo: this.formatTimeAgo(backendPost.createdAt),
             content: backendPost.content,
             tags: [],
-            likes: 0,
-            comments: 0,
+            likes: backendPost._count?.likes ?? 0,
+            comments: backendPost._count?.comments ?? 0,
             type: this.capitalizeFirstLetter(backendPost.type) as 'Help' | 'Resource' | 'Meme',
             imageUrl: backendPost.imageUrl,
             contentUrl: backendPost.contentUrl,

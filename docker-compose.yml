@@ -56,8 +56,6 @@ services:
     restart: always
     networks:
       - my-app-network
-    ports:
-      - "3000"
     env_file:
       - ./backend/auth/.env
     volumes:
@@ -79,8 +77,6 @@ services:
       dockerfile: Dockerfile
       args:
         - app_name=core
-    ports:
-      - "3000"
     restart: always
     env_file:
       - ./backend/auth/.env
@@ -105,8 +101,6 @@ services:
       dockerfile: Dockerfile
       args:
         - app_name=chat
-    ports:
-      - "3000"
     restart: always
     env_file:
       - ./backend/auth/.env

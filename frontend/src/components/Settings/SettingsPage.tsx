@@ -23,18 +23,23 @@ function SettingsPage() {
     const currentUser = authAPI.getCurrentUser();
     const derivedUsername = currentUser?.username || currentUser?.email?.split('@')[0] || 'user';
 
+    // Must be declared before useState to use in initial state
+    const cachedProfile = (() => {
+        try { return JSON.parse(sessionStorage.getItem('user_profile') || 'null'); } catch { return null; }
+    })();
+
     const [form, setForm] = useState<ProfileFormData>({
-        username: derivedUsername,
-        bio: '',
-        skills: [],
+        username: cachedProfile?.username || derivedUsername,
+        bio: cachedProfile?.bio || '',
+        skills: cachedProfile?.skills || [],
     });
 
     const [skillInput, setSkillInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+    const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(cachedProfile?.avatarUrl || null);
     const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
-    const [avatarLoading, setAvatarLoading] = useState(true);
+    const [avatarLoading, setAvatarLoading] = useState(!cachedProfile);
     const [errors, setErrors] = useState<FormErrors>({});
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);

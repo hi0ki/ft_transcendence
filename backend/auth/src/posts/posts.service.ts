@@ -16,6 +16,12 @@ const POST_INCLUDE = {
 			},
 		},
 	},
+	_count: {
+		select: {
+			likes: true,
+			comments: true,
+		},
+	},
 };
 
 @Injectable()
