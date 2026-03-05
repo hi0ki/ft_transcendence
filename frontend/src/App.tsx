@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { authAPI } from './services/authApi'
 import { socketService } from './services/socketService'
 import ChatApp from './components/Chat/ChatApp'
@@ -265,7 +265,7 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage onLoginSuccess={handleLoggedIn} />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -285,7 +285,7 @@ function App() {
 
         <Route path="*" element={<Navigate to={isAuthed ? '/home' : '/login'} replace />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 
