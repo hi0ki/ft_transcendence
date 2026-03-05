@@ -16,6 +16,10 @@ import { useLocation } from 'react-router-dom';
 
 const FeedPage: React.FC = () => {
     const { user } = useAuth();
+    const cachedProfile = (() => {
+        try { return JSON.parse(sessionStorage.getItem('user_profile') || 'null'); }
+        catch { return null; }
+    })();
     const [activeTab, setActiveTab] = useState('All');
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
@@ -284,7 +288,7 @@ const FeedPage: React.FC = () => {
                 isOpen={!!activeCommentPostId}
                 onClose={() => setActiveCommentPostId(null)}
                 comments={activeCommentPost?.commentList || []}
-                currentUserAvatar={getAvatarSrc(null, 'me')}
+                currentUserAvatar={getAvatarSrc(cachedProfile?.avatarUrl, user?.username || 'me')}
                 currentUserId={user?.id ?? null}
                 onAddComment={handleAddComment}
                 onEditComment={handleEditComment}
