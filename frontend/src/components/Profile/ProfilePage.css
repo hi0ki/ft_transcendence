@@ -1333,3 +1333,223 @@
 .friends-popup-item:hover .friends-popup-name {
     color: #0ea5e9;
 }
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 16px 12px;
+    }
+
+    .profile-container {
+        width: 100%;
+    }
+
+    .profile-banner {
+        height: 120px;
+    }
+
+    .profile-avatar-wrap {
+        margin-top: -44px;
+        margin-left: 16px;
+        width: 88px;
+        height: 88px;
+    }
+
+    .profile-avatar {
+        width: 88px;
+        height: 88px;
+    }
+
+    .profile-info-row {
+        flex-direction: column;
+        padding: 12px 16px 20px;
+        gap: 16px;
+    }
+
+    .profile-actions {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .profile-follow-btn,
+    .profile-edit-btn,
+    .profile-delete-btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .profile-name {
+        font-size: 1.4rem;
+    }
+
+    .profile-name-row {
+        flex-wrap: wrap;
+    }
+
+    .profile-stats {
+        gap: 16px;
+    }
+
+    .stat-value {
+        font-size: 1rem;
+    }
+
+    .stat-label {
+        font-size: 0.82rem;
+    }
+
+    .profile-tabs {
+        border-radius: 14px;
+    }
+
+    .profile-tab {
+        padding: 12px 8px;
+        font-size: 0.88rem;
+    }
+
+    .profile-tab-label {
+        font-size: 0.85rem;
+    }
+
+    .profile-tab-count {
+        font-size: 0.7rem;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+    }
+
+    .ppc-card {
+        padding: 14px 16px;
+    }
+
+    .profile-card {
+        border-radius: 16px;
+    }
+
+    .skill-chip {
+        font-size: 0.78rem;
+        padding: 3px 12px;
+    }
+
+    .profile-bio {
+        font-size: 0.88rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-page {
+        padding: 10px 8px;
+    }
+
+    .profile-banner {
+        height: 100px;
+    }
+
+    .profile-avatar-wrap {
+        margin-top: -40px;
+        margin-left: 14px;
+        width: 76px;
+        height: 76px;
+    }
+
+    .profile-avatar {
+        width: 76px;
+        height: 76px;
+    }
+
+    .profile-info-row {
+        padding: 10px 14px 18px;
+        gap: 14px;
+    }
+
+    .profile-name {
+        font-size: 1.2rem;
+    }
+
+    .profile-joined {
+        font-size: 0.75rem;
+    }
+
+    .profile-bio {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+
+    .profile-follow-btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
+
+    .profile-edit-btn {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .profile-stats {
+        gap: 14px;
+        margin: 4px 0 16px;
+    }
+
+    .profile-achievements {
+        gap: 6px;
+    }
+
+    .achv-badge {
+        width: 32px;
+        height: 32px;
+    }
+
+    .achv-icon {
+        font-size: 0.9rem;
+    }
+
+    .profile-tab {
+        padding: 10px 6px;
+        gap: 5px;
+    }
+
+    .profile-tab-label {
+        font-size: 0.8rem;
+    }
+
+    .ppc-card {
+        padding: 12px 14px;
+        border-radius: 12px;
+    }
+
+    .ppc-title {
+        font-size: 0.92rem;
+    }
+
+    .ppc-text {
+        font-size: 0.85rem;
+    }
+
+    .ppc-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .ppc-author-name {
+        font-size: 0.82rem;
+    }
+
+    .ppc-actions {
+        gap: 12px;
+    }
+
+    .ppc-action-btn {
+        font-size: 0.82rem;
+    }
+
+    .skills-chips {
+        gap: 6px;
+    }
+
+    .skill-chip {
+        font-size: 0.75rem;
+        padding: 3px 10px;
+    }
+}

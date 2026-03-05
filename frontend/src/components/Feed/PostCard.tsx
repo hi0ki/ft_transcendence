@@ -318,6 +318,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
             )}
 
             <div className="post-actions">
+                <div className="post-actions-left">
                 {readOnly ? (
                     <span className="action-btn" style={{ cursor: 'default', opacity: 0.75 }}>
                         <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -373,7 +374,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                     </svg>
                     {commentCount}
                 </button>
-                <button className="action-btn" onClick={() => onShare && onShare(post.id)}>
+                </div>
+                {onShare && (
+                <button className="action-btn" onClick={() => onShare(post.id)}>
                     <svg className="action-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
@@ -383,6 +386,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                     </svg>
                     Share
                 </button>
+                )}
             </div>
 
             {/* Reactions Users Popup — rendered via portal so it covers the full viewport */}
