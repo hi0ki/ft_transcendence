@@ -108,7 +108,7 @@ export class PostsService {
 		});
 	}
 
-	// ── Advanced search with filters, sorting, pagination ──────────────
+	// Advanced search with filters, sorting, pagination
 	async searchPosts(dto: SearchPostsDto, userId?: number) {
 		const { q, type, sortBy = 'createdAt', order = 'desc', page = 1, limit = 10 } = dto;
 

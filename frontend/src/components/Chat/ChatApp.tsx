@@ -42,8 +42,6 @@ const ChatApp: React.FC<ChatAppProps> = () => {
         });
 
         // If the socket is already connected when this component mounts,
-        // request the fresh list immediately — the last broadcast may have
-        // happened before we subscribed (e.g. right after login).
         if (socketService.isConnected()) {
             socketService.emit('request_online_users');
         }
@@ -204,9 +202,6 @@ const ChatApp: React.FC<ChatAppProps> = () => {
         return () => {
             socketService.off('connect', handleConnect);
             socketService.off('disconnect', handleDisconnect);
-            // ⚠️ Do NOT disconnect the socket here.
-            // The socket is managed globally by useGlobalSocket in App.tsx
-            // and must stay alive when we navigate away from the chat page.
         };
     }, []);
 

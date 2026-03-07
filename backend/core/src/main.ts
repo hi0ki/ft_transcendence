@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
+import * as cookieParser from 'cookie-parser';  
 
 async function bootstrap()
 {
@@ -13,6 +14,9 @@ async function bootstrap()
 			cert: readFileSync('/app/ssl/cert.pem'),
 		},
 	});
+	app.use(cookieParser()); 
+
+	
 	app.use(json({ limit: '10mb' }));
 	app.use(urlencoded({ extended: true, limit: '10mb' }));
 	
@@ -25,6 +29,6 @@ async function bootstrap()
 	});
 	
 	app.useGlobalPipes(new ValidationPipe());
-	await app.listen(3000, '0.0.0.0');
+	await app.listen(3000);
 }
 bootstrap();

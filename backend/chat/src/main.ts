@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ChatModule } from './chat.module';
 import { readFileSync } from 'fs';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-
+import * as cookieParser from 'cookie-parser';  
 async function bootstrap() {
   const httpsOptions = {
     key: readFileSync('/app/ssl/key.pem'),
@@ -12,6 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(ChatModule, {
     httpsOptions,
   });
+  app.use(cookieParser()); 
 
   // Configure Socket.IO to use the HTTPS server
   app.useWebSocketAdapter(new IoAdapter(app));
@@ -22,7 +23,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(3000, '0.0.0.0');
+  await app.listen(3000);
 }
 
 bootstrap();

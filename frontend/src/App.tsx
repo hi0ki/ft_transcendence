@@ -30,16 +30,12 @@ function RegisterPage() {
   const navigate = useNavigate();
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/profile')}
+      onSignUpSuccess={() => navigate('/home')}
       onSwitchToLogin={() => navigate('/login')}
     />
   );
 }
 
-/**
- * Global socket hook — ONLY manages connection lifecycle.
- * Online-user state is handled inside socketService via subscribeOnlineUsers.
- */
 function useGlobalSocket(isAuthenticated: boolean) {
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,24 +48,18 @@ function useGlobalSocket(isAuthenticated: boolean) {
     if (!socketService.isConnected()) {
       socketService.connect()
         .then(() => {
-          // Socket is now connected — request the fresh online list immediately
-          // instead of waiting up to 1s for the server's periodic broadcast.
           socketService.emit('request_online_users');
         })
-        .catch((err: any) => {
-          // Error handled silently
-        });
+        .catch((err: any) => {});
     } else {
-      // Already connected — request fresh online list immediately
       socketService.emit('request_online_users');
     }
 
-    // Re-request when user focuses the tab
     const handleFocus = () => {
       if (socketService.isConnected()) {
         socketService.emit('request_online_users');
       } else if (isAuthenticated) {
-        socketService.connect().catch(() => { });
+        socketService.connect().catch(() => {});
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -222,47 +212,68 @@ function AdminPageWrapper() {
 }
 
 function App() {
-  const [isAuthed, setIsAuthed] = useState(authAPI.isAuthenticated());
+  // null = still checking, true/false = resolved
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // If sessionStorage already has the user (e.g. same-tab navigation), use it immediately
+    if (authAPI.isAuthenticated()) {
+      setIsAuthed(true);
+      return;
+    }
+    // Otherwise try to hydrate from the cookie (e.g. page refresh or return visit)
+    authAPI.fetchAndCacheUser().then((user) => {
+      setIsAuthed(!!user);
+    });
+  }, []);
 
   const handleLoggedOut = () => setIsAuthed(false);
   const handleLoggedIn = () => setIsAuthed(true);
 
-  // Connects / disconnects socket based on auth state
-  useGlobalSocket(isAuthed);
-  useHeartbeat(isAuthed);
+  useGlobalSocket(!!isAuthed);
+  useHeartbeat(!!isAuthed);
 
-  // ── FIX: Debounced token refresh to prevent 429 rate limiting errors ──
   useEffect(() => {
     let lastRefreshTime = 0;
-    const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh calls
+    const REFRESH_COOLDOWN = 120000;
 
     const debouncedRefresh = async () => {
       if (!authAPI.isAuthenticated()) return;
-
       const now = Date.now();
-      const timeSinceLastRefresh = now - lastRefreshTime;
-
-      // If less than 120 seconds since last refresh, skip this attempt
-      if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
-        return;
-      }
-
+      if (now - lastRefreshTime < REFRESH_COOLDOWN) return;
       lastRefreshTime = now;
       try {
         await authAPI.refreshToken();
-      } catch (err) {
-        // Silently handle rate limit errors - token is probably still valid
-      }
+      } catch (err) {}
     };
 
-    // DON'T refresh on load - just start the interval
-    // debouncedRefresh(); ← Removed this
-
-    // Check every 30 seconds (but actual refresh respects 120 second cooldown)
     const interval = setInterval(debouncedRefresh, 30 * 1000);
-
     return () => clearInterval(interval);
   }, []);
+
+  // Wait for auth check to complete before rendering routes
+  // This prevents the flicker where protected routes redirect to /login
+  if (isAuthed === null) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#020617',
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          border: '3px solid rgba(255,255,255,0.05)',
+          borderTop: '3px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+        }} />
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

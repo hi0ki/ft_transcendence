@@ -7,24 +7,16 @@ import { firstValueFrom } from 'rxjs';
 export class ChatService {
     private readonly logger = new Logger(ChatService.name);
 
-    // socketId -> ConnectedUser mapping (online tracking)
     private connectedUsers: Map<string, ConnectedUser> = new Map();
-    
-    // userId -> JWT token mapping (for authenticated HTTP requests)
     private userTokens: Map<number, string> = new Map();
-
-    // Auth service base URL (internal Docker network)
     private readonly AUTH_SERVICE_URL = 'https://auth_service:3000';
 
     constructor(private readonly httpService: HttpService) { }
 
-    // ─── Online User Tracking ───
-
     addConnectedUser(socketId: string, userId: number, email: string, username?: string, token?: string): ConnectedUser {
         const user: ConnectedUser = { socketId, userId, email, username };
         this.connectedUsers.set(socketId, user);
-        
-        // Store JWT token for this user
+
         if (token) {
             this.userTokens.set(userId, token);
         }

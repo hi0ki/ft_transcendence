@@ -124,7 +124,7 @@ export class ChatService {
         });
     }
 
-    // get conversations of a user for sidebar (like Instagram),
+    // get conversations of a user for sidebar
     // with the last message in each conversation
     async getUserConversations(userId: number) {
         const conversations = await this.prisma.conversation.findMany({

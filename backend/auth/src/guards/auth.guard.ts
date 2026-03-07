@@ -9,14 +9,12 @@ export class AuthGuard implements CanActivate{
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const authHeader = request.headers['authorization'];
-        if (!authHeader) {
+        const token = request.cookies?.['auth_token'];
+
+        if (!token) {
             throw new UnauthorizedException('Token missing');
         }
-        const [type, token] = authHeader.split(' ');
-        if (type !== 'Bearer' || !token) {
-            throw new UnauthorizedException('Invalid token format');
-        }
+
         try {
             const secret = this.configService.get<string>('JWT_SECRET');
             if (!secret) {

@@ -28,8 +28,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(private readonly chatService: ChatService) { }
 
     afterInit() {
-        // Broadcast online users every 5 seconds as a "self-healing" mechanism
-        // for clients that might have missed a connection/disconnection event
         setInterval(() => {
             if (this.server) {
                 this.broadcastOnlineUsers();
@@ -39,44 +37,51 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     async handleConnection(client: Socket) {
         try {
-            // Extract JWT token from handshake
-            const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '');
-
+            // ← read from cookie instead of auth/header
+            const cookieHeader = client.handshake.headers?.cookie;
+            let token: string | undefined;
+    
+            if (cookieHeader) {
+                // parse "auth_token=xxxxx; other_cookie=yyy"
+                const match = cookieHeader
+                    .split(';')
+                    .find(c => c.trim().startsWith('auth_token='));
+                if (match) {
+                    token = match.split('=')[1]?.trim();
+                }
+            }
+    
             if (!token) {
                 this.logger.warn(`Client ${client.id} connected without token — disconnecting`);
                 client.emit('error', { message: 'Authentication required' });
                 client.disconnect();
                 return;
             }
-
-            // Decode JWT to get user info
+    
+            // everything below stays exactly the same
             const payload: any = jwt.verify(token, this.JWT_SECRET);
-            // Cast to Number to prevent string vs number mismatch on the frontend
             const userId = Number(payload.id || payload.sub);
             const email = payload.email;
             const username = payload.username;
-
+    
             if (!userId) {
                 this.logger.warn(`Client ${client.id} token has no userId — disconnecting`);
                 client.emit('error', { message: 'Invalid token' });
                 client.disconnect();
                 return;
             }
-
-            // Register connected user with token
+    
             const user = this.chatService.addConnectedUser(client.id, userId, email, username, token);
-
-            // Send welcome with user info
+    
             client.emit('welcome', {
                 socketId: client.id,
                 userId: user.userId,
                 email: user.email,
                 username: user.username,
             });
-
-            // Broadcast updated online users list
+    
             this.broadcastOnlineUsers();
-
+    
         } catch (error) {
             this.logger.error(`Client ${client.id} auth failed: ${error.message}`);
             client.emit('error', { message: 'Authentication failed' });
@@ -129,7 +134,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 initiatorId: currentUser.userId,
             });
 
-            // Also notify the target user if online (they are the recipient, not the initiator)
             if (targetSocketId) {
                 this.server.to(targetSocketId).emit('room_created', {
                     conversationId: conversation.id,
@@ -273,11 +277,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('heartbeat')
     handleHeartbeat(@ConnectedSocket() client: Socket) {
-        // Touch the user's last-seen time (currently just a no-op ACK).
-        // The periodic broadcastOnlineUsers interval keeps guests informed.
         const user = this.chatService.getConnectedUser(client.id);
         if (user) {
-            // Respond to the sender so they know they are still registered
             client.emit('heartbeat_ack', { userId: user.userId });
         }
     }

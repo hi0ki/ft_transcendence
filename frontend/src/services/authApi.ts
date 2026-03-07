@@ -1,18 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
-
 export interface AuthUser {
     id: number;
     email: string;
     role?: string;
     username?: string;
     avatarUrl?: string | null;
-}
-
-export interface LoginResponse {
-    access_token: string;
 }
 
 export interface RegisterResponse {
@@ -29,10 +22,12 @@ export interface UserProfile {
 }
 
 class AuthAPI {
+
     async register(email: string, password: string, username: string): Promise<RegisterResponse> {
         const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, password, username }),
         });
 
@@ -41,14 +36,17 @@ class AuthAPI {
             throw new Error(error.message || 'Registration failed');
         }
 
-        return response.json();
+        const data = await response.json();
+        // Cache user so isAuthenticated() returns true immediately after register
+        await this.fetchAndCacheUser();
+        return data;
     }
 
-
-    async login(email: string, password: string): Promise<LoginResponse> {
+    async login(email: string, password: string): Promise<void> {
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ email, password }),
         });
 
@@ -57,41 +55,34 @@ class AuthAPI {
             throw new Error(error.message || 'Login failed');
         }
 
-        const data: LoginResponse = await response.json();
-
-        localStorage.setItem(TOKEN_KEY, data.access_token);
-
-        return data;
+        // Cache user so isAuthenticated() returns true immediately after login
+        await this.fetchAndCacheUser();
     }
 
-
+    // Cookie is sent automatically — getToken() is no longer meaningful
     getToken(): string | null {
-        return localStorage.getItem(TOKEN_KEY);
+        return null;
     }
-
 
     isAuthenticated(): boolean {
-        const token = this.getToken();
-        if (!token) return false;
-
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.exp * 1000 > Date.now();
+            const cached = sessionStorage.getItem('auth_user');
+            if (cached) {
+                const user = JSON.parse(cached);
+                return !!user?.id;
+            }
+            return false;
         } catch {
             return false;
         }
     }
 
     async refreshToken(): Promise<void> {
-        const token = this.getToken();
-        if (!token) return;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
             });
 
-            // If 401 — user was deleted or token is invalid → logout
             if (response.status === 401 || response.status === 403) {
                 this.logout();
                 window.location.href = '/login';
@@ -100,38 +91,46 @@ class AuthAPI {
 
             if (!response.ok) return;
 
-            const data = await response.json();
-            localStorage.setItem(TOKEN_KEY, data.access_token);
+            await this.fetchAndCacheUser();
         } catch {
             return;
         }
     }
 
+    async fetchAndCacheUser(): Promise<AuthUser | null> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
+                credentials: 'include',
+            });
+            if (!response.ok) return null;
+            const data = await response.json();
+            const user: AuthUser = {
+                id: data.user?.id,
+                email: data.user?.email,
+                role: data.user?.role || 'USER',
+                username: data.username,
+                avatarUrl: data.avatarUrl || null,
+            };
+            sessionStorage.setItem('auth_user', JSON.stringify(user));
+            return user;
+        } catch {
+            return null;
+        }
+    }
 
     getCurrentUser(): AuthUser | null {
-        const token = this.getToken();
-        if (!token) return null;
-
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return {
-                id: Number(payload.id || payload.sub), // force to number — JWT may carry a string
-                email: payload.email,
-                role: payload.role || 'USER',
-                username: payload.username,
-                avatarUrl: null,
-            };
+            const cached = sessionStorage.getItem('auth_user');
+            if (cached) return JSON.parse(cached);
+            return null;
         } catch {
             return null;
         }
     }
 
     async reLoginWithFreshToken(): Promise<void> {
-        const token = this.getToken();
-        if (!token) return;
-
         const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -140,18 +139,13 @@ class AuthAPI {
             return;
         }
 
-        const data = await response.json();
-        localStorage.setItem(TOKEN_KEY, data.access_token);
+        await this.fetchAndCacheUser();
     }
 
-    // Fetch current user's profile (including avatarUrl) from the backend
     async getMyProfile(): Promise<UserProfile | null> {
-        const token = this.getToken();
-        if (!token) return null;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/profiles/me`, {
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
             });
             if (!response.ok) return null;
             return await response.json();
@@ -160,14 +154,10 @@ class AuthAPI {
         }
     }
 
- 
     async getProfile(username: string): Promise<any | null> {
-        const token = this.getToken();
-        if (!token) return null;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/profiles/${username}`, {
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
             });
             if (!response.ok) return null;
             return await response.json();
@@ -182,47 +172,40 @@ class AuthAPI {
         skills?: string[];
         avatarUrl?: string | null;
     }): Promise<UserProfile | null> {
-        const token = this.getToken();
-        if (!token) return null;
-
         try {
             const response = await fetch(`${API_BASE_URL}/api/profiles`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(data),
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: 'Failed to update profile' }));
                 throw new Error(errorData.message || 'Failed to update profile');
             }
-            
-            const result = await response.json();
 
-            // ← Clear cache so Navbar fetches fresh profile with new avatar
             sessionStorage.removeItem('user_profile');
-
-            return result;
+            // Re-cache user in case username or avatar changed
+            await this.fetchAndCacheUser();
+            return await response.json();
         } catch (error) {
-            // Re-throw the error so it can be caught by the component
             throw error;
         }
     }
 
+    async logout(): Promise<void> {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        }).catch(() => {});
 
-
-    logout(): void {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
+        sessionStorage.removeItem('auth_user');
         sessionStorage.removeItem('user_profile');
     }
 }
 
 export const authAPI = new AuthAPI();
-
 
 export function getAvatarSrc(avatarUrl: string | null | undefined, username: string): string {
     if (avatarUrl && avatarUrl.trim() !== '') return avatarUrl;

@@ -14,7 +14,7 @@ import './ProfilePage.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-// ── Icons ──────────────────────────────────────────────────────────────────
+// icons
 const HeartIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
@@ -42,7 +42,7 @@ const ImageIcon = () => (
 const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
 const MAX_CONTENT_LENGTH = 150;
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// helpers
 function hashStr(s: string): number {
     let hash = 0;
     for (let i = 0; i < s.length; i++) {
@@ -79,7 +79,7 @@ function fixImageUrl(url?: string | null): string | null {
     return url;
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// types
 interface BackendPost {
     id: number;
     title: string;
@@ -107,7 +107,6 @@ interface ProfileData {
 
 type TabType = 'HELP' | 'RESOURCE' | 'MEME';
 
-// ── Edit Icon ──────────────────────────────────────────────────────────────────
 const EditIcon = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -115,7 +114,7 @@ const EditIcon = () => (
     </svg>
 );
 
-// ── ProfilePostCard ───────────────────────────────────────────────────────────
+// profilePostCard
 interface ProfilePostCardProps {
     post: BackendPost;
     avatarSrc: string;
@@ -693,11 +692,10 @@ function ProfilePage() {
                 if (!isOwner && data.user?.id) {
                     friendsAPI.getStatus(data.user.id).then(setFriendStatus).catch(() => {});
                 }
-                // Fetch achievements — use profile user id, fall back to JWT id for owner
+                // Fetch achievements — cookie auth, no token argument needed
                 const targetId = data.user?.id;
-                const tok = authAPI.getToken();
-                if (targetId && tok) {
-                    getAchievementProgress(targetId, tok)
+                if (targetId) {
+                    getAchievementProgress(targetId)
                         .then(setAchievements)
                         .catch(() => {});
                 }
@@ -726,10 +724,9 @@ function ProfilePage() {
     const handleDeletePost = async (postId: number) => {
         if (!window.confirm('Delete this post? This cannot be undone.')) return;
         try {
-            const token = authAPI.getToken();
             const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
             });
             if (res.ok) {
                 setPosts(prev => prev.filter(p => p.id !== postId));
@@ -742,13 +739,10 @@ function ProfilePage() {
     };
 
     const handleEditPost = async (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => {
-        const token = authAPI.getToken();
         const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
             method: 'PATCH',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(data),
         });
         if (res.ok) {
@@ -977,10 +971,9 @@ function ProfilePage() {
                                     type="button"
                                     onClick={async () => {
                                         if (!window.confirm(`Delete user @${username}? This cannot be undone.`)) return;
-                                        const token = authAPI.getToken();
                                         const res = await fetch(`${API_BASE_URL}/api/users/${profileData?.user?.id}`, {
                                             method: 'DELETE',
-                                            headers: { Authorization: `Bearer ${token}` },
+                                            credentials: 'include',
                                         });
                                         if (res.ok) {
                                             navigate('/home');
