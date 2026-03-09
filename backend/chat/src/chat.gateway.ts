@@ -146,14 +146,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @SubscribeMessage('join_room')
-    handleJoinRoom(
+    async handleJoinRoom(
         @MessageBody() data: { conversationId: number },
         @ConnectedSocket() client: Socket,
     ) {
+        const currentUser = this.chatService.getConnectedUser(client.id);
+        if (!currentUser) {
+            client.emit('error', { message: 'Not authenticated' });
+            return;
+        }
+
+        // SECURITY: verify this user is actually a participant in the conversation
+        const conversation = await this.chatService.getConversation(data.conversationId, currentUser.userId);
+        if (
+            !conversation ||
+            (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
+        ) {
+            client.emit('error', { message: 'Access denied: not a member of this conversation' });
+            this.logger.warn(`User ${currentUser.userId} tried to join conversation ${data.conversationId} without access`);
+            return;
+        }
+
         const roomName = `conversation_${data.conversationId}`;
         client.join(roomName);
         client.emit('joined_room', { conversationId: data.conversationId });
-        this.logger.log(`Client ${client.id} joined conversation ${data.conversationId}`);
+        this.logger.log(`Client ${client.id} (user ${currentUser.userId}) joined conversation ${data.conversationId}`);
     }
 
     @SubscribeMessage('leave_room')

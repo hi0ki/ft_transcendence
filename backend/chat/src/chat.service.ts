@@ -9,7 +9,7 @@ export class ChatService {
 
     // socketId -> ConnectedUser mapping (online tracking)
     private connectedUsers: Map<string, ConnectedUser> = new Map();
-    
+
     // userId -> JWT token mapping (for authenticated HTTP requests)
     private userTokens: Map<number, string> = new Map();
 
@@ -23,12 +23,12 @@ export class ChatService {
     addConnectedUser(socketId: string, userId: number, email: string, username?: string, token?: string): ConnectedUser {
         const user: ConnectedUser = { socketId, userId, email, username };
         this.connectedUsers.set(socketId, user);
-        
+
         // Store JWT token for this user
         if (token) {
             this.userTokens.set(userId, token);
         }
-        
+
         this.logger.log(`User connected: ${username || email} (userId: ${userId}, socketId: ${socketId})`);
         return user;
     }
@@ -37,14 +37,14 @@ export class ChatService {
         const user = this.connectedUsers.get(socketId);
         if (user) {
             this.connectedUsers.delete(socketId);
-            
+
             // Only remove token if no other sockets exist for this user
             const hasOtherSockets = Array.from(this.connectedUsers.values())
                 .some(u => u.userId === user.userId);
             if (!hasOtherSockets) {
                 this.userTokens.delete(user.userId);
             }
-            
+
             this.logger.log(`User disconnected: ${user.username || user.email} (userId: ${user.userId})`);
         }
         return user;
@@ -69,7 +69,7 @@ export class ChatService {
         }
         return undefined;
     }
-    
+
     private getTokenForUser(userId: number): string | undefined {
         return this.userTokens.get(userId);
     }
@@ -82,7 +82,7 @@ export class ChatService {
             if (!token) {
                 throw new Error('No authentication token available');
             }
-            
+
             const response = await firstValueFrom(
                 this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/conversation/find-or-create`, {
                     userId1,
@@ -98,13 +98,30 @@ export class ChatService {
         }
     }
 
+    async getConversation(conversationId: number, userId: number): Promise<DBConversation | null> {
+        try {
+            const token = this.getTokenForUser(userId);
+            if (!token) return null;
+
+            const response = await firstValueFrom(
+                this.httpService.get(`${this.AUTH_SERVICE_URL}/chat/conversation/${conversationId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                })
+            );
+            return response.data;
+        } catch {
+            return null;
+        }
+    }
+
+
     async sendMessageToDB(conversationId: number, senderId: number, content: string, type: string = 'TEXT', fileUrl: string | null = null): Promise<DBMessage> {
         try {
             const token = this.getTokenForUser(senderId);
             if (!token) {
                 throw new Error('No authentication token for sender');
             }
-            
+
             const response = await firstValueFrom(
                 this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/new-message`, {
                     conversationId,
@@ -129,7 +146,7 @@ export class ChatService {
             if (!token) {
                 throw new Error('No authentication token available');
             }
-            
+
             const response = await firstValueFrom(
                 this.httpService.get(`${this.AUTH_SERVICE_URL}/chat/conversation/${conversationId}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -148,7 +165,7 @@ export class ChatService {
             if (!token) {
                 throw new Error('No authentication token for user');
             }
-            
+
             const response = await firstValueFrom(
                 this.httpService.get(`${this.AUTH_SERVICE_URL}/chat/user/${userId}/conversations`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -167,7 +184,7 @@ export class ChatService {
             if (!token) {
                 throw new Error('No authentication token for user');
             }
-            
+
             const response = await firstValueFrom(
                 this.httpService.put(`${this.AUTH_SERVICE_URL}/chat/message`, {
                     messageId,
@@ -191,7 +208,7 @@ export class ChatService {
             if (!token) {
                 throw new Error('No authentication token for user');
             }
-            
+
             await firstValueFrom(
                 this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/message/delete`, {
                     messageId,
