@@ -295,22 +295,27 @@ The application runs entirely via **Docker Compose** with six containerized serv
    cd ft_transcendence
    ```
 
-2. **Create the `.env` file** for the auth service:
+2. **Create the `.env` file** for the auth service and database:
    ```bash
    cp backend/auth/env.example backend/auth/.env
+   cp backend/database/env.example backend/database/.env
    ```
 
-3. **Edit `backend/auth/.env`** with your values:
-   ```env
+3. **Edit `backend/auth/.env , backend/database/.env`** with your values:
+   ```
+   # auth env
    DATABASE_URL="postgresql://database_user:database_password@postgres:5432/database_name"
    JWT_SECRET="your_jwt_secret_key"
 
-   LIENT_ID="Client ID from 42 API"
+   CLIENT_ID="Client ID from 42 API"
    CLIENT_SECRET="Client Secret from 42 API"
    CALLBACK_URL="https://localhost/auth/42/callback"
-
-   # Frontend URL (for CORS and redirects)
-   FRONTEND_URL=https://localhost
+   ```
+   ```
+   # databse env
+   POSTGRES_USER="db user"
+   POSTGRES_PASSWORD="user password"
+   POSTGRES_DB="db name"
    ```
 
 4. **Create the frontend `.env`** (optional — defaults to `https://localhost`):
