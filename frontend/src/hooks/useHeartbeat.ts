@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { socketService } from '../services/socketService';
 
-const HEARTBEAT_INTERVAL_MS = 1_000; // 1 second
+const HEARTBEAT_INTERVAL_MS = 30_000; // 1 second
 
 /**
  * Global hook that sends a heartbeat to the server every second

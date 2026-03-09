@@ -32,56 +32,45 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             if (this.server) {
                 this.broadcastOnlineUsers();
             }
-        }, 1000);
+        }, 30_000);
     }
 
     async handleConnection(client: Socket) {
         try {
-            // ← read from cookie instead of auth/header
             const cookieHeader = client.handshake.headers?.cookie;
-            let token: string | undefined;
-    
-            if (cookieHeader) {
-                // parse "auth_token=xxxxx; other_cookie=yyy"
-                const match = cookieHeader
-                    .split(';')
-                    .find(c => c.trim().startsWith('auth_token='));
-                if (match) {
-                    token = match.split('=')[1]?.trim();
-                }
-            }
-    
+            const match = cookieHeader?.split(';').find(c => c.trim().startsWith('auth_token='));
+            const token = match?.split('=')[1]?.trim();
+
             if (!token) {
                 this.logger.warn(`Client ${client.id} connected without token — disconnecting`);
                 client.emit('error', { message: 'Authentication required' });
                 client.disconnect();
                 return;
             }
-    
-            // everything below stays exactly the same
+
             const payload: any = jwt.verify(token, this.JWT_SECRET);
             const userId = Number(payload.id || payload.sub);
             const email = payload.email;
             const username = payload.username;
-    
+
             if (!userId) {
                 this.logger.warn(`Client ${client.id} token has no userId — disconnecting`);
                 client.emit('error', { message: 'Invalid token' });
                 client.disconnect();
                 return;
             }
-    
+
             const user = this.chatService.addConnectedUser(client.id, userId, email, username, token);
-    
+
             client.emit('welcome', {
                 socketId: client.id,
                 userId: user.userId,
                 email: user.email,
                 username: user.username,
             });
-    
+
             this.broadcastOnlineUsers();
-    
+
         } catch (error) {
             this.logger.error(`Client ${client.id} auth failed: ${error.message}`);
             client.emit('error', { message: 'Authentication failed' });
@@ -108,17 +97,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
-            // Find or create conversation in DB
             const conversation = await this.chatService.findOrCreateConversation(
                 currentUser.userId,
                 data.targetUserId,
             );
 
-            // Join both users to a socket.io room (using conversation DB ID)
             const roomName = `conversation_${conversation.id}`;
             client.join(roomName);
 
-            // If the other user is online, join them to the room too
             const targetSocketId = this.chatService.getSocketIdForUser(data.targetUserId);
             if (targetSocketId) {
                 const targetSocket = this.server.sockets.sockets.get(targetSocketId);
@@ -127,7 +113,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 }
             }
 
-            // Notify the creator about the room
             client.emit('room_created', {
                 conversationId: conversation.id,
                 conversation,
@@ -150,14 +135,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @SubscribeMessage('join_room')
-    handleJoinRoom(
+    async handleJoinRoom(
         @MessageBody() data: { conversationId: number },
         @ConnectedSocket() client: Socket,
     ) {
+        const currentUser = this.chatService.getConnectedUser(client.id);
+        if (!currentUser) {
+            client.emit('error', { message: 'Not authenticated' });
+            return;
+        }
+
+        // SECURITY: verify this user is actually a participant in the conversation
+        const conversations = await this.chatService.getUserConversations(currentUser.userId); // ← fixed
+        const conversation = conversations.find(c => c.id === data.conversationId);            // ← fixed
+        if (
+            !conversation ||
+            (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
+        ) {
+            client.emit('error', { message: 'Access denied: not a member of this conversation' });
+            this.logger.warn(`User ${currentUser.userId} tried to join conversation ${data.conversationId} without access`);
+            return;
+        }
+
         const roomName = `conversation_${data.conversationId}`;
         client.join(roomName);
         client.emit('joined_room', { conversationId: data.conversationId });
-        this.logger.log(`Client ${client.id} joined conversation ${data.conversationId}`);
+        this.logger.log(`Client ${client.id} (user ${currentUser.userId}) joined conversation ${data.conversationId}`);
     }
 
     @SubscribeMessage('leave_room')
@@ -182,7 +185,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
-            // Persist message to database via auth_service
             const savedMessage = await this.chatService.sendMessageToDB(
                 data.conversationId,
                 currentUser.userId,
@@ -191,11 +193,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 data.fileUrl || null,
             );
 
-            // Broadcast to all participants in the room
             const roomName = `conversation_${data.conversationId}`;
             this.server.to(roomName).emit('room_message', savedMessage);
-
-            // Also emit to sender in case they haven't joined the room yet
             client.emit('room_message', savedMessage);
 
             this.logger.log(`Message sent to conversation ${data.conversationId} by user ${currentUser.userId}`);
@@ -255,7 +254,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                     deleteType: 'FOR_ALL'
                 });
             } else {
-                // FOR_ME: only notify the sender
                 client.emit('message_deleted', {
                     messageId: data.messageId,
                     conversationId: data.conversationId,
@@ -270,7 +268,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     private broadcastOnlineUsers() {
-        // Deduplicate in case a user has multiple sockets open
         const onlineUserIds = [...new Set(this.chatService.getOnlineUserIds())];
         this.server.emit('online_users', onlineUserIds);
     }

@@ -1,7 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-// ← removed getAuthHeaders() entirely — cookies sent automatically
-
 export interface UserProfile {
     username: string;
     avatarUrl?: string;
@@ -39,7 +37,7 @@ class ChatAPI {
 
     async getUsers(): Promise<DBUser[]> {
         const response = await fetch(`${this.BASE}/users`, {
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Failed to fetch users');
         return response.json();
@@ -47,7 +45,7 @@ class ChatAPI {
 
     async getUser(userId: number): Promise<DBUser> {
         const response = await fetch(`${this.BASE}/users/${userId}`, {
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Failed to fetch user');
         return response.json();
@@ -55,7 +53,7 @@ class ChatAPI {
 
     async getUserConversations(userId: number): Promise<DBConversation[]> {
         const response = await fetch(`${this.BASE}/user/${userId}/conversations`, {
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Failed to fetch conversations');
         return response.json();
@@ -67,7 +65,7 @@ class ChatAPI {
             : `${this.BASE}/conversation/${conversationId}/messages`;
 
         const response = await fetch(url, {
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Failed to fetch messages');
         return response.json();
@@ -77,7 +75,7 @@ class ChatAPI {
         const response = await fetch(`${this.BASE}/message/delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
             body: JSON.stringify({ messageId, userId, deleteType }),
         });
         if (!response.ok) throw new Error('Failed to delete message');
@@ -87,7 +85,7 @@ class ChatAPI {
         const response = await fetch(`${this.BASE}/conversation/find-or-create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
             body: JSON.stringify({ userId1, userId2 }),
         });
         if (!response.ok) throw new Error('Failed to find or create conversation');
@@ -98,7 +96,7 @@ class ChatAPI {
         const response = await fetch(`${this.BASE}/new-message`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
             body: JSON.stringify({ conversationId, senderId, content: content || null, type, fileUrl: fileUrl || null }),
         });
         if (!response.ok) throw new Error('Failed to send message');
@@ -115,7 +113,7 @@ class ChatAPI {
 
         const response = await fetch(`${this.BASE}/upload`, {
             method: 'POST',
-            credentials: 'include',             // ← removed Authorization header, cookie handles it
+            credentials: 'include',
             body: formData,
         });
         if (!response.ok) throw new Error('Failed to upload file');
@@ -126,7 +124,7 @@ class ChatAPI {
         const response = await fetch(`${this.BASE}/message`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
             body: JSON.stringify({ messageId, userId, content }),
         });
         if (!response.ok) throw new Error('Failed to update message');
@@ -136,7 +134,7 @@ class ChatAPI {
     async deleteConversation(conversationId: number): Promise<void> {
         const response = await fetch(`${this.BASE}/conversation/${conversationId}`, {
             method: 'DELETE',
-            credentials: 'include',             // ← replaced getAuthHeaders()
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Failed to delete conversation');
     }
