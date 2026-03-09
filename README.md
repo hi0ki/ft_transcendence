@@ -297,21 +297,17 @@ The application runs entirely via **Docker Compose** with six containerized serv
 
 2. **Create the `.env` file** for the auth service:
    ```bash
-   cp backend/auth/env_example backend/auth/.env
+   cp backend/auth/env.example backend/auth/.env
    ```
 
 3. **Edit `backend/auth/.env`** with your values:
    ```env
-   # Database
-   DATABASE_URL=postgresql://user:password@postgres:5432/mydb
+   DATABASE_URL="postgresql://database_user:database_password@postgres:5432/database_name"
+   JWT_SECRET="your_jwt_secret_key"
 
-   # JWT
-   JWT_SECRET=your_super_secret_key
-
-   # 42 OAuth (obtain from 42 API settings)
-   FORTYTWO_CLIENT_ID=your_42_client_id
-   FORTYTWO_CLIENT_SECRET=your_42_client_secret
-   FORTYTWO_CALLBACK_URL=https://localhost/auth/42/callback
+   LIENT_ID="Client ID from 42 API"
+   CLIENT_SECRET="Client Secret from 42 API"
+   CALLBACK_URL="https://localhost/auth/42/callback"
 
    # Frontend URL (for CORS and redirects)
    FRONTEND_URL=https://localhost
