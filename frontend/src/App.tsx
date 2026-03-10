@@ -39,32 +39,46 @@ function RegisterPage() {
 function useGlobalSocket(isAuthenticated: boolean) {
   useEffect(() => {
     if (!isAuthenticated) {
+      // User logged out — disconnect cleanly
       if (socketService.isConnected()) {
         socketService.disconnect();
       }
       return;
     }
 
-    if (!socketService.isConnected()) {
-      socketService.connect()
-        .then(() => {
-          socketService.emit('request_online_users');
-        })
-        .catch((err: any) => {});
-    } else {
+    // ✅ FIX: Only connect if not already connected OR connecting.
+    // Previously this ran twice in React StrictMode (dev), calling connect()
+    // twice — the second call killed the first socket immediately, causing
+    // Jana's rapid connect/disconnect loop in the logs.
+    if (socketService.isConnected()) {
       socketService.emit('request_online_users');
+      return;
     }
+
+    let cancelled = false;
+
+    socketService.connect()
+      .then(() => {
+        if (!cancelled) {
+          socketService.emit('request_online_users');
+        }
+      })
+      .catch(() => {});
 
     const handleFocus = () => {
       if (socketService.isConnected()) {
         socketService.emit('request_online_users');
-      } else if (isAuthenticated) {
+      } else if (!cancelled) {
         socketService.connect().catch(() => {});
       }
     };
     window.addEventListener('focus', handleFocus);
 
     return () => {
+      // ✅ FIX: Mark as cancelled so the async connect() callback doesn't
+      // emit after cleanup. Do NOT disconnect here — that would kill the
+      // socket every time any component re-renders.
+      cancelled = true;
       window.removeEventListener('focus', handleFocus);
     };
   }, [isAuthenticated]);
@@ -212,16 +226,13 @@ function AdminPageWrapper() {
 }
 
 function App() {
-  // null = still checking, true/false = resolved
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // If sessionStorage already has the user (e.g. same-tab navigation), use it immediately
     if (authAPI.isAuthenticated()) {
       setIsAuthed(true);
       return;
     }
-    // Otherwise try to hydrate from the cookie (e.g. page refresh or return visit)
     authAPI.fetchAndCacheUser().then((user) => {
       setIsAuthed(!!user);
     });
@@ -251,8 +262,6 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Wait for auth check to complete before rendering routes
-  // This prevents the flicker where protected routes redirect to /login
   if (isAuthed === null) {
     return (
       <div style={{

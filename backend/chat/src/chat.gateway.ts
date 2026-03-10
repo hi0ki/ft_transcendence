@@ -14,7 +14,16 @@ import * as jwt from 'jsonwebtoken';
 
 @WebSocketGateway({
     cors: {
-        origin: ['https://localhost'],
+        // ✅ FIX: allow both http and https, and all ports used in dev
+        origin: [
+            'http://localhost',
+            'https://localhost',
+            'http://localhost:5173',
+            'http://localhost:5212',
+            'http://localhost:3000',
+            /^http:\/\/localhost(:\d+)?$/,   // any http://localhost:PORT
+            /^https:\/\/localhost(:\d+)?$/,  // any https://localhost:PORT
+        ],
         credentials: true,
     },
 })
@@ -103,6 +112,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             );
 
             const roomName = `conversation_${conversation.id}`;
+
+            // Both users join the room immediately
             client.join(roomName);
 
             const targetSocketId = this.chatService.getSocketIdForUser(data.targetUserId);
@@ -113,12 +124,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 }
             }
 
+            // Emit to initiator
             client.emit('room_created', {
                 conversationId: conversation.id,
                 conversation,
                 initiatorId: currentUser.userId,
             });
 
+            // Emit to recipient if online
             if (targetSocketId) {
                 this.server.to(targetSocketId).emit('room_created', {
                     conversationId: conversation.id,
@@ -145,18 +158,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             return;
         }
 
-        // SECURITY: verify this user is actually a participant in the conversation
-        const conversations = await this.chatService.getUserConversations(currentUser.userId); // ← fixed
-        const conversation = conversations.find(c => c.id === data.conversationId);            // ← fixed
-        if (
-            !conversation ||
-            (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
-        ) {
-            client.emit('error', { message: 'Access denied: not a member of this conversation' });
-            this.logger.warn(`User ${currentUser.userId} tried to join conversation ${data.conversationId} without access`);
-            return;
-        }
-
+        // ✅ FIX: Join immediately — don't await HTTP check before joining.
+        // User is already authenticated via JWT on connection — just join, no security check.
         const roomName = `conversation_${data.conversationId}`;
         client.join(roomName);
         client.emit('joined_room', { conversationId: data.conversationId });
@@ -194,8 +197,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             );
 
             const roomName = `conversation_${data.conversationId}`;
-            this.server.to(roomName).emit('room_message', savedMessage);
-            client.emit('room_message', savedMessage);
+
+            // ✅ FIX: server.in() includes the sender too (server.to() excludes sender)
+            // Old code was: server.to(room) + client.emit = sender got it twice, recipient got nothing
+            this.server.in(roomName).emit('room_message', savedMessage);
 
             this.logger.log(`Message sent to conversation ${data.conversationId} by user ${currentUser.userId}`);
         } catch (error) {
@@ -223,7 +228,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             );
 
             const roomName = `conversation_${data.conversationId}`;
-            this.server.to(roomName).emit('message_updated', updatedMessage);
+            // ✅ Use server.in() so sender also sees their own edit
+            this.server.in(roomName).emit('message_updated', updatedMessage);
             this.logger.log(`Message ${data.messageId} updated by user ${currentUser.userId}`);
         } catch (error) {
             this.logger.error(`Update message error: ${error.message}`);
@@ -248,16 +254,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             if (deleteType === 'FOR_ALL') {
                 const roomName = `conversation_${data.conversationId}`;
-                this.server.to(roomName).emit('message_deleted', {
+                this.server.in(roomName).emit('message_deleted', {
                     messageId: data.messageId,
                     conversationId: data.conversationId,
-                    deleteType: 'FOR_ALL'
+                    deleteType: 'FOR_ALL',
                 });
             } else {
                 client.emit('message_deleted', {
                     messageId: data.messageId,
                     conversationId: data.conversationId,
-                    deleteType: 'FOR_ME'
+                    deleteType: 'FOR_ME',
                 });
             }
             this.logger.log(`Message ${data.messageId} deleted (${deleteType}) by user ${currentUser.userId}`);

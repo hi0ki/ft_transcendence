@@ -41,13 +41,19 @@ class SocketService {
         }
 
         return new Promise((resolve, reject) => {
-            // ← removed localStorage.getItem('auth_token')
-            // ← removed token check — cookie is sent automatically by the browser
+            // Track whether the promise has already settled so we never
+            // call resolve/reject twice (which would throw on reconnects)
+            let settled = false;
+            const settle = (fn: () => void) => {
+                if (settled) return;
+                settled = true;
+                fn();
+            };
 
             this.socket = io(SOCKET_URL, {
                 transports: ['websocket'],
                 autoConnect: true,
-                withCredentials: true,          // ← replaces auth: { token }
+                withCredentials: true,
                 reconnection: true,
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
@@ -68,30 +74,40 @@ class SocketService {
 
             this.socket.on('connect', () => {
                 this.socket?.emit('request_online_users');
-                resolve({ socketId: this.socket?.id || '', userId: 0, email: '', username: '' });
+                // Only resolve the first time — reconnects don't re-resolve
+                settle(() => resolve({
+                    socketId: this.socket?.id || '',
+                    userId: 0,
+                    email: '',
+                    username: '',
+                }));
             });
 
             this.socket.on('welcome', () => {
-                // Connection successful
+                // Connection confirmed by server
             });
 
             this.socket.on('disconnect', (reason) => {
-                // Socket disconnected
+                // Socket disconnected — reconnection handled automatically
             });
 
             this.socket.on('error', (error: any) => {
-                // Socket error occurred
+                // Socket-level error — don't crash, just log
             });
 
             this.socket.on('connect_error', (error: any) => {
-                reject(error);
+                // Only reject the first time — subsequent reconnect failures are silent
+                settle(() => reject(error));
             });
 
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 if (!this.socket?.connected) {
-                    reject(new Error('Socket connection timed out'));
+                    settle(() => reject(new Error('Socket connection timed out')));
                 }
             }, 8000);
+
+            // Clear timeout once connected so it doesn't fire after a slow connect
+            this.socket.on('connect', () => clearTimeout(timeout));
         });
     }
 

@@ -7,11 +7,16 @@ import { AuthGuard } from '../guards/auth.guard';
 import { Response } from 'express';
 
 const COOKIE_OPTIONS = {
-    httpOnly: true,        // JS cannot read it — XSS protection
-    secure: true,          // HTTPS only
-    sameSite: 'strict' as const,  // CSRF protection
-    maxAge: 3600000,       // 1 hour in milliseconds
+    httpOnly: true,         // JS cannot read it — XSS protection
+    secure: true,           // HTTPS only
+    sameSite: 'lax' as const, // ✅ FIX: 'strict' blocks cookies on OAuth redirects
+                              // and cross-tab navigation. 'lax' allows cookies to be
+                              // sent on top-level navigations (redirects from 42.fr)
+                              // while still protecting against CSRF.
+    maxAge: 3600000,        // 1 hour in milliseconds
+    path: '/',              // ✅ Ensure cookie is sent for all paths
 };
+
 
 @Controller('auth')
 export class AuthController {
