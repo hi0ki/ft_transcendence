@@ -55,8 +55,8 @@ export class AuthService {
                 throw new UnauthorizedException('Wrong password');
             }
             const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
-            
-            // ← returns plain string now, not { access_token }
+
+
             return this.jwtService.sign({
                 id: user.id,
                 email: user.email,
@@ -74,7 +74,6 @@ export class AuthService {
 
         const profile = await this.prisma.profile.findUnique({ where: { userId } });
 
-        // ← returns plain string now, not { access_token }
         return this.jwtService.sign({
             id: user.id,
             email: user.email,
@@ -127,7 +126,6 @@ export class AuthService {
 
         const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
 
-        // ← returns plain string now, not { access_token }
         return this.jwtService.sign({
             id: user.id,
             email: user.email,

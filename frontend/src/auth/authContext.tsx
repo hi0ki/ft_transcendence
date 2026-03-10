@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let refreshTimeout: NodeJS.Timeout | null = null;
     const REFRESH_COOLDOWN = 120000;
 
-    // ✅ Instant role-change handler — no throttle, no debounce
+    // Instant role-change handler
     const handleRoleChange = async () => {
       if (!authAPI.isAuthenticated()) return;
 
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    // ✅ Throttled refresh for routine background checks (unchanged behavior)
+    // Throttled refresh for routine background checks
     const debouncedCheckRole = async () => {
       if (refreshTimeout) clearTimeout(refreshTimeout);
 
@@ -95,12 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // ✅ Use instant handler on tab focus/visibility — no cooldown delay
+        // Use instant handler on tab focus/visibility
         handleRoleChange();
       }
     };
 
-    // ✅ Focus also triggers instant role check
+    // Focus also triggers instant role check
     window.addEventListener('focus', handleRoleChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 

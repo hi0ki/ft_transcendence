@@ -27,7 +27,6 @@ export interface CommentDisplay {
 }
 
 class CommentsAPI {
-    // ← removed getAuthHeader() — no more token needed
 
     private formatTimeAgo(isoDate: string): string {
         const now = new Date();
@@ -62,7 +61,7 @@ class CommentsAPI {
 
     async getCommentsByPost(postId: number): Promise<CommentDisplay[]> {
         const response = await fetch(`${API_BASE_URL}/comments/post/${postId}`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to fetch comments' }));
@@ -74,7 +73,7 @@ class CommentsAPI {
 
     async getCommentCount(postId: number): Promise<number> {
         const response = await fetch(`${API_BASE_URL}/comments/post/${postId}/count`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) return 0;
         return response.json();
@@ -84,7 +83,7 @@ class CommentsAPI {
         const response = await fetch(`${API_BASE_URL}/comments/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
             body: JSON.stringify({ postId, content }),
         });
         if (!response.ok) {
@@ -99,7 +98,7 @@ class CommentsAPI {
         const response = await fetch(`${API_BASE_URL}/comments/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
             body: JSON.stringify({ commentId, postId, content }),
         });
         if (!response.ok) {
@@ -113,7 +112,7 @@ class CommentsAPI {
     async deleteComment(commentId: number, postId: number): Promise<void> {
         const response = await fetch(`${API_BASE_URL}/comments/${commentId}?postId=${postId}`, {
             method: 'DELETE',
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to delete comment' }));

@@ -7,9 +7,9 @@ import { AuthGuard } from '../guards/auth.guard';
 import { Response } from 'express';
 
 const COOKIE_OPTIONS = {
-    httpOnly: true, 
-    secure: true, 
-    sameSite: 'lax' as const, 
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax' as const,
     maxAge: 3600000,
     path: '/',
 };
@@ -31,19 +31,19 @@ export class AuthController {
     @Post('login')
     async login(
         @Body() loginDto: LoginDto,
-        @Res() res: Response           // ← added
+        @Res() res: Response
     ) {
         const token = await this.authService.login(
             loginDto.email,
             loginDto.password
         );
-        res.cookie('auth_token', token, COOKIE_OPTIONS);  // ← set cookie
+        res.cookie('auth_token', token, COOKIE_OPTIONS);
         return res.json({ message: 'Logged in successfully' });
     }
 
-    @Post('logout')                    // ← added
+    @Post('logout')
     logout(@Res() res: Response) {
-        res.clearCookie('auth_token'); // ← delete cookie
+        res.clearCookie('auth_token');
         return res.json({ message: 'Logged out successfully' });
     }
 
@@ -51,10 +51,10 @@ export class AuthController {
     @UseGuards(AuthGuard)
     async refresh(
         @Req() req: any,
-        @Res() res: Response           // ← added
+        @Res() res: Response
     ) {
         const token = await this.authService.refreshToken(req.user.id);
-        res.cookie('auth_token', token, COOKIE_OPTIONS);  // ← refresh cookie
+        res.cookie('auth_token', token, COOKIE_OPTIONS);
         return res.json({ message: 'Token refreshed' });
     }
 
@@ -65,9 +65,9 @@ export class AuthController {
     @Get('42/callback')
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoCallback(@Req() req: any, @Res() res: Response) {
-        const token = req.user;                           // ← plain string now
-        res.cookie('auth_token', token, COOKIE_OPTIONS);  // ← set cookie
-        res.redirect('https://localhost/home');            // ← no token in URL
+        const token = req.user;
+        res.cookie('auth_token', token, COOKIE_OPTIONS);
+        res.redirect('https://localhost/home');
     }
 
     @Get('health')

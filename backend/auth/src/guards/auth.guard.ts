@@ -7,15 +7,15 @@ export class AuthGuard implements CanActivate {
     constructor(
         private jwtService: JwtService,
         private configService: ConfigService,
-    ) {}
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
 
-        // ← try cookie first (browser requests)
+        // Try cookie first (browser requests)
         let token = request.cookies?.['auth_token'];
 
-        // ← fall back to Bearer token (internal service-to-service calls)
+        // Fall back to Bearer token (internal service-to-service calls)
         if (!token) {
             const authHeader = request.headers?.authorization;
             if (authHeader?.startsWith('Bearer ')) {

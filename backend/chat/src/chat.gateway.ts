@@ -12,7 +12,7 @@ import { ChatService } from './chat.service';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
-/** Inline XSS sanitization — same logic as auth service's sanitize.ts */
+/** Inline XSS sanitization */
 function stripTags(input: string): string {
     return input.replace(/<[^>]*>/g, '');
 }
@@ -175,8 +175,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             return;
         }
 
-        // ✅ FIX: Join immediately — don't await HTTP check before joining.
-        // User is already authenticated via JWT on connection — just join, no security check.
+        // Join the room
         const roomName = `conversation_${data.conversationId}`;
         client.join(roomName);
         client.emit('joined_room', { conversationId: data.conversationId });
@@ -218,8 +217,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             const roomName = `conversation_${data.conversationId}`;
 
-            // ✅ FIX: server.in() includes the sender too (server.to() excludes sender)
-            // Old code was: server.to(room) + client.emit = sender got it twice, recipient got nothing
             this.server.in(roomName).emit('room_message', savedMessage);
 
             this.logger.log(`Message sent to conversation ${data.conversationId} by user ${currentUser.userId}`);
@@ -250,7 +247,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             );
 
             const roomName = `conversation_${data.conversationId}`;
-            // ✅ Use server.in() so sender also sees their own edit
             this.server.in(roomName).emit('message_updated', updatedMessage);
             this.logger.log(`Message ${data.messageId} updated by user ${currentUser.userId}`);
         } catch (error) {

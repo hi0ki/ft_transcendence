@@ -46,7 +46,7 @@ function useGlobalSocket(isAuthenticated: boolean) {
       return;
     }
 
-    // ✅ FIX: Only connect if not already connected OR connecting.
+    // Only connect if not already connected or connecting.
     // Previously this ran twice in React StrictMode (dev), calling connect()
     // twice — the second call killed the first socket immediately, causing
     // Jana's rapid connect/disconnect loop in the logs.
@@ -75,7 +75,7 @@ function useGlobalSocket(isAuthenticated: boolean) {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      // ✅ FIX: Mark as cancelled so the async connect() callback doesn't
+      // Mark as cancelled so the async connect() callback doesn't
       // emit after cleanup. Do NOT disconnect here — that would kill the
       // socket every time any component re-renders.
       cancelled = true;
@@ -239,6 +239,11 @@ function App() {
   useEffect(() => {
     if (authAPI.isAuthenticated()) {
       setIsAuthed(true);
+      return;
+    }
+    const path = window.location.pathname;
+    if (path === '/login' || path === '/register' || path === '/') {
+      setIsAuthed(false);
       return;
     }
     authAPI.fetchAndCacheUser().then((user) => {

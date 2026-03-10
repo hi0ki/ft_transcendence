@@ -92,7 +92,7 @@ class PostsAPI {
 
     async getAllPosts(): Promise<Post[]> {
         const response = await fetch(`${API_BASE_URL}/posts/`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to fetch posts' }));
@@ -104,7 +104,7 @@ class PostsAPI {
 
     async getPost(id: string): Promise<Post> {
         const response = await fetch(`${API_BASE_URL}/posts/detail/${id}`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to fetch post' }));
@@ -124,7 +124,7 @@ class PostsAPI {
 
         const response = await fetch(`${API_BASE_URL}/posts/`, {
             method: 'POST',
-            credentials: 'include',             // ← replaced getAuthTokenHeader(), no Content-Type for FormData
+            credentials: 'include',
             body: formData,
         });
         if (!response.ok) {
@@ -139,7 +139,7 @@ class PostsAPI {
         const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
             body: JSON.stringify(payload),
         });
         if (!response.ok) {
@@ -153,7 +153,7 @@ class PostsAPI {
     async deletePost(id: string): Promise<void> {
         const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
             method: 'DELETE',
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Failed to delete post' }));

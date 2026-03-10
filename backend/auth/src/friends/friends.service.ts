@@ -10,7 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FriendsService {
     constructor(private prisma: PrismaService) { }
 
-    /** Send a friend request from currentUserId → targetUserId */
+    /** Send a friend request from currentUserId to targetUserId */
     async sendRequest(currentUserId: number, targetUserId: number) {
         if (currentUserId === targetUserId) {
             throw new BadRequestException('Cannot send friend request to yourself');

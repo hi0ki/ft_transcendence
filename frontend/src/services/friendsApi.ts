@@ -21,13 +21,12 @@ export interface FriendshipStatusResponse {
 }
 
 class FriendsAPI {
-    // ← removed headers() method entirely
 
     async sendRequest(targetUserId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/request/${targetUserId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -40,7 +39,7 @@ class FriendsAPI {
         const res = await fetch(`${API_BASE_URL}/api/friends/accept/${senderId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -53,7 +52,7 @@ class FriendsAPI {
         const res = await fetch(`${API_BASE_URL}/api/friends/reject/${senderId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -64,7 +63,7 @@ class FriendsAPI {
 
     async getPendingRequests(): Promise<PendingRequest[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends/pending`, {
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) return [];
         return res.json();
@@ -72,7 +71,7 @@ class FriendsAPI {
 
     async getFriends(): Promise<Friend[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends`, {
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) return [];
         return res.json();
@@ -81,7 +80,7 @@ class FriendsAPI {
     async removeFriend(friendId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/${friendId}`, {
             method: 'DELETE',
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -92,7 +91,7 @@ class FriendsAPI {
 
     async getFriendsByUser(userId: number): Promise<Friend[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends/user/${userId}`, {
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) return [];
         return res.json();
@@ -100,7 +99,7 @@ class FriendsAPI {
 
     async getStatus(targetUserId: number): Promise<FriendshipStatusResponse> {
         const res = await fetch(`${API_BASE_URL}/api/friends/status/${targetUserId}`, {
-            credentials: 'include',             // ← replaced this.headers()
+            credentials: 'include',
         });
         if (!res.ok) return { status: 'NONE' };
         return res.json();

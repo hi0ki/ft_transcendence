@@ -1,23 +1,23 @@
 const API_BASE = (import.meta as any).env?.VITE_API_URL || window.location.origin;
 
 export interface AchievementProgress {
-    posts:     number;
+    posts: number;
     reactions: number;
-    comments:  number;
-    earned:    string[];
+    comments: number;
+    earned: string[];
     thresholds: {
-        FIRST_POSTER:    number;
+        FIRST_POSTER: number;
         REACTION_MASTER: number;
-        COMMENT_KING:    number;
+        COMMENT_KING: number;
     };
 }
 
 export async function getAchievementProgress(
     userId: number,
-    // ← removed token parameter, cookie handles auth now
+
 ): Promise<AchievementProgress> {
     const res = await fetch(`${API_BASE}/api/achievements/progress/${userId}`, {
-        credentials: 'include',                 // ← replaced Authorization header
+        credentials: 'include',
     });
     if (!res.ok) throw new Error('Failed to fetch achievements');
     return res.json();

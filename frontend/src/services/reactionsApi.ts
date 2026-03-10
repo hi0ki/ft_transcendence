@@ -32,13 +32,12 @@ export interface ReactionWithUser {
 }
 
 class ReactionsAPI {
-    // ← removed getAuthHeader() entirely
 
     async toggle(postId: number, type: ReactionType): Promise<ToggleResult> {
         const response = await fetch(`${API_BASE_URL}/reactions/toggle`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
             body: JSON.stringify({ postId, type }),
         });
         if (!response.ok) {
@@ -52,7 +51,7 @@ class ReactionsAPI {
         const response = await fetch(`${API_BASE_URL}/reactions/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
             body: JSON.stringify({ postId, type }),
         });
         if (!response.ok) {
@@ -64,7 +63,7 @@ class ReactionsAPI {
     async getCount(postId: number): Promise<number> {
         try {
             const response = await fetch(`${API_BASE_URL}/reactions/post/${postId}/count`, {
-                credentials: 'include',         // ← replaced getAuthHeader()
+                credentials: 'include',
             });
             if (!response.ok) return 0;
             return response.json();
@@ -74,7 +73,7 @@ class ReactionsAPI {
     async getReactionsByPost(postId: number): Promise<ReactionWithUser[]> {
         try {
             const response = await fetch(`${API_BASE_URL}/reactions/post/${postId}`, {
-                credentials: 'include',         // ← replaced getAuthHeader()
+                credentials: 'include',
             });
             if (!response.ok) return [];
             return response.json();
@@ -84,7 +83,7 @@ class ReactionsAPI {
     async getMyReaction(postId: number): Promise<{ type: ReactionType } | null> {
         try {
             const response = await fetch(`${API_BASE_URL}/reactions/mine/${postId}`, {
-                credentials: 'include',         // ← replaced getAuthHeader()
+                credentials: 'include',
             });
             if (!response.ok) return null;
             return await response.json();

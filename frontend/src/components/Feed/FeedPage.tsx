@@ -48,7 +48,7 @@ const FeedPage: React.FC = () => {
         // Filter to show only the shared post
         const sharedPost = posts.find(p => p.id === postId);
         if (sharedPost) {
-            setPosts([sharedPost]); // ← show only that post
+            setPosts([sharedPost]);
         }
     }, [posts.length]); 
     

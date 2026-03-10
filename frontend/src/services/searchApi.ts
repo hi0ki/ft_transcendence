@@ -77,7 +77,7 @@ export interface UserSearchResponse {
 }
 
 class SearchAPI {
-    // ← removed getAuthHeader() entirely
+
 
     private transformPost(backendPost: BackendPost): Post {
         const currentUser = authAPI.getCurrentUser();
@@ -137,7 +137,7 @@ class SearchAPI {
         if (params.limit) qs.set('limit', params.limit.toString());
 
         const response = await fetch(`${API_BASE_URL}/posts/search?${qs.toString()}`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Search failed' }));
@@ -160,7 +160,7 @@ class SearchAPI {
         if (params.limit) qs.set('limit', params.limit.toString());
 
         const response = await fetch(`${API_BASE_URL}/profiles/search?${qs.toString()}`, {
-            credentials: 'include',             // ← replaced getAuthHeader()
+            credentials: 'include',
         });
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'User search failed' }));
