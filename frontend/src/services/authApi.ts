@@ -37,7 +37,6 @@ class AuthAPI {
         }
 
         const data = await response.json();
-        await this.fetchAndCacheUser();
         return data;
     }
 
