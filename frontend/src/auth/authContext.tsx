@@ -21,9 +21,12 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(authAPI.getCurrentUser());
+  // Cookie-based auth: start as null and hydrate in useEffect,
+  // since cookies are not synchronously readable like localStorage.
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
+    // Hydrate user state from cookie on mount
     if (authAPI.isAuthenticated()) {
       setUser(authAPI.getCurrentUser());
     } else {
@@ -114,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     await authAPI.login(email, password);
+    // Cookie is set by the backend response — just sync user state
     setUser(authAPI.getCurrentUser());
   };
 
@@ -123,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     authAPI.logout();
+    // Cookie is cleared by the backend (or authAPI) — clear user state
     setUser(null);
   };
 

@@ -23,7 +23,6 @@ function SettingsPage() {
     const currentUser = authAPI.getCurrentUser();
     const derivedUsername = currentUser?.username || currentUser?.email?.split('@')[0] || 'user';
 
-    // Must be declared before useState to use in initial state
     const cachedProfile = (() => {
         try { return JSON.parse(sessionStorage.getItem('user_profile') || 'null'); } catch { return null; }
     })();
@@ -44,7 +43,6 @@ function SettingsPage() {
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    // Validate form
     const validateForm = (username: string): FormErrors => {
         const newErrors: FormErrors = {};
         if (username.length < USERNAME_MIN) {
@@ -55,7 +53,6 @@ function SettingsPage() {
         return newErrors;
     };
 
-    // In a real app, you might fetch the latest profile data here
     useEffect(() => {
         if (!authAPI.isAuthenticated()) {
             navigate('/login');
@@ -100,7 +97,7 @@ function SettingsPage() {
             setErrors(newErrors);
             return;
         }
-    
+
         setIsSaving(true);
         try {
             await authAPI.updateProfile({
@@ -121,15 +118,12 @@ function SettingsPage() {
 
     const handleDeleteAccount = async () => {
         if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
-    
-        const currentUser = authAPI.getCurrentUser();
-        const token = authAPI.getToken();
-    
+
         const res = await fetch(`${API_BASE_URL}/api/users/${currentUser?.id}`, {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
         });
-    
+
         if (res.ok) {
             authAPI.logout();
             navigate('/login');
@@ -151,7 +145,6 @@ function SettingsPage() {
         }
     };
 
-    // ── FIX: Use getAvatarSrc to generate proper fallback when loading ──
     const displayAvatarSrc = previewImage || getAvatarSrc(profileAvatarUrl, form.username);
 
     return (
@@ -269,29 +262,29 @@ function SettingsPage() {
                 </div>
 
                 <div className="settings-footer">
-                <button
-                    className="settings-cancel-btn"
-                    onClick={() => navigate(-1)}
-                    type="button"
-                >
-                    Cancel
-                </button>
-                <button
-                    className="settings-delete-btn"
-                    onClick={handleDeleteAccount}
-                    type="button"
-                >
-                    🗑 Delete My Account
-                </button>
-                <button
-                    className="settings-save-btn"
-                    onClick={handleSave}
-                    type="button"
-                    disabled={isSaving || Object.keys(errors).length > 0}
-                >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
-            </div>
+                    <button
+                        className="settings-cancel-btn"
+                        onClick={() => navigate(-1)}
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="settings-delete-btn"
+                        onClick={handleDeleteAccount}
+                        type="button"
+                    >
+                        🗑 Delete My Account
+                    </button>
+                    <button
+                        className="settings-save-btn"
+                        onClick={handleSave}
+                        type="button"
+                        disabled={isSaving || Object.keys(errors).length > 0}
+                    >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                </div>
             </div>
         </div>
     );

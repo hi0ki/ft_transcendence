@@ -3,12 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
-
 @Injectable()
 export class AuthService {
     constructor(private prisma: PrismaService,
         private jwtService: JwtService) { }
-
 
     async register(email: string, password: string, username: string) {
         const normalizedEmail = email.toLowerCase();
@@ -44,51 +42,46 @@ export class AuthService {
         return { id: user.id, email: normalizedEmail, username: profile.username };
     }
 
-
     async login(email: string, password: string) {
         const normalizedEmail = email.toLowerCase();
         const user = await this.prisma.user.findUnique({
-            where : {email : normalizedEmail},
+            where: { email: normalizedEmail },
             include: { profile: { select: { username: true } } },
         });
-        if (user)
-        {
+
+        if (user) {
             const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
             if (!isPasswordValid) {
                 throw new UnauthorizedException('Wrong password');
             }
             const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
-            const token = this.jwtService.sign({
+            
+            // ← returns plain string now, not { access_token }
+            return this.jwtService.sign({
                 id: user.id,
                 email: user.email,
                 role: user.role,
                 username: profile?.username || null,
-              
             });
-            return { access_token: token };
-        }
-        else {
+        } else {
             throw new UnauthorizedException('Invalid credentials');
         }
     }
 
-
     async refreshToken(userId: number) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new UnauthorizedException('User not found');
-    
+
         const profile = await this.prisma.profile.findUnique({ where: { userId } });
-    
-        const token = this.jwtService.sign({
+
+        // ← returns plain string now, not { access_token }
+        return this.jwtService.sign({
             id: user.id,
             email: user.email,
             role: user.role,
             username: profile?.username || null,
         });
-    
-        return { access_token: token };
     }
-    
 
     async Create42User(data: { fortyTwoId: string; email: string; username: string; avatar: string; }) {
         let user = await this.prisma.user.findFirst({
@@ -105,9 +98,8 @@ export class AuthService {
             if (existingEmailUser) {
                 throw new Error('Email already exists');
             }
-    
-            user = await this.prisma.user.create(
-                {
+
+            user = await this.prisma.user.create({
                 data: {
                     email: data.email,
                     oauthProvider: '42',
@@ -116,13 +108,13 @@ export class AuthService {
                     role: 'USER',
                 }
             });
-    
+
             let username = data.username;
             const existingProfile = await this.prisma.profile.findUnique({ where: { username } });
             if (existingProfile) {
                 username = `${data.username}_${Math.floor(1000 + Math.random() * 9000)}`;
             }
-    
+
             await this.prisma.profile.create({
                 data: {
                     userId: user.id,
@@ -132,15 +124,15 @@ export class AuthService {
                 }
             });
         }
-    
+
         const profile = await this.prisma.profile.findUnique({ where: { userId: user.id } });
-    
-        const token = this.jwtService.sign({
+
+        // ← returns plain string now, not { access_token }
+        return this.jwtService.sign({
             id: user.id,
             email: user.email,
             role: user.role,
             username: profile?.username || null,
         });
-        return { access_token: token };
     }
 }

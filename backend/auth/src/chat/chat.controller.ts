@@ -27,7 +27,7 @@ const ALLOWED_MIME_TYPES = [
     'text/plain',
 ];
 
-const MAX_FILE_SIZE = 20* 1024 * 1024; // 20MB — videos need more room
+const MAX_FILE_SIZE = 20* 1024 * 1024;
 
 const UPLOAD_BASE = '/app/uploads/chat';
 

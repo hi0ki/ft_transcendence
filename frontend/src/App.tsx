@@ -30,51 +30,55 @@ function RegisterPage() {
   const navigate = useNavigate();
   return (
     <SignUp
-      onSignUpSuccess={() => navigate('/profile')}
+      onSignUpSuccess={() => navigate('/home')}
       onSwitchToLogin={() => navigate('/login')}
     />
   );
 }
 
-/**
- * Global socket hook — ONLY manages connection lifecycle.
- * Online-user state is handled inside socketService via subscribeOnlineUsers.
- */
 function useGlobalSocket(isAuthenticated: boolean) {
   useEffect(() => {
     if (!isAuthenticated) {
+      // User logged out — disconnect cleanly
       if (socketService.isConnected()) {
         socketService.disconnect();
       }
       return;
     }
 
-    if (!socketService.isConnected()) {
-      socketService.connect()
-        .then(() => {
-          // Socket is now connected — request the fresh online list immediately
-          // instead of waiting up to 1s for the server's periodic broadcast.
-          socketService.emit('request_online_users');
-        })
-        .catch((err: any) => {
-          // Error handled silently
-        });
-    } else {
-      // Already connected — request fresh online list immediately
+    // ✅ FIX: Only connect if not already connected OR connecting.
+    // Previously this ran twice in React StrictMode (dev), calling connect()
+    // twice — the second call killed the first socket immediately, causing
+    // Jana's rapid connect/disconnect loop in the logs.
+    if (socketService.isConnected()) {
       socketService.emit('request_online_users');
+      return;
     }
 
-    // Re-request when user focuses the tab
+    let cancelled = false;
+
+    socketService.connect()
+      .then(() => {
+        if (!cancelled) {
+          socketService.emit('request_online_users');
+        }
+      })
+      .catch(() => {});
+
     const handleFocus = () => {
       if (socketService.isConnected()) {
         socketService.emit('request_online_users');
-      } else if (isAuthenticated) {
-        socketService.connect().catch(() => { });
+      } else if (!cancelled) {
+        socketService.connect().catch(() => {});
       }
     };
     window.addEventListener('focus', handleFocus);
 
     return () => {
+      // ✅ FIX: Mark as cancelled so the async connect() callback doesn't
+      // emit after cleanup. Do NOT disconnect here — that would kill the
+      // socket every time any component re-renders.
+      cancelled = true;
       window.removeEventListener('focus', handleFocus);
     };
   }, [isAuthenticated]);
@@ -222,47 +226,63 @@ function AdminPageWrapper() {
 }
 
 function App() {
-  const [isAuthed, setIsAuthed] = useState(authAPI.isAuthenticated());
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (authAPI.isAuthenticated()) {
+      setIsAuthed(true);
+      return;
+    }
+    authAPI.fetchAndCacheUser().then((user) => {
+      setIsAuthed(!!user);
+    });
+  }, []);
 
   const handleLoggedOut = () => setIsAuthed(false);
   const handleLoggedIn = () => setIsAuthed(true);
 
-  // Connects / disconnects socket based on auth state
-  useGlobalSocket(isAuthed);
-  useHeartbeat(isAuthed);
+  useGlobalSocket(!!isAuthed);
+  useHeartbeat(!!isAuthed);
 
-  // ── FIX: Debounced token refresh to prevent 429 rate limiting errors ──
   useEffect(() => {
     let lastRefreshTime = 0;
-    const REFRESH_COOLDOWN = 120000; // 120 seconds (2 minutes) between refresh calls
+    const REFRESH_COOLDOWN = 120000;
 
     const debouncedRefresh = async () => {
       if (!authAPI.isAuthenticated()) return;
-
       const now = Date.now();
-      const timeSinceLastRefresh = now - lastRefreshTime;
-
-      // If less than 120 seconds since last refresh, skip this attempt
-      if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
-        return;
-      }
-
+      if (now - lastRefreshTime < REFRESH_COOLDOWN) return;
       lastRefreshTime = now;
       try {
         await authAPI.refreshToken();
-      } catch (err) {
-        // Silently handle rate limit errors - token is probably still valid
-      }
+      } catch (err) {}
     };
 
-    // DON'T refresh on load - just start the interval
-    // debouncedRefresh(); ← Removed this
-
-    // Check every 30 seconds (but actual refresh respects 120 second cooldown)
     const interval = setInterval(debouncedRefresh, 30 * 1000);
-
     return () => clearInterval(interval);
   }, []);
+
+  if (isAuthed === null) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#020617',
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          border: '3px solid rgba(255,255,255,0.05)',
+          borderTop: '3px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+        }} />
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

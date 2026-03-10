@@ -8,20 +8,13 @@ type OnlineUsersCallback = (userIds: number[]) => void;
 class SocketService {
     private socket: Socket | null = null;
 
-    // ── Online users: stored directly in the service ──────────────────────
-    // Any component can subscribe; when server broadcasts, ALL subscribers
-    // are notified in one shot — no React prop-drilling needed.
     private onlineUserIds: number[] = [];
     private onlineUsersSubscribers: Set<OnlineUsersCallback> = new Set();
 
-    // ── Other event listener wrappers (unchanged) ─────────────────────────
     private listenerWrappers: Map<string, Map<Function, (...args: any[]) => void>> = new Map();
 
-    // ── Public: subscribe to online users list updates ────────────────────
     subscribeOnlineUsers(cb: OnlineUsersCallback): () => void {
         this.onlineUsersSubscribers.add(cb);
-        // Immediately deliver the current list so the component doesn't
-        // have to wait for the next broadcast.
         cb(this.onlineUserIds);
         return () => this.onlineUsersSubscribers.delete(cb);
     }
@@ -31,7 +24,6 @@ class SocketService {
         this.onlineUsersSubscribers.forEach(cb => cb(userIds));
     }
 
-    // ── Connection ────────────────────────────────────────────────────────
     connect(): Promise<{ socketId: string; userId: number; email: string; username?: string }> {
         if (this.socket?.connected) {
             return Promise.resolve({
@@ -49,16 +41,19 @@ class SocketService {
         }
 
         return new Promise((resolve, reject) => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                reject(new Error('No auth token found'));
-                return;
-            }
+            // Track whether the promise has already settled so we never
+            // call resolve/reject twice (which would throw on reconnects)
+            let settled = false;
+            const settle = (fn: () => void) => {
+                if (settled) return;
+                settled = true;
+                fn();
+            };
 
             this.socket = io(SOCKET_URL, {
                 transports: ['websocket'],
                 autoConnect: true,
-                auth: { token },
+                withCredentials: true,
                 reconnection: true,
                 reconnectionAttempts: Infinity,
                 reconnectionDelay: 1000,
@@ -72,44 +67,47 @@ class SocketService {
                 });
             });
 
-            // ── online_users is handled DIRECTLY by the service ──────────
             this.socket.on('online_users', (userIds: number[]) => {
                 const numericIds = userIds.map(Number);
                 this.notifyOnlineUsers(numericIds);
             });
 
-            // Resolve the promise as soon as the TCP connection is confirmed.
-            // This is deterministic — 'connect' always fires before 'welcome'.
-            // Also immediately request the online list so components get fresh
-            // data as early as possible.
             this.socket.on('connect', () => {
                 this.socket?.emit('request_online_users');
-                resolve({ socketId: this.socket?.id || '', userId: 0, email: '', username: '' });
+                // Only resolve the first time — reconnects don't re-resolve
+                settle(() => resolve({
+                    socketId: this.socket?.id || '',
+                    userId: 0,
+                    email: '',
+                    username: '',
+                }));
             });
 
-            // 'welcome' carries user info — keep logging it but don't gate on it
             this.socket.on('welcome', () => {
-                // Connection successful
+                // Connection confirmed by server
             });
 
             this.socket.on('disconnect', (reason) => {
-                // Socket disconnected
+                // Socket disconnected — reconnection handled automatically
             });
 
             this.socket.on('error', (error: any) => {
-                // Socket error occurred
+                // Socket-level error — don't crash, just log
             });
 
             this.socket.on('connect_error', (error: any) => {
-                reject(error);
+                // Only reject the first time — subsequent reconnect failures are silent
+                settle(() => reject(error));
             });
 
-            // Safety fallback: if connect_error is never fired but we never connect
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 if (!this.socket?.connected) {
-                    reject(new Error('Socket connection timed out'));
+                    settle(() => reject(new Error('Socket connection timed out')));
                 }
             }, 8000);
+
+            // Clear timeout once connected so it doesn't fire after a slow connect
+            this.socket.on('connect', () => clearTimeout(timeout));
         });
     }
 
@@ -119,10 +117,6 @@ class SocketService {
             this.socket.disconnect();
             this.socket = null;
         }
-        // Do NOT clear onlineUserIds here — keeping the last known list avoids
-        // a flash of "Offline" during reconnects and brief network interruptions.
-        // The list will be refreshed by the next 'online_users' broadcast.
-        // Only reset on an actual logout (where the user navigates away from chat).
         this.onlineUserIds = [];
         this.onlineUsersSubscribers.forEach(cb => cb([]));
     }
@@ -135,7 +129,6 @@ class SocketService {
         return this.socket?.id;
     }
 
-    // ── Generic listener management ───────────────────────────────────────
     on(event: string, callback: Function) {
         if (!this.listenerWrappers.has(event)) {
             this.listenerWrappers.set(event, new Map());

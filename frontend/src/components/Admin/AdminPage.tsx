@@ -148,29 +148,25 @@ export default function AdminPage() {
     const [busy, setBusy] = useState<number | null>(null);
     const [selectedPost, setSelectedPost] = useState<AdminPost | null>(null);
 
-
     const [activeMainTab, setActiveMainTab] = useState<'posts' | 'users'>('posts');
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [usersLoading, setUsersLoading] = useState(false);
     const [usersBusy, setUsersBusy] = useState<number | null>(null);
 
-    const token = authAPI.getToken();
-
     const fetchPosts = () => {
         setLoading(true);
         fetch(`${API_BASE_URL}/posts/admin/all`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
         })
             .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
             .then((data: AdminPost[]) => { setPosts(data); setLoading(false); })
             .catch(err => { setError(err.message); setLoading(false); });
     };
 
-
     const fetchUsers = () => {
         setUsersLoading(true);
         fetch(`${API_BASE_URL}/api/users`, {
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
         })
             .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
             .then((response: any) => {
@@ -188,7 +184,8 @@ export default function AdminPage() {
         try {
             const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}/status`, {
                 method: 'PATCH',
-                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ status: 'APPROVED' }),
             });
             if (!res.ok) {
@@ -207,7 +204,7 @@ export default function AdminPage() {
         try {
             const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
@@ -222,9 +219,10 @@ export default function AdminPage() {
     const handleChangeRole = async (userId: number, newRole: string) => {
         setUsersBusy(userId);
         try {
-            const res = await fetch(`${API_BASE_URL}/api{userId}/role`, {
+            const res = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
                 method: 'PATCH',
-                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ role: newRole }),
             });
             if (!res.ok) {
@@ -240,7 +238,6 @@ export default function AdminPage() {
     const pending = posts.filter(p => p.status === 'PENDING');
     const approved = posts.filter(p => p.status === 'APPROVED');
     const displayed = activeTab === 'PENDING' ? pending : approved;
-
 
     const adminUsers = users.filter(u => u.role === 'ADMIN');
     const regularUsers = users.filter(u => u.role === 'USER');
@@ -262,7 +259,6 @@ export default function AdminPage() {
                 )}
             </div>
 
-            {/* ── NEW: Main tab switcher ── */}
             <div className="mod-tabs" style={{ paddingBottom: '0', borderBottom: '1px solid rgba(255,255,255,0.04)', marginBottom: '0' }}>
                 <button
                     className={`mod-tab ${activeMainTab === 'posts' ? 'mod-tab--active' : ''}`}
@@ -285,7 +281,6 @@ export default function AdminPage() {
 
             {error && <div className="mod-error">⚠ {error} <button onClick={() => setError(null)}>✕</button></div>}
 
-            {/* ── POSTS SECTION (unchanged) ── */}
             {activeMainTab === 'posts' && (
                 <>
                     <div className="mod-stats">
@@ -415,7 +410,6 @@ export default function AdminPage() {
                 </>
             )}
 
-            {/* ── USERS SECTION ── */}
             {activeMainTab === 'users' && (
                 <>
                     <div className="mod-stats">
@@ -441,7 +435,6 @@ export default function AdminPage() {
                     </div>
 
                     <div className="mod-list">
-                        {/* Admin Users Section */}
                         {adminUsers.length > 0 && (
                             <div className="mod-user-section">
                                 <h3 className="mod-user-section-title">
@@ -486,7 +479,6 @@ export default function AdminPage() {
                             </div>
                         )}
 
-                        {/* Regular Users Section */}
                         {regularUsers.length > 0 && (
                             <div className="mod-user-section">
                                 <h3 className="mod-user-section-title">
