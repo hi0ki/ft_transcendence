@@ -10,7 +10,7 @@ import ChatList from './ChatList';
 import ChatRoom from './ChatRoom';
 import './Chat.css';
 
-interface ChatAppProps {}
+interface ChatAppProps { }
 
 const ChatApp: React.FC<ChatAppProps> = () => {
     const [connected, setConnected] = useState(false);
@@ -71,13 +71,13 @@ const ChatApp: React.FC<ChatAppProps> = () => {
 
         // Initial data load
         const loadData = async () => {
-            try { setUsers(await chatAPI.getUsers()); } catch {}
-            try { setFriends(await friendsAPI.getFriends()); } catch {}
+            try { setUsers(await chatAPI.getUsers()); } catch { }
+            try { setFriends(await friendsAPI.getFriends()); } catch { }
             try {
                 const convs = await chatAPI.getUserConversations(authUser.id);
                 setConversations(convs);
                 if (socketService.isConnected()) joinAllRooms(convs);
-            } catch {}
+            } catch { }
             setLoading(false);
         };
         loadData();
@@ -127,13 +127,10 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     setSearchQuery('');
                 }
             } else {
-                // Recipient (Jana): add conversation to her list so she's ready to receive
-                // She doesn't auto-open it — she'll see it in her conversation list
             }
         };
 
         // ── Socket: room_message ──────────────────────────────────────────
-        // Fires for EVERY message in any room both users are joined to.
         const handleRoomMessage = (message: DBMessage) => {
             // 1. Always show in active chat window if it matches
             if (activeConversationRef.current?.id === message.conversationId) {
@@ -246,7 +243,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                     setActiveMessages([]);
                 }
             }
-        } catch {}
+        } catch { }
     };
 
     // ── Click on a user in search results ────────────────────────────────
@@ -280,7 +277,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
 
         // No existing conversation:
         // 1. Create via REST immediately so we have the conversation object NOW
-        // 2. Then emit create_room via socket so Jana gets notified in real time
+        // 2. Then emit create_room via socket so the other user gets notified in real time
         try {
             const conv = await chatAPI.findOrCreateConversation(currentUserId, Number(user.id));
             // Open the chat window immediately — don't wait for socket round-trip
@@ -292,11 +289,11 @@ const ChatApp: React.FC<ChatAppProps> = () => {
             });
             // Join the socket room so we receive messages
             socketService.joinRoom(conv.id);
-            // Also tell the backend via socket so it can notify Jana (room_created → her frontend)
+            // Notify the other user via socket
             socketService.createRoom(Number(user.id));
             setSearchQuery('');
             setMobileView('chat');
-        } catch {}
+        } catch { }
     };
 
     // ── Click on an existing conversation ────────────────────────────────
@@ -333,7 +330,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
                         c.id === activeConversation.id ? { ...c, lastMessage: savedMsg } : c
                     );
                 });
-            } catch {}
+            } catch { }
         }
     };
 
@@ -345,7 +342,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
             try {
                 const updatedMsg = await chatAPI.updateMessage(messageId, currentUserId!, content);
                 setActiveMessages(prev => prev.map(m => m.id === messageId ? updatedMsg : m));
-            } catch {}
+            } catch { }
         }
     };
 
@@ -357,7 +354,7 @@ const ChatApp: React.FC<ChatAppProps> = () => {
             try {
                 await chatAPI.deleteMessage(messageId, currentUserId!, deleteType);
                 setActiveMessages(prev => prev.filter(m => m.id !== messageId));
-            } catch {}
+            } catch { }
         }
     };
 

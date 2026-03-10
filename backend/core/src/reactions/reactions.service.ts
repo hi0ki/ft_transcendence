@@ -44,7 +44,7 @@ export class ReactionsService {
             }
         }
 
-        // No existing reaction → create
+        // No existing reaction — create
         try {
             const { data } = await firstValueFrom(
                 this.http.post(`${this.authUrl}/reactions`, {

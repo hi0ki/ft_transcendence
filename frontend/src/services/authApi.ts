@@ -37,7 +37,6 @@ class AuthAPI {
         }
 
         const data = await response.json();
-        // Cache user so isAuthenticated() returns true immediately after register
         await this.fetchAndCacheUser();
         return data;
     }
@@ -55,11 +54,9 @@ class AuthAPI {
             throw new Error(error.message || 'Login failed');
         }
 
-        // Cache user so isAuthenticated() returns true immediately after login
         await this.fetchAndCacheUser();
     }
 
-    // Cookie is sent automatically — getToken() is no longer meaningful
     getToken(): string | null {
         return null;
     }
@@ -198,7 +195,7 @@ class AuthAPI {
         await fetch(`${API_BASE_URL}/api/auth/logout`, {
             method: 'POST',
             credentials: 'include',
-        }).catch(() => {});
+        }).catch(() => { });
 
         sessionStorage.removeItem('auth_user');
         sessionStorage.removeItem('user_profile');

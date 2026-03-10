@@ -47,9 +47,6 @@ function useGlobalSocket(isAuthenticated: boolean) {
     }
 
     // Only connect if not already connected or connecting.
-    // Previously this ran twice in React StrictMode (dev), calling connect()
-    // twice — the second call killed the first socket immediately, causing
-    // Jana's rapid connect/disconnect loop in the logs.
     if (socketService.isConnected()) {
       socketService.emit('request_online_users');
       return;

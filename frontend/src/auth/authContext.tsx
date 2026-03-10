@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             await authAPI.reLoginWithFreshToken();
             setUser(authAPI.getCurrentUser());
-            // Removed the 500ms setTimeout — reload happens immediately
             window.location.reload();
           } catch (err) {
             window.location.reload();
@@ -85,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newRole = authAPI.getCurrentUser()?.role;
 
         if (oldRole && newRole && oldRole !== newRole) {
-          // Delegate to the instant handler
           await handleRoleChange();
         }
       } catch (err) {
@@ -117,7 +115,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     await authAPI.login(email, password);
-    // Cookie is set by the backend response — just sync user state
     setUser(authAPI.getCurrentUser());
   };
 
@@ -127,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     authAPI.logout();
-    // Cookie is cleared by the backend (or authAPI) — clear user state
     setUser(null);
   };
 

@@ -15,8 +15,7 @@ const AuthCallback: React.FC = () => {
             return;
         }
 
-        // Cookie is set by the backend — populate sessionStorage cache so
-        // isAuthenticated() returns true before navigating to /home
+        // Populate sessionStorage cache before navigating
         authAPI.fetchAndCacheUser().then((user) => {
             if (user) {
                 navigate('/home');
