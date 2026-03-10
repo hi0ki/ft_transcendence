@@ -204,6 +204,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
+            // Verify sender is a participant in this conversation
+            const conversation = await this.chatService.getConversation(data.conversationId, currentUser.userId);
+            if (
+                !conversation ||
+                (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
+            ) {
+                client.emit('error', { message: 'Access denied: not a member of this conversation' });
+                this.logger.warn(`User ${currentUser.userId} tried to send message to conversation ${data.conversationId} without access`);
+                return;
+            }
+
             const sanitizedMessage = data.message ? sanitizeInput(data.message) : '';
             const sanitizedFileUrl = data.fileUrl ? sanitizeInput(data.fileUrl) : null;
 
@@ -238,6 +249,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
+            // Verify sender is a participant in this conversation
+            const conversation = await this.chatService.getConversation(data.conversationId, currentUser.userId);
+            if (
+                !conversation ||
+                (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
+            ) {
+                client.emit('error', { message: 'Access denied: not a member of this conversation' });
+                this.logger.warn(`User ${currentUser.userId} tried to update message in conversation ${data.conversationId} without access`);
+                return;
+            }
+
             const sanitizedContent = data.content ? sanitizeInput(data.content) : '';
 
             const updatedMessage = await this.chatService.updateMessageInDB(
@@ -264,6 +286,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             const currentUser = this.chatService.getConnectedUser(client.id);
             if (!currentUser) {
                 client.emit('error', { message: 'Not authenticated' });
+                return;
+            }
+
+            // Verify sender is a participant in this conversation
+            const conversation = await this.chatService.getConversation(data.conversationId, currentUser.userId);
+            if (
+                !conversation ||
+                (conversation.user1.id !== currentUser.userId && conversation.user2.id !== currentUser.userId)
+            ) {
+                client.emit('error', { message: 'Access denied: not a member of this conversation' });
+                this.logger.warn(`User ${currentUser.userId} tried to delete message in conversation ${data.conversationId} without access`);
                 return;
             }
 
