@@ -118,7 +118,7 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUpSuccess, onSwitchToLogin }) => 
                             value={username}
                             onChange={(e) => setUsername(e.target.value.toLowerCase())}
                             minLength={3}
-                            maxLength={20}
+                            maxLength={10}
                             required
                         />
                     </div>

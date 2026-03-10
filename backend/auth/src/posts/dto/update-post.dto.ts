@@ -1,7 +1,6 @@
-import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty, MaxLength } from 'class-validator';
 
-export class UpdatePostDto 
-{
+export class UpdatePostDto {
 	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
@@ -10,6 +9,7 @@ export class UpdatePostDto
 	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
+	@MaxLength(5000, { message: 'Content must not exceed 5000 characters' })
 	content?: string;
 
 	@IsOptional()

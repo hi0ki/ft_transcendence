@@ -189,11 +189,11 @@ export class ChatService {
     }
 
 
-    async sendMessage(sendMessageDto: SendMessageDto) {
+    async sendMessage(sendMessageDto: SendMessageDto, senderId: number) {
         return this.prisma.message.create({
             data: {
                 conversationId: sendMessageDto.conversationId,
-                senderId: sendMessageDto.senderId,
+                senderId: senderId,
                 content: sendMessageDto.content ?? null,
                 type: sendMessageDto.type,
                 fileUrl: sendMessageDto.fileUrl || null,

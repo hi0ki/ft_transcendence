@@ -63,13 +63,13 @@ function useGlobalSocket(isAuthenticated: boolean) {
           socketService.emit('request_online_users');
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     const handleFocus = () => {
       if (socketService.isConnected()) {
         socketService.emit('request_online_users');
       } else if (!cancelled) {
-        socketService.connect().catch(() => {});
+        socketService.connect().catch(() => { });
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -198,6 +198,14 @@ function AdminPageWrapper() {
 
   const user = authAPI.getCurrentUser();
 
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#020617', color: '#94a3b8', fontSize: '1.1rem' }}>
+        Access Denied — Admin only
+      </div>
+    );
+  }
+
   const handleLogout = () => {
     authAPI.logout();
     navigate('/login');
@@ -255,7 +263,7 @@ function App() {
       lastRefreshTime = now;
       try {
         await authAPI.refreshToken();
-      } catch (err) {}
+      } catch (err) { }
     };
 
     const interval = setInterval(debouncedRefresh, 30 * 1000);

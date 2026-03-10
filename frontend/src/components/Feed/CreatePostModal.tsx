@@ -126,12 +126,18 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
                 </div>
 
                 <div className="input-group">
-                    <label className="input-label">Content</label>
+                    <label className="input-label">
+                        Content
+                        <span style={{ marginLeft: '8px', fontSize: '12px', color: content.length > 4800 ? '#ef4444' : '#6b7280' }}>
+                            {content.length}/5000
+                        </span>
+                    </label>
                     <textarea
                         className="post-textarea"
                         placeholder="What's on your mind?"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
+                        maxLength={5000}
                     />
                 </div>
 

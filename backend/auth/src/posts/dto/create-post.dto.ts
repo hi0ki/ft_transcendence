@@ -15,6 +15,7 @@ export class CreatePostDto {
 
     @IsString()
     @IsNotEmpty()
+    @MaxLength(5000, { message: 'Content must not exceed 5000 characters' })
     content: string;
 
     @IsOptional()

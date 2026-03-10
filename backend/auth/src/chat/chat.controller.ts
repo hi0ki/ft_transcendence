@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, ParseIntPipe, UseInterceptors, UploadedFile, BadRequestException, UseGuards, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -27,7 +27,7 @@ const ALLOWED_MIME_TYPES = [
     'text/plain',
 ];
 
-const MAX_FILE_SIZE = 20* 1024 * 1024;
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 const UPLOAD_BASE = '/app/uploads/chat';
 
@@ -130,8 +130,9 @@ export class ChatController {
     }
 
     @Post('new-message')
-    sendMessage(@Body() sendMessageDto: SendMessageDto) {
-        return this.chatService.sendMessage(sendMessageDto);
+    sendMessage(@Body() sendMessageDto: SendMessageDto, @Req() req: any) {
+        const senderId = req.user?.sub || req.user?.id;
+        return this.chatService.sendMessage(sendMessageDto, senderId);
     }
 
     @Get('conversation/:conversationId/messages')

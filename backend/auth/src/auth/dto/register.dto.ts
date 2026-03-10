@@ -7,7 +7,7 @@ export class RegisterDto {
 
   @IsString()
   @MinLength(6, { message: 'Password must be at least 6 characters' })
-  @MaxLength(20)
+  @MaxLength(10)
   @Matches(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).+$/,
     {
@@ -22,6 +22,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(3, { message: 'Username must be at least 3 characters' })
   @MaxLength(10, { message: 'Username must not exceed 10 characters' })
+  @Matches(/^[a-zA-Z0-9_]+$/)
   @IsNotEmpty({ message: 'username is required' })
   username: string;
 }

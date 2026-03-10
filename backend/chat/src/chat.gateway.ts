@@ -12,17 +12,23 @@ import { ChatService } from './chat.service';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
+/** Inline XSS sanitization — same logic as auth service's sanitize.ts */
+function stripTags(input: string): string {
+    return input.replace(/<[^>]*>/g, '');
+}
+function escapeHtml(input: string): string {
+    const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+    return input.replace(/[&<>"']/g, (c) => map[c] || c);
+}
+function sanitizeInput(input: string): string {
+    if (!input || typeof input !== 'string') return '';
+    return escapeHtml(stripTags(input.trim()));
+}
+
 @WebSocketGateway({
     cors: {
-        // ✅ FIX: allow both http and https, and all ports used in dev
         origin: [
-            'http://localhost',
-            'https://localhost',
-            'http://localhost:5173',
-            'http://localhost:5212',
-            'http://localhost:3000',
-            /^http:\/\/localhost(:\d+)?$/,   // any http://localhost:PORT
-            /^https:\/\/localhost(:\d+)?$/,  // any https://localhost:PORT
+            'https://localhost'
         ],
         credentials: true,
     },
@@ -199,12 +205,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
+            const sanitizedMessage = data.message ? sanitizeInput(data.message) : '';
+            const sanitizedFileUrl = data.fileUrl ? sanitizeInput(data.fileUrl) : null;
+
             const savedMessage = await this.chatService.sendMessageToDB(
                 data.conversationId,
                 currentUser.userId,
-                data.message,
+                sanitizedMessage,
                 data.type || 'TEXT',
-                data.fileUrl || null,
+                sanitizedFileUrl,
             );
 
             const roomName = `conversation_${data.conversationId}`;
@@ -232,10 +241,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 return;
             }
 
+            const sanitizedContent = data.content ? sanitizeInput(data.content) : '';
+
             const updatedMessage = await this.chatService.updateMessageInDB(
                 data.messageId,
                 currentUser.userId,
-                data.content,
+                sanitizedContent,
             );
 
             const roomName = `conversation_${data.conversationId}`;

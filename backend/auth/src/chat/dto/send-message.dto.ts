@@ -6,10 +6,6 @@ export class SendMessageDto {
     @IsNotEmpty()
     conversationId: number;
 
-    @IsInt()
-    @IsNotEmpty()
-    senderId: number;
-
     @IsString()
     @IsOptional()
     content?: string;

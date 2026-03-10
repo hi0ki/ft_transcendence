@@ -57,17 +57,20 @@ The application runs entirely via **Docker Compose** with six containerized serv
 ## Project Management
 
 ### Work Organization
+
 - **Agile/Scrum methodology** with weekly sprints
 - Tasks broken down into features and distributed based on team member strengths
 - Code reviews required before merging into the main branch
 - Regular stand-up meetings to track progress and blockers
 
 ### Tools Used
+
 - **Git/GitHub** — Version control, branching strategy, pull requests
 - **GitHub Issues** — Task tracking, bug reports, feature requests
 - **Discord** — Primary communication channel for daily coordination, screen sharing, and pair programming
 
 ### Communication
+
 - Daily check-ins on Discord
 - Weekly sprint review and planning sessions
 - Ad-hoc voice calls for debugging and design discussions
@@ -77,6 +80,7 @@ The application runs entirely via **Docker Compose** with six containerized serv
 ## Technical Stack
 
 ### Frontend
+
 | Technology | Version | Purpose |
 |-----------|---------|---------|
 | **React** | 19.2 | UI library — component-based architecture |
@@ -89,6 +93,7 @@ The application runs entirely via **Docker Compose** with six containerized serv
 **Justification:** React was chosen for its component reusability and ecosystem maturity. Vite provides significantly faster build times than Webpack. TypeScript catches bugs at compile-time. No CSS framework was used to maintain full control over the UI design.
 
 ### Backend
+
 | Technology | Version | Purpose |
 |-----------|---------|---------|
 | **NestJS** | 10.x | Modular MVC framework for all backend services |
@@ -102,6 +107,7 @@ The application runs entirely via **Docker Compose** with six containerized serv
 **Justification:** NestJS was chosen for its modular architecture (perfect for microservices), built-in dependency injection, and TypeScript-first approach. Prisma provides type-safe queries and automatic migrations. Passport handles multiple auth strategies cleanly.
 
 ### Database
+
 | Technology | Version | Purpose |
 |-----------|---------|---------|
 | **PostgreSQL** | 15 (Alpine) | Primary relational database |
@@ -109,6 +115,7 @@ The application runs entirely via **Docker Compose** with six containerized serv
 **Why PostgreSQL:** Chosen for its reliability, ACID compliance, excellent support for complex queries and relations, native JSON support, and seamless integration with Prisma ORM. The relational model suits the interconnected nature of users, posts, comments, reactions, friendships, and conversations.
 
 ### Infrastructure
+
 | Technology | Purpose |
 |-----------|---------|
 | **Docker & Docker Compose** | Service orchestration and containerization |
@@ -273,7 +280,6 @@ The application runs entirely via **Docker Compose** with six containerized serv
 | 15 | Advanced search functionality | Minor | 1 | mjadid |
 | | **Total** | **6 Major + 9 Minor** | **21** | |
 
-
 ---
 
 ## Instructions
@@ -290,18 +296,21 @@ The application runs entirely via **Docker Compose** with six containerized serv
 ### Environment Configuration
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url> 
    cd ft_transcendence
    ```
 
 2. **Create the `.env` file** for the auth service and database:
+
    ```bash
-   cp backend/auth/env.example backend/auth/.env
-   cp backend/database/env.example backend/database/.env
+   cp backend/auth/.env.example backend/auth/.env
+   cp backend/database/.env.example backend/database/.env
    ```
 
 3. **Edit `backend/auth/.env , backend/database/.env`** with your values:
+
    ```
    # auth env
    DATABASE_URL="postgresql://database_user:database_password@postgres:5432/database_name"
@@ -311,14 +320,16 @@ The application runs entirely via **Docker Compose** with six containerized serv
    CLIENT_SECRET="Client Secret from 42 API"
    CALLBACK_URL="https://localhost/auth/42/callback"
    ```
+
    ```
-   # databse env
+   # database env
    POSTGRES_USER="db user"
    POSTGRES_PASSWORD="user password"
    POSTGRES_DB="db name"
    ```
 
 4. **Create the frontend `.env`** (optional — defaults to `https://localhost`):
+
    ```bash
    echo "VITE_API_URL=https://localhost" > frontend/.env
    ```
@@ -347,6 +358,7 @@ This will start 6 services:
 ### Access the Application
 
 Open your browser and navigate to:
+
 ```
 https://localhost
 ```

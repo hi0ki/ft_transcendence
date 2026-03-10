@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, MaxLength } from 'class-validator';
 
 export class CreateCommentDto {
     @IsNumber()
@@ -7,5 +7,6 @@ export class CreateCommentDto {
 
     @IsString()
     @IsNotEmpty()
+    @MaxLength(500, { message: 'Content must not exceed 500 characters' })
     content: string;
 }
