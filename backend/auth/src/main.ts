@@ -5,9 +5,9 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
-import helmet from 'helmet'; 
-import { XssInterceptor } from './utils/xss.interceptor'; 
-import * as cookieParser from 'cookie-parser';  
+import helmet from 'helmet';
+import { XssInterceptor } from './utils/xss.interceptor';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   // Ensure uploads directories exist (one per file type)
@@ -26,14 +26,14 @@ async function bootstrap() {
     },
   });
 
-  app.use(helmet()); 
+  app.use(helmet());
   app.use(cookieParser());
 
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   app.enableCors({
-    origin: true, 
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -120,7 +120,6 @@ export class ChatService {
             const response = await firstValueFrom(
                 this.httpService.post(`${this.AUTH_SERVICE_URL}/chat/new-message`, {
                     conversationId,
-                    senderId,
                     content,
                     type,
                     fileUrl,

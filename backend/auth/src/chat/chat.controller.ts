@@ -124,6 +124,11 @@ export class ChatController {
         return this.chatService.createConversation(createConversationDto);
     }
 
+    @Get('conversation/:conversationId')
+    getConversation(@Param('conversationId', ParseIntPipe) conversationId: number) {
+        return this.chatService.getConversationById(conversationId);
+    }
+
     @Post('conversation/find-or-create')
     findOrCreateConversation(@Body() body: { userId1: number, userId2: number }) {
         return this.chatService.findOrCreateConversation(body.userId1, body.userId2);
@@ -174,3 +179,4 @@ export class ChatController {
         return this.chatService.markAsRead(markAsReadDto);
     }
 }
+`   `

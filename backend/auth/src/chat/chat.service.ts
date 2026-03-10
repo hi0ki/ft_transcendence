@@ -100,6 +100,28 @@ export class ChatService {
     }
 
 
+    async getConversationById(conversationId: number) {
+        return this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: {
+                user1: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+                user2: {
+                    select: {
+                        id: true,
+                        email: true,
+                        profile: { select: { username: true, avatarUrl: true } },
+                    },
+                },
+            },
+        });
+    }
+
     async getConversationMessages(conversationId: number, userId?: number) {
         const where: any = { conversationId };
 

@@ -1,10 +1,11 @@
-import { IsOptional, IsString, IsArray, MinLength, MaxLength } from "class-validator";
+import { IsOptional, IsString, IsArray, MinLength, MaxLength, Matches } from "class-validator";
 
 export class UpdateProfileDto{
     @IsOptional()
     @IsString()
     @MinLength(3, { message: 'Username must be at least 3 characters long' })
     @MaxLength(10, { message: 'Username must not exceed 10 characters' })
+    @Matches(/^[a-zA-Z0-9_]+$/)
     username ?:string;
 
     @IsOptional()
