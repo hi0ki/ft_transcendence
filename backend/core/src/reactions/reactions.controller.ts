@@ -7,10 +7,6 @@ import { AuthGuard } from '../common/guards/auth.guard';
 export class ReactionsController {
     constructor(private readonly reactionsService: ReactionsService) {}
 
-    /**
-     * Toggle a reaction: creates if new, removes if same type, updates if different type.
-     * POST /reactions/toggle  { postId, type }
-     */
     @Post('toggle')
     @UseGuards(AuthGuard)
     toggle(
@@ -20,10 +16,6 @@ export class ReactionsController {
         return this.reactionsService.toggle(req.user.id, body.postId, body.type);
     }
 
-    /**
-     * Update an existing reaction to a different type.
-     * PUT /reactions/update  { postId, type }
-     */
     @Put('update')
     @UseGuards(AuthGuard)
     update(
@@ -33,19 +25,11 @@ export class ReactionsController {
         return this.reactionsService.update(req.user.id, body.postId, body.type);
     }
 
-    /**
-     * Get reaction counts grouped by type for a post.
-     * GET /reactions/post/:postId/count
-     */
     @Get('post/:postId/count')
     countByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.reactionsService.countByPost(postId);
     }
 
-    /**
-     * Get the current user's reaction on a post.
-     * GET /reactions/mine/:postId
-     */
     @Get('mine/:postId')
     @UseGuards(AuthGuard)
     getMyReaction(
@@ -55,10 +39,6 @@ export class ReactionsController {
         return this.reactionsService.getMyReaction(req.user.id, postId);
     }
 
-    /**
-     * Get all reactions for a post with user info.
-     * GET /reactions/post/:postId
-     */
     @Get('post/:postId')
     getReactionsByPost(@Param('postId', ParseIntPipe) postId: number) {
         return this.reactionsService.getReactionsByPost(postId);

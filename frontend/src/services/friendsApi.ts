@@ -1,5 +1,3 @@
-import { authAPI } from './authApi';
-
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 export interface PendingRequest {
@@ -15,12 +13,7 @@ export interface Friend {
     avatarUrl: string | null;
 }
 
-export type FriendshipStatus =
-    | 'NONE'
-    | 'PENDING'
-    | 'ACCEPTED'
-    | 'BLOCKED'
-    | 'SELF';
+export type FriendshipStatus = 'NONE' | 'PENDING' | 'ACCEPTED' | 'BLOCKED' | 'SELF';
 
 export interface FriendshipStatusResponse {
     status: FriendshipStatus;
@@ -28,19 +21,13 @@ export interface FriendshipStatusResponse {
 }
 
 class FriendsAPI {
-    private headers() {
-        const token = authAPI.getToken();
-        return {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-        };
-    }
+    // ← removed headers() method entirely
 
-    /** Send a friend request to targetUserId */
     async sendRequest(targetUserId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/request/${targetUserId}`, {
             method: 'POST',
-            headers: this.headers(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -49,11 +36,11 @@ class FriendsAPI {
         return res.json();
     }
 
-    /** Accept an incoming friend request from senderId */
     async acceptRequest(senderId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/accept/${senderId}`, {
             method: 'POST',
-            headers: this.headers(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -62,11 +49,11 @@ class FriendsAPI {
         return res.json();
     }
 
-    /** Reject / cancel a friend request from senderId */
     async rejectRequest(senderId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/reject/${senderId}`, {
             method: 'DELETE',
-            headers: this.headers(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -75,29 +62,26 @@ class FriendsAPI {
         return res.json();
     }
 
-    /** Get incoming pending friend requests */
     async getPendingRequests(): Promise<PendingRequest[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends/pending`, {
-            headers: this.headers(),
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) return [];
         return res.json();
     }
 
-    /** Get accepted friends list */
     async getFriends(): Promise<Friend[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends`, {
-            headers: this.headers(),
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) return [];
         return res.json();
     }
 
-    /** Remove an accepted friend */
     async removeFriend(friendId: number): Promise<{ message: string }> {
         const res = await fetch(`${API_BASE_URL}/api/friends/${friendId}`, {
             method: 'DELETE',
-            headers: this.headers(),
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -106,19 +90,17 @@ class FriendsAPI {
         return res.json();
     }
 
-    /** Get friends list of any user by their id */
     async getFriendsByUser(userId: number): Promise<Friend[]> {
         const res = await fetch(`${API_BASE_URL}/api/friends/user/${userId}`, {
-            headers: this.headers(),
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) return [];
         return res.json();
     }
 
-    /** Get friendship status between current user and targetUserId */
     async getStatus(targetUserId: number): Promise<FriendshipStatusResponse> {
         const res = await fetch(`${API_BASE_URL}/api/friends/status/${targetUserId}`, {
-            headers: this.headers(),
+            credentials: 'include',             // ← replaced this.headers()
         });
         if (!res.ok) return { status: 'NONE' };
         return res.json();

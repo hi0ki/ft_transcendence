@@ -1,4 +1,4 @@
-/* ── Search Page ─────────────────────────────────────────── */
+/*  Search Page */
 
 .search-page {
     max-width: 900px;
@@ -76,7 +76,7 @@
     border-radius: 2px 2px 0 0;
 }
 
-/* ── Search Bar ─────────────────────────────────────────── */
+/*  Search Bar */
 
 .search-bar {
     display: flex;
@@ -127,7 +127,7 @@
     font-weight: 400;
 }
 
-/* ── Filters ────────────────────────────────────────────── */
+/*  Filters ─*/
 
 .search-filters {
     display: flex;
@@ -178,7 +178,7 @@
     padding: 10px;
 }
 
-/* ── Loading ────────────────────────────────────────────── */
+/*  Loading ─*/
 
 .search-loading {
     display: flex;
@@ -204,7 +204,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* ── Error ──────────────────────────────────────────────── */
+/*  Error ─*/
 
 .search-error {
     background: rgba(239, 68, 68, 0.1);
@@ -218,7 +218,7 @@
     text-align: center;
 }
 
-/* ── Results info ───────────────────────────────────────── */
+/*  Results info ─ */
 
 .search-results-info {
     background: rgba(14, 165, 233, 0.08);
@@ -232,7 +232,7 @@
     text-align: center;
 }
 
-/* ── Results list ───────────────────────────────────────── */
+/*  Results list ─ */
 
 .search-results-list {
     display: flex;
@@ -241,7 +241,7 @@
     width: 100%;
 }
 
-/* ── Pagination ─────────────────────────────────────────── */
+/*  Pagination */
 
 .search-pagination {
     display: flex;
@@ -291,13 +291,13 @@
     box-shadow: 0 2px 12px rgba(14, 165, 233, 0.3);
 }
 
-/* ── Image Hiding logic ──────────────────────────────────────── */
+/*  Image Hiding logic  */
 
 .post-has-image-indicator {
     display: none;
 }
 
-/* ── Search Result Item ──────────────────────────────────── */
+/*  Search Result Item  */
 
 .search-result-item {
     display: flex;

@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import helmet from 'helmet'; 
 import { XssInterceptor } from './utils/xss.interceptor'; 
+import * as cookieParser from 'cookie-parser';  
 
 async function bootstrap() {
   // Ensure uploads directories exist (one per file type)
@@ -26,6 +27,7 @@ async function bootstrap() {
   });
 
   app.use(helmet()); 
+  app.use(cookieParser());
 
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
@@ -48,6 +50,6 @@ async function bootstrap() {
       stopAtFirstError: true,
     }),
   );
-  await app.listen(3000, "0.0.0.0");
+  await app.listen(3000);
 }
 bootstrap();

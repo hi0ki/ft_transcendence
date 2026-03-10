@@ -77,6 +77,8 @@ export interface UserSearchResponse {
 }
 
 class SearchAPI {
+    // ← removed getAuthHeader() entirely
+
     private transformPost(backendPost: BackendPost): Post {
         const currentUser = authAPI.getCurrentUser();
         const fallbackName = currentUser?.username || currentUser?.email?.split('@')[0] || 'Anonymous';
@@ -125,17 +127,6 @@ class SearchAPI {
         return `${Math.floor(diffDay / 30)} month${Math.floor(diffDay / 30) > 1 ? 's' : ''} ago`;
     }
 
-    private getAuthHeader(): Record<string, string> {
-        const token = authAPI.getToken();
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-        return {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        };
-    }
-
     async search(params: SearchParams): Promise<SearchResponse> {
         const qs = new URLSearchParams();
         if (params.q) qs.set('q', params.q);
@@ -146,15 +137,12 @@ class SearchAPI {
         if (params.limit) qs.set('limit', params.limit.toString());
 
         const response = await fetch(`${API_BASE_URL}/posts/search?${qs.toString()}`, {
-            method: 'GET',
-            headers: this.getAuthHeader(),
+            credentials: 'include',             // ← replaced getAuthHeader()
         });
-
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'Search failed' }));
-            throw new Error(error.message || `HTTP ${response.status}: Search failed`);
+            throw new Error(error.message || `HTTP ${response.status}`);
         }
-
         const json = await response.json();
         return {
             data: json.data.map((p: BackendPost) => this.transformPost(p)),
@@ -172,15 +160,12 @@ class SearchAPI {
         if (params.limit) qs.set('limit', params.limit.toString());
 
         const response = await fetch(`${API_BASE_URL}/profiles/search?${qs.toString()}`, {
-            method: 'GET',
-            headers: this.getAuthHeader(),
+            credentials: 'include',             // ← replaced getAuthHeader()
         });
-
         if (!response.ok) {
             const error = await response.json().catch(() => ({ message: 'User search failed' }));
-            throw new Error(error.message || `HTTP ${response.status}: User search failed`);
+            throw new Error(error.message || `HTTP ${response.status}`);
         }
-
         return response.json();
     }
 }

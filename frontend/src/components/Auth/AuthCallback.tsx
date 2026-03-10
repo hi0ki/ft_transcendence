@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { authAPI } from '../../services/authApi';
 
 const AuthCallback: React.FC = () => {
     const navigate = useNavigate();
@@ -7,14 +8,22 @@ const AuthCallback: React.FC = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const token = params.get('token');
+        const hasError = params.get('error');
 
-        if (token) {
-            localStorage.setItem('auth_token', token);
-            navigate('/home');
-        } else {
+        if (hasError) {
             navigate('/login');
+            return;
         }
+
+        // Cookie is set by the backend — populate sessionStorage cache so
+        // isAuthenticated() returns true before navigating to /home
+        authAPI.fetchAndCacheUser().then((user) => {
+            if (user) {
+                navigate('/home');
+            } else {
+                navigate('/login');
+            }
+        });
     }, [location, navigate]);
 
     return (
@@ -43,7 +52,7 @@ const AuthCallback: React.FC = () => {
                 }
             `}</style>
             <p>Completing login...</p>
-        </div >
+        </div>
     );
 };
 

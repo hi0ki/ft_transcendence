@@ -14,10 +14,10 @@ export interface AchievementProgress {
 
 export async function getAchievementProgress(
     userId: number,
-    token:  string,
+    // ← removed token parameter, cookie handles auth now
 ): Promise<AchievementProgress> {
     const res = await fetch(`${API_BASE}/api/achievements/progress/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',                 // ← replaced Authorization header
     });
     if (!res.ok) throw new Error('Failed to fetch achievements');
     return res.json();
