@@ -13,7 +13,8 @@ import { AchievementsModule } from './achievements/achievements.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { HealthController } from './health/health.controller';
-
+import { MetricsController } from './metrics/metrics.controller';
+import { MetricsService } from './metrics/metrics.service';
 
 @Module({
   imports: [
@@ -32,12 +33,13 @@ import { HealthController } from './health/health.controller';
     FriendsModule,
     AchievementsModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    MetricsService,
   ],
 })
 export class AppModule {}
