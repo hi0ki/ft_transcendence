@@ -13,11 +13,11 @@ import { AchievementsModule } from './achievements/achievements.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { HealthController } from './health/health.controller';
-import { MetricsController } from './metrics/metrics.controller';
-import { MetricsService } from './metrics/metrics.service';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
+    MetricsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([
       { ttl: 60000, limit: 100, blockDuration: 60000 },  // 100 req/min, block 1min
@@ -33,13 +33,12 @@ import { MetricsService } from './metrics/metrics.service';
     FriendsModule,
     AchievementsModule,
   ],
-  controllers: [HealthController, MetricsController],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    MetricsService,
   ],
 })
 export class AppModule {}

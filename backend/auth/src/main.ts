@@ -8,6 +8,8 @@ import { existsSync, mkdirSync, readFileSync } from 'fs';
 import helmet from 'helmet';
 import { XssInterceptor } from './utils/xss.interceptor';
 import * as cookieParser from 'cookie-parser';
+import { MetricsInterceptor } from './metrics/metrics.interceptor';
+
 
 async function bootstrap() {
   // Ensure uploads directories exist (one per file type)
@@ -50,6 +52,9 @@ async function bootstrap() {
       stopAtFirstError: true,
     }),
   );
+
+  app.useGlobalInterceptors(new MetricsInterceptor());
+
   await app.listen(3000,'0.0.0.0');
 }
 bootstrap();
