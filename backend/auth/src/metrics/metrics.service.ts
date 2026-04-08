@@ -14,7 +14,9 @@ export class MetricsService {
     getContentType() {
         return client.register.contentType;
     }
+
 }
+
 
 export const httpRequestCounter = new client.Counter({
     name: 'http_requests_total',
@@ -25,6 +27,11 @@ export const httpRequestCounter = new client.Counter({
 export const httpRequestDuration = new client.Histogram({
     name: 'http_request_duration_seconds',
     help: 'HTTP request duration',
-    labelNames: ['method', 'route', 'status'],
-    buckets: [0.1, 0.3, 0.5, 1, 2, 5],
+    labelNames: ['user_role', 'method', 'route', 'status', 'BodySize'],
+    buckets: [0.1, 0.5, 1, 2.5, 5, 10],
+});
+
+export const activeUsers = new client.Gauge({
+    name: 'active_users',
+    help: 'Number of currently active users',
 });

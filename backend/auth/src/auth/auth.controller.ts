@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { AuthGuard } from '../guards/auth.guard';
 import { Response } from 'express';
+import { activeUsers } from '../metrics/metrics.service';
 
 const COOKIE_OPTIONS = {
     httpOnly: true,
@@ -37,12 +38,14 @@ export class AuthController {
             loginDto.email,
             loginDto.password
         );
+        activeUsers.inc();
         res.cookie('auth_token', token, COOKIE_OPTIONS);
         return res.json({ message: 'Logged in successfully' });
     }
 
     @Post('logout')
     logout(@Res() res: Response) {
+        activeUsers.dec();
         res.clearCookie('auth_token');
         return res.json({ message: 'Logged out successfully' });
     }
@@ -66,6 +69,7 @@ export class AuthController {
     @UseGuards(PassportAuthGuard('42'))
     fortyTwoCallback(@Req() req: any, @Res() res: Response) {
         const token = req.user;
+        activeUsers.inc();
         res.cookie('auth_token', token, COOKIE_OPTIONS);
         res.redirect('https://localhost/home');
     }

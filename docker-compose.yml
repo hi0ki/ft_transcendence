@@ -29,6 +29,8 @@ services:
         condition: service_healthy
       frontend:
         condition: service_started
+      grafana:
+        condition: service_started
 
   # Database
   postgres:
@@ -133,14 +135,19 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
     networks:
       - my-app-network
+    volumes:
+      - grafana_backup:/var/lib/grafana
+      
 
 # Volumes
 volumes:
   uploads_data:
   postgres_data:
+  grafana_backup:
 
     # Networks
 networks:
