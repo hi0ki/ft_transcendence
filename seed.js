@@ -4,19 +4,16 @@
  *  ft_transcendence — Seed Script  (complete flow)
  *
  *  FLOW:
- *    Step 1 : Create N users  (register + login)
- *    Step 2 : Send friend requests  (ring: each user → next 2)
- *    Step 3 : Accept all pending friend requests  (a few secs "delay")
+ *    Step 1 : Create N users (register + login)
+ *             ★ User ID extracted directly from JWT — 100% correct
+ *    Step 2 : Send friend requests (ring: each user → next 2)
+ *    Step 3 : Accept all pending friend requests (small delay simulated)
  *    Step 4 : Every user creates 1 post
  *    Step 5 : ⏸  PAUSE — you manually approve posts in the admin panel
- *             then type  yes  + Enter to continue
+ *             then type  yes + Enter to continue
  *    Step 6 : Comments on every approved post
  *    Step 7 : Reactions on every approved post
- *    Step 8 : Private chat conversations between friends
- *
- *  Validation rules (register.dto.ts):
- *    username : 3-10 chars, alphanumeric / underscore
- *    password : 6-10 chars, uppercase + lowercase + special char
+ *    Step 8 : Private chat conversations between the friends we just made
  *
  *  Usage:
  *    node seed.js [--users 10] [--base-url https://localhost]
@@ -29,158 +26,119 @@ const https    = require('https');
 const http     = require('http');
 const readline = require('readline');
 
-// ─── CLI args ──────────────────────────────────────────────────────────────
+// ─── CLI ─────────────────────────────────────────────────────────────────────
 const args   = process.argv.slice(2);
-const getArg = (flag, def) => {
-  const idx = args.indexOf(flag);
-  return idx !== -1 && args[idx + 1] ? args[idx + 1] : def;
-};
+const getArg = (flag, def) => { const i = args.indexOf(flag); return i !== -1 && args[i+1] ? args[i+1] : def; };
 
 const BASE_URL  = getArg('--base-url', 'https://localhost');
 const NUM_USERS = parseInt(getArg('--users', '10'), 10);
 
-// ─── HTTP helper (no redirect-following, self-signed cert OK) ──────────────
-const agent = new https.Agent({ rejectUnauthorized: false });
+// ─── HTTP helper ──────────────────────────────────────────────────────────────
+const tlsAgent = new https.Agent({ rejectUnauthorized: false });
 
 function request(method, path, body = null, cookies = '') {
   return new Promise((resolve, reject) => {
     const url     = new URL(path, BASE_URL);
     const isHttps = url.protocol === 'https:';
-    const lib     = isHttps ? https : http;
     const data    = body ? JSON.stringify(body) : null;
 
-    const options = {
+    const req = (isHttps ? https : http).request({
       hostname : url.hostname,
       port     : url.port || (isHttps ? 443 : 80),
       path     : url.pathname + url.search,
       method,
-      agent    : isHttps ? agent : undefined,
+      agent    : isHttps ? tlsAgent : undefined,
       headers  : {
         'Content-Type': 'application/json',
         ...(data    && { 'Content-Length': Buffer.byteLength(data) }),
         ...(cookies && { Cookie: cookies }),
       },
-    };
-
-    const req = lib.request(options, (res) => {
+    }, res => {
       let raw = '';
-      res.on('data', chunk => (raw += chunk));
+      res.on('data', c => raw += c);
       res.on('end', () => {
-        // Capture Set-Cookie for login responses
-        const setCookie = res.headers['set-cookie'] || [];
-        const cookieStr = setCookie.map(c => c.split(';')[0]).join('; ');
-
-        let parsed;
-        try { parsed = JSON.parse(raw); } catch { parsed = raw; }
+        const cookieStr = (res.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
+        let parsed; try { parsed = JSON.parse(raw); } catch { parsed = raw; }
         resolve({ status: res.statusCode, data: parsed, cookie: cookieStr });
       });
     });
-
     req.on('error', reject);
     if (data) req.write(data);
     req.end();
   });
 }
 
-// ─── Utilities ─────────────────────────────────────────────────────────────
+// ─── JWT decode (no library needed — payload is just base64) ─────────────────
+function jwtDecode(cookieStr) {
+  try {
+    // cookieStr looks like "auth_token=eyJhbGc..."
+    const token   = cookieStr.replace(/.*auth_token=/, '').split(';')[0].trim();
+    const payload = Buffer.from(token.split('.')[1], 'base64').toString('utf-8');
+    return JSON.parse(payload);   // { id, email, role, username, iat, exp }
+  } catch { return {}; }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rand  = arr => arr[Math.floor(Math.random() * arr.length)];
 
-const G = t => `\x1b[32m${t}\x1b[0m`;   // green
-const Y = t => `\x1b[33m${t}\x1b[0m`;   // yellow
-const R = t => `\x1b[31m${t}\x1b[0m`;   // red
-const C = t => `\x1b[36m${t}\x1b[0m`;   // cyan
-const B = t => `\x1b[1m${t}\x1b[0m`;    // bold
-const DIM = t => `\x1b[2m${t}\x1b[0m`;  // dim
+const G  = t => `\x1b[32m${t}\x1b[0m`;
+const Y  = t => `\x1b[33m${t}\x1b[0m`;
+const R  = t => `\x1b[31m${t}\x1b[0m`;
+const C  = t => `\x1b[36m${t}\x1b[0m`;
+const B  = t => `\x1b[1m${t}\x1b[0m`;
+const DM = t => `\x1b[2m${t}\x1b[0m`;
 
-function header(title) {
-  const line = '═'.repeat(50);
-  console.log(`\n${B(line)}`);
-  console.log(B(`  ${title}`));
-  console.log(`${B(line)}`);
-}
+function hdr(title) { const l = '═'.repeat(52); console.log(`\n${B(l)}\n${B('  '+title)}\n${B(l)}`); }
+const ok   = m => console.log(`  ${G('✅')} ${m}`);
+const warn = m => console.log(`  ${Y('⚠️ ')} ${m}`);
+const fail = m => console.log(`  ${R('❌')} ${m}`);
+const info = m => console.log(`  ${C('ℹ️ ')} ${m}`);
 
-function ok(msg)   { console.log(`  ${G('✅')} ${msg}`); }
-function warn(msg) { console.log(`  ${Y('⚠️ ')} ${msg}`); }
-function fail(msg) { console.log(`  ${R('❌')} ${msg}`); }
-function info(msg) { console.log(`  ${C('ℹ️ ')} ${msg}`); }
-
-/** Block until the user types a non-empty line */
-function waitForInput(prompt) {
+function askUser(prompt) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise(resolve => {
-    rl.question(prompt, answer => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
+  return new Promise(res => rl.question(prompt, a => { rl.close(); res(a.trim()); }));
 }
 
-/** Spinner while waiting */
-async function fakeWait(ms, label) {
-  const frames = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
-  const step   = 80;
-  const total  = Math.ceil(ms / step);
-  process.stdout.write('  ');
-  for (let i = 0; i < total; i++) {
-    process.stdout.write(`\r  ${C(frames[i % frames.length])}  ${DIM(label)} `);
-    await sleep(step);
+async function spinner(ms, label) {
+  const f = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+  const n = Math.ceil(ms / 80);
+  for (let i = 0; i < n; i++) {
+    process.stdout.write(`\r  ${C(f[i%f.length])}  ${DM(label)} `);
+    await sleep(80);
   }
-  process.stdout.write(`\r  ${G('✓')}  ${label}           \n`);
+  process.stdout.write(`\r  ${G('✓')}  ${label}             \n`);
 }
 
-// ─── Fake data ─────────────────────────────────────────────────────────────
+// ─── Fake data ────────────────────────────────────────────────────────────────
+// Short names so  username = name+index  stays ≤ 10 chars
+const NAMES = ['ali','bob','cara','dan','eve','fay','gil','hana','ida','jak',
+               'kim','leo','mia','ned','ola','pam','quinn','ria','sam','tia'];
 
-// Short so username = name + index stays ≤ 10 chars
-const NAMES = [
-  'ali','bob','cara','dan','eve','fay','gil','hana','ida','jak',
-  'kim','leo','mia','ned','ola','pam','quinn','ria','sam','tia',
-];
-
-// Always valid: 6-10 chars, has Uppercase + lowercase + special
-const makePass = i => `Ax@Pass${i % 10}`;  // e.g. "Ax@Pass3"
+// Password: 6-10 chars, uppercase + lowercase + special char
+const makePass = i => `Ax@Pass${i % 10}`;
 
 const POST_TEMPLATES = [
-  { type: 'HELP',     title: 'How do I handle JWT refresh tokens?',
-    content: 'Struggling to implement a solid refresh strategy. Any tips or resources?' },
-  { type: 'HELP',     title: 'Best way to structure a NestJS monorepo?',
-    content: 'Large app incoming. Nx workspace or plain NestJS monorepo? Pros/cons?' },
-  { type: 'HELP',     title: 'Prisma relations are confusing me',
-    content: 'Can someone explain @relation vs @@index? Getting schema errors all day.' },
-  { type: 'RESOURCE', title: '10 VS Code extensions every dev should have',
-    content: 'My curated list of must-haves that massively improved my workflow.' },
-  { type: 'RESOURCE', title: 'Free DevOps learning path 2025',
-    content: 'Linux → Docker → K8s — full free path. Sharing with the community.' },
-  { type: 'RESOURCE', title: 'Docker Compose cheatsheet',
-    content: 'Handy reference for the most common Docker Compose patterns. Bookmark!' },
-  { type: 'MEME',     title: 'When the bug disappears after adding a log',
-    content: 'Heisenbug strikes again 😂  We all know this pain.' },
-  { type: 'MEME',     title: "Me: I'll just fix this one thing",
-    content: '3 hours later, 12 files changed… it\'s fine. Totally fine.' },
-  { type: 'MEME',     title: 'Senior dev on a Friday afternoon code review',
-    content: '"This PR is fine" — said no senior dev ever before a weekend.' },
-  { type: 'HELP',     title: 'WebSocket vs SSE for real-time notifications',
-    content: 'Which is better for notifs in a NestJS app? Need pros and cons.' },
-  { type: 'RESOURCE', title: 'PostgreSQL performance tips',
-    content: 'Indexing, EXPLAIN ANALYZE, query planning — everything you need.' },
-  { type: 'MEME',     title: 'CSS centering in 2025',
-    content: 'Still googling "how to center a div" after 5 years. No shame.' },
-  { type: 'HELP',     title: 'Docker networking explained',
-    content: 'Bridge vs host vs overlay — when do you use each? Confused.' },
-  { type: 'RESOURCE', title: 'Git aliases that will change your life',
-    content: 'These 10 git aliases save me 20 minutes every single day.' },
-  { type: 'MEME',     title: 'Works on my machine™',
-    content: 'Introducing the new deployment strategy: ship your laptop.' },
-  { type: 'HELP',     title: 'Difference between async/await and Promises?',
-    content: 'I know they are related but when should I use one vs the other?' },
-  { type: 'RESOURCE', title: 'Clean Code principles with TypeScript examples',
-    content: 'SOLID, DRY, KISS — with real TypeScript snippets. Very practical.' },
-  { type: 'MEME',     title: 'Documentation? What documentation?',
-    content: 'The code IS the documentation. — every developer ever.' },
-  { type: 'HELP',     title: 'How to pass env vars securely to Docker?',
-    content: 'Using .env files feels unsafe. What are the best practices?' },
-  { type: 'RESOURCE', title: 'Ultimate Linux command cheatsheet',
-    content: 'awk, sed, grep, xargs — mastering these changed everything for me.' },
+  { type:'HELP',     title:'How do I handle JWT refresh tokens?',          content:'Struggling to implement a solid refresh strategy. Tips or resources?' },
+  { type:'HELP',     title:'Best way to structure a NestJS monorepo?',     content:'Large app incoming. Nx or plain NestJS monorepo? Pros/cons welcome.' },
+  { type:'HELP',     title:'Prisma relations are confusing me',            content:'Can someone explain @relation vs @@index? Getting schema errors daily.' },
+  { type:'RESOURCE', title:'10 VS Code extensions every dev should have', content:'My curated list of must-haves that massively improved my workflow.' },
+  { type:'RESOURCE', title:'Free DevOps learning path 2025',              content:'Linux→Docker→K8s — full free path compiled for the community.' },
+  { type:'RESOURCE', title:'Docker Compose cheatsheet',                   content:'Handy reference for the most common Docker Compose patterns. Bookmark!' },
+  { type:'MEME',     title:'When the bug disappears after adding a log',  content:'Heisenbug strikes again 😂  We all know this pain.' },
+  { type:'MEME',     title:`Me: I'll just fix this one thing`,            content:'3 hours later, 12 files changed… perfectly fine.' },
+  { type:'MEME',     title:'Senior dev on a Friday afternoon PR review',  content:'"This PR is fine" — said no senior dev ever before a weekend.' },
+  { type:'HELP',     title:'WebSocket vs SSE for real-time notifications',content:'Which is better for notifs in a NestJS app? Pros and cons please.' },
+  { type:'RESOURCE', title:'PostgreSQL performance tips',                 content:'Indexing, EXPLAIN ANALYZE, query planning — everything you need.' },
+  { type:'MEME',     title:'CSS centering in 2025',                       content:'Still googling "how to center a div" after 5 years. No shame.' },
+  { type:'HELP',     title:'Docker networking explained',                 content:'Bridge vs host vs overlay — when do you actually use each?' },
+  { type:'RESOURCE', title:'Git aliases that will change your life',      content:'These 10 git aliases save me 20 minutes every single day.' },
+  { type:'MEME',     title:'Works on my machine™',                        content:'Introducing the new deployment strategy: ship your laptop.' },
+  { type:'HELP',     title:'Difference between async/await and Promises?',content:'I know they are related but when should I use one vs the other?' },
+  { type:'RESOURCE', title:'Clean Code principles with TypeScript',       content:'SOLID, DRY, KISS — with real TypeScript snippets. Very practical.' },
+  { type:'MEME',     title:'Documentation? What documentation?',          content:'The code IS the documentation. — every developer, ever.' },
+  { type:'HELP',     title:'How to pass env vars securely to Docker?',    content:'Using .env files feels unsafe. What are the best practices here?' },
+  { type:'RESOURCE', title:'Ultimate Linux command cheatsheet',           content:'awk, sed, grep, xargs — mastering these changed everything for me.' },
 ];
 
 const COMMENTS = [
@@ -189,27 +147,27 @@ const COMMENTS = [
   'Had the same issue last week. Check your middleware order!',
   'This is a common pitfall. Always worth documenting.',
   'Lol I literally did this yesterday 😂',
-  'Pure gold. Sending to my whole team.',
-  'Could you elaborate a bit on the second point?',
+  'Pure gold. Sending to my whole team right now.',
+  'Could you elaborate a bit more on the second point?',
   'Been looking for exactly this. Thank you!',
   'Interesting. I usually go the other way but might try this.',
-  'The Heisenbug is so real.',
+  'The Heisenbug is so real, feel you.',
   "Don't forget to handle edge cases too!",
   'Nice write-up. Would love a follow-up on advanced patterns.',
-  'The cheatsheet link seems broken — maybe update it?',
-  'This saved me hours. Seriously, thank you.',
+  'This saved me hours of debugging. Seriously, thank you.',
   'Pro tip: also check your environment variables when debugging this.',
-  'This is exactly what I needed today.',
-  'Shared this in our Slack channel — everyone loved it.',
-  'Just tried it! Works perfectly. 🙌',
-  'Nice explanation! Very clear and concise.',
+  'This is exactly what I needed today. Perfect timing.',
+  'Shared this in our Slack — everyone loved it.',
+  'Just tried it! Works perfectly 🙌',
+  'Nice and concise explanation!',
   'Finally someone wrote this up properly.',
+  'This should be pinned at the top.',
 ];
 
 const MESSAGES = [
   "Hey! How's it going?",
-  'Did you see the latest post? Pretty interesting.',
-  "I'm stuck on this bug — any chance you can take a look?",
+  'Did you see that latest post? Pretty interesting.',
+  "I'm stuck on a bug — any chance you can take a look?",
   "Sure! Send me the code and I'll check.",
   'Have you tried the async/await approach here?',
   'Yeah, it worked! Thanks a lot 🙏',
@@ -227,142 +185,110 @@ const MESSAGES = [
   'Perfect, see you there.',
 ];
 
-const REACTION_TYPES = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+const REACTION_TYPES = ['LIKE','LOVE','HAHA','WOW','SAD','ANGRY'];
 
-// ─── MAIN ──────────────────────────────────────────────────────────────────
+// ─── MAIN ────────────────────────────────────────────────────────────────────
 async function main() {
   console.clear();
   console.log(B('\n  🌱  ft_transcendence — Seed Script\n'));
   console.log(`  ${C('Base URL :')} ${BASE_URL}`);
   console.log(`  ${C('Users    :')} ${NUM_USERS}`);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  STEP 1 — Register & login all users
-  // ══════════════════════════════════════════════════════════════════════════
-  header('Step 1 — Creating users');
+  // ════════════════════════════════════════════════════════════════════════════
+  //  STEP 1 — Register & login users, get IDs from JWT
+  // ════════════════════════════════════════════════════════════════════════════
+  hdr('Step 1 — Creating users');
 
-  const users = [];   // { username, email, password, cookie, id }
+  const users = [];  // { username, email, password, cookie, id }
 
   for (let i = 0; i < NUM_USERS; i++) {
-    const name     = NAMES[i % NAMES.length];
-    const username = `${name}${i}`;
+    const username = `${NAMES[i % NAMES.length]}${i}`;
     const email    = `seed_${username}@devmail.io`;
     const password = makePass(i);
 
-    // Register
+    // Register (409 = already exists, that is fine)
     const reg = await request('POST', '/auth/register', { email, password, username });
-    if (reg.status === 201 || reg.status === 200) {
-      // nothing extra needed
-    } else if (reg.status === 409) {
-      warn(`${Y(username)} already exists — will login`);
-    } else {
+    if (![200, 201, 409].includes(reg.status)) {
       fail(`Register ${username}: ${JSON.stringify(reg.data)}`);
       continue;
     }
+    if (reg.status === 409) warn(`${Y(username)} already exists — logging in`);
 
-    // Login → get cookie
+    // Login → cookie → decode JWT → get real ID & real username
     const login = await request('POST', '/auth/login', { email, password });
-    if (login.status !== 200 && login.status !== 201) {
+    if (![200, 201].includes(login.status)) {
       fail(`Login ${username}: ${JSON.stringify(login.data)}`);
       continue;
     }
 
-    users.push({ username, email, password, cookie: login.cookie, id: null });
-    ok(`${G(username)} registered & logged in`);
+    const jwt = jwtDecode(login.cookie);
+    if (!jwt.id) { fail(`Could not decode JWT for ${username}`); continue; }
+
+    const realUsername = jwt.username || username;
+    users.push({ username: realUsername, email, password, cookie: login.cookie, id: jwt.id });
+    ok(`${G(realUsername)} (ID ${jwt.id}) ← ID from JWT ✓`);
     await sleep(40);
   }
 
-  info(`${G(users.length)} users ready`);
+  if (users.length === 0) { fail('No users — aborting.'); process.exit(1); }
+  info(`${G(users.length)} users ready with correct IDs`);
 
-  // ── Fetch real IDs ────────────────────────────────────────────────────────
-  if (users.length === 0) {
-    fail('No users available. Aborting.'); process.exit(1);
-  }
-
-  const usersRes = await request('GET', '/api/chat/users', null, users[0].cookie);
-  const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-
-  for (const u of users) {
-    const found = allUsers.find(au =>
-      au.profile?.username === u.username || au.email === u.email
-    );
-    if (found) u.id = found.id;
-  }
-
-  const valid = users.filter(u => u.id);
-  if (valid.length === 0) {
-    fail('Could not fetch user IDs. Is the platform running?'); process.exit(1);
-  }
-  info(`Resolved IDs for ${G(valid.length)} users`);
-
-  // ══════════════════════════════════════════════════════════════════════════
-  //  STEP 2 — Send friend requests  (ring: each user → next 2)
-  // ══════════════════════════════════════════════════════════════════════════
-  header('Step 2 — Sending friend requests');
+  // ════════════════════════════════════════════════════════════════════════════
+  //  STEP 2 — Send friend requests (ring: each user → next 2)
+  // ════════════════════════════════════════════════════════════════════════════
+  hdr('Step 2 — Sending friend requests');
 
   let reqSent = 0;
-  // Track which pairs we already requested to avoid duplicates
-  const requestedPairs = new Set();
+  const sentPairs = new Set();  // avoid duplicates
 
-  for (let i = 0; i < valid.length; i++) {
-    for (let delta = 1; delta <= 2; delta++) {
-      const sender   = valid[i];
-      const receiver = valid[(i + delta) % valid.length];
+  for (let i = 0; i < users.length; i++) {
+    for (let d = 1; d <= 2; d++) {
+      const sender   = users[i];
+      const receiver = users[(i + d) % users.length];
       const key      = [sender.id, receiver.id].sort().join('-');
-      if (requestedPairs.has(key)) continue;
-      requestedPairs.add(key);
+      if (sentPairs.has(key)) continue;
+      sentPairs.add(key);
 
-      const res = await request(
-        'POST',
-        `/api/friends/request/${receiver.id}`,
-        null,
-        sender.cookie,
-      );
+      const res = await request('POST', `/api/friends/request/${receiver.id}`, null, sender.cookie);
 
-      if (res.status === 201 || res.status === 200 || res.status === 409) {
-        // 409 = already friends or pending — that's fine
+      if ([200, 201].includes(res.status)) {
+        ok(`${G(sender.username)} (${sender.id}) → ${G(receiver.username)} (${receiver.id})`);
         reqSent++;
-        ok(`${G(sender.username)} → ${G(receiver.username)} ${DIM('(request sent)')}`);
+      } else if (res.status === 409) {
+        // Already friends or already pending — count & move on
+        warn(`${sender.username} → ${receiver.username}: ${res.data?.message || 'already exists'}`);
+        reqSent++;
       } else {
-        warn(`${sender.username} → ${receiver.username}: ${JSON.stringify(res.data)}`);
+        fail(`${sender.username} → ${receiver.username}: [${res.status}] ${JSON.stringify(res.data)}`);
       }
       await sleep(40);
     }
   }
+  info(`${G(reqSent)} friend request operations done`);
 
-  info(`${G(reqSent)} friend requests sent`);
-
-  // ══════════════════════════════════════════════════════════════════════════
-  //  STEP 3 — Wait, then accept all pending requests
-  // ══════════════════════════════════════════════════════════════════════════
-  header('Step 3 — Accepting friend requests');
-
-  await fakeWait(2000, 'Simulating a short delay before accepting…');
+  // ════════════════════════════════════════════════════════════════════════════
+  //  STEP 3 — Accept all pending requests (with a simulated delay)
+  // ════════════════════════════════════════════════════════════════════════════
+  hdr('Step 3 — Accepting friend requests');
+  await spinner(2000, 'Simulating a short delay before accepting…');
 
   let accepted = 0;
 
-  for (const receiver of valid) {
-    // Fetch this user's pending incoming requests
-    const pendingRes = await request('GET', '/api/friends/pending', null, receiver.cookie);
-    const pending    = Array.isArray(pendingRes.data) ? pendingRes.data : [];
+  for (const receiver of users) {
+    const pendRes = await request('GET', '/api/friends/pending', null, receiver.cookie);
+    const pending = Array.isArray(pendRes.data) ? pendRes.data : [];
 
     for (const req of pending) {
       const senderId = req.senderId;
       if (!senderId) continue;
 
-      const acceptRes = await request(
-        'POST',
-        `/api/friends/accept/${senderId}`,
-        null,
-        receiver.cookie,
-      );
-
-      if (acceptRes.status === 200 || acceptRes.status === 201) {
-        const senderUser = valid.find(u => u.id === senderId);
-        ok(`${G(receiver.username)} accepted request from ${G(senderUser?.username ?? senderId)}`);
+      const acceptRes = await request('POST', `/api/friends/accept/${senderId}`, null, receiver.cookie);
+      if ([200, 201].includes(acceptRes.status)) {
+        const su = users.find(u => u.id === senderId);
+        ok(`${G(receiver.username)} accepted from ${G(su?.username ?? senderId)}`);
         accepted++;
       } else {
-        warn(`Accept failed for ${receiver.username} ← ${senderId}: ${JSON.stringify(acceptRes.data)}`);
+        warn(`Accept ${receiver.username} ← ${senderId}: ${JSON.stringify(acceptRes.data)}`);
       }
       await sleep(40);
     }
@@ -370,232 +296,185 @@ async function main() {
 
   info(`${G(accepted)} friend requests accepted`);
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // Build the list of friend pairs we confirmed (for chat step later)
+  // We use the ring pairs we tried + assume they are now accepted
+  const friendPairs = [];
+  const seenFP = new Set();
+  for (let i = 0; i < users.length; i++) {
+    for (let d = 1; d <= 2; d++) {
+      const u1  = users[i];
+      const u2  = users[(i + d) % users.length];
+      const key = [u1.id, u2.id].sort().join('-');
+      if (!seenFP.has(key)) { seenFP.add(key); friendPairs.push({ u1, u2 }); }
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
   //  STEP 4 — Each user creates 1 post
-  // ══════════════════════════════════════════════════════════════════════════
-  header('Step 4 — Creating posts');
+  // ════════════════════════════════════════════════════════════════════════════
+  hdr('Step 4 — Creating posts');
 
-  const createdPosts = [];  // { id, userId }
+  const createdPosts = [];
 
-  for (let i = 0; i < valid.length; i++) {
-    const user     = valid[i];
-    const template = POST_TEMPLATES[i % POST_TEMPLATES.length];
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    const tpl  = POST_TEMPLATES[i % POST_TEMPLATES.length];
 
     const res = await request('POST', '/api/posts/', {
-      type   : template.type,
-      title  : template.title,
-      content: template.content,
+      type: tpl.type, title: tpl.title, content: tpl.content,
     }, user.cookie);
 
-    if (res.status === 201 || res.status === 200) {
+    if ([200, 201].includes(res.status)) {
       createdPosts.push({ id: res.data?.id, userId: user.id });
-      ok(`${G(user.username)} → "${template.title.slice(0, 55)}…"`);
+      ok(`${G(user.username)} → "${tpl.title.slice(0, 55)}…"`);
     } else {
       fail(`Post by ${user.username}: ${JSON.stringify(res.data)}`);
     }
     await sleep(60);
   }
-
   info(`${G(createdPosts.length)} posts created (status: PENDING)`);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  STEP 5 — PAUSE  ⏸  Wait for you to approve posts in admin panel
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  //  STEP 5 — PAUSE: you approve posts in the admin panel
+  // ════════════════════════════════════════════════════════════════════════════
   console.log(`
-${B('═'.repeat(50))}
-${B('  ⏸  PAUSED — Manual Admin Approval Required')}
-${B('═'.repeat(50))}
+${B('═'.repeat(52))}
+${B('  ⏸  PAUSED — Waiting for admin approval')}
+${B('═'.repeat(52))}
 
   ${Y('Please go to the admin panel and approve all PENDING posts.')}
 
-  ${DIM('Hint:')} Log in as an ADMIN user, navigate to the admin
-  ${DIM('      ')} posts panel, and set every post to ${Y('APPROVED')}.
+  ${DM('Log in as ADMIN → admin posts panel → set each post to APPROVED')}
 
-  ${C('When you are done, come back here and type:')}   ${B('yes')}  + Enter
+  ${C('When done, type')}  ${B('yes')}  ${C('+ Enter to continue')}
 `);
 
-  // Prompt loop — keep asking until they type "yes"
   let answer = '';
   while (answer.toLowerCase() !== 'yes') {
-    answer = await waitForInput(`  ${C('Type yes to continue')} → `);
-    if (answer.toLowerCase() !== 'yes') {
-      console.log(`  ${Y('Not yet? Take your time — approve the posts first.')}`);
-    }
+    answer = await askUser(`  ${C('→ ')} `);
+    if (answer.toLowerCase() !== 'yes') warn('Not yet! Approve the posts first, then type yes.');
   }
   console.log(`  ${G('✅ Continuing…')}\n`);
+  await spinner(1000, 'Verifying approved posts…');
 
-  // ── Verify which posts are now APPROVED ──────────────────────────────────
-  await fakeWait(1000, 'Fetching approved posts…');
-
-  const approvedIds = new Set();
+  // Verify which posts are now APPROVED
+  const approvedPostIds = new Set();
   for (const post of createdPosts) {
     if (!post.id) continue;
-    const r = await request('GET', `/api/posts/detail/${post.id}`, null, valid[0].cookie);
-    if (r.data?.status === 'APPROVED') approvedIds.add(post.id);
+    const r = await request('GET', `/api/posts/detail/${post.id}`, null, users[0].cookie);
+    if (r.data?.status === 'APPROVED') approvedPostIds.add(post.id);
     await sleep(30);
   }
-
-  const approvedPosts = createdPosts.filter(p => approvedIds.has(p.id));
+  const approvedPosts = createdPosts.filter(p => approvedPostIds.has(p.id));
   info(`${G(approvedPosts.length)} / ${createdPosts.length} posts are APPROVED`);
 
   if (approvedPosts.length === 0) {
-    warn('No posts are approved yet. Skipping comments & reactions.');
-    warn('Re-run or approve posts and run from step 6 manually.');
+    warn('No posts approved. Skipping comments & reactions.');
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
   //  STEP 6 — Comments on approved posts
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
   if (approvedPosts.length > 0) {
-    header('Step 6 — Adding comments');
-
-    let totalComments = 0;
+    hdr('Step 6 — Adding comments');
+    let total = 0;
 
     for (const post of approvedPosts) {
-      // 2–4 random users that are NOT the author comment on each post
-      const commenters = valid
+      const commenters = users
         .filter(u => u.id !== post.userId)
         .sort(() => Math.random() - 0.5)
         .slice(0, rand([2, 3, 4]));
 
-      for (const commenter of commenters) {
-        const content = rand(COMMENTS);
+      for (const c of commenters) {
         const res = await request('POST', '/api/comments/', {
-          postId : post.id,
-          content,
-        }, commenter.cookie);
-
-        if (res.status === 200 || res.status === 201) {
-          totalComments++;
-        } else {
-          warn(`Comment by ${commenter.username} on post ${post.id}: ${JSON.stringify(res.data)}`);
-        }
+          postId: post.id, content: rand(COMMENTS),
+        }, c.cookie);
+        if ([200, 201].includes(res.status)) total++;
+        else warn(`Comment by ${c.username}: ${JSON.stringify(res.data)}`);
         await sleep(35);
       }
     }
-
-    ok(`${G(totalComments)} comments added`);
+    ok(`${G(total)} comments added`);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
   //  STEP 7 — Reactions on approved posts
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
   if (approvedPosts.length > 0) {
-    header('Step 7 — Adding reactions');
-
-    let totalReactions = 0;
+    hdr('Step 7 — Adding reactions');
+    let total = 0;
 
     for (const post of approvedPosts) {
-      const reactors = valid.filter(u => u.id !== post.userId);
-      for (const reactor of reactors) {
-        // ~65% chance each user reacts
-        if (Math.random() > 0.65) continue;
-
-        const type = rand(REACTION_TYPES);
-        const res  = await request('POST', '/api/reactions/toggle', {
-          postId: post.id,
-          type,
+      for (const reactor of users.filter(u => u.id !== post.userId)) {
+        if (Math.random() > 0.65) continue;  // ~65% chance
+        const res = await request('POST', '/api/reactions/toggle', {
+          postId: post.id, type: rand(REACTION_TYPES),
         }, reactor.cookie);
-
-        if (res.status === 200 || res.status === 201) totalReactions++;
+        if ([200, 201].includes(res.status)) total++;
         await sleep(25);
       }
     }
-
-    ok(`${G(totalReactions)} reactions added`);
+    ok(`${G(total)} reactions added`);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  STEP 8 — Private chat between friends
-  // ══════════════════════════════════════════════════════════════════════════
-  header('Step 8 — Creating private chats between friends');
+  // ════════════════════════════════════════════════════════════════════════════
+  //  STEP 8 — Private chats between friends
+  // ════════════════════════════════════════════════════════════════════════════
+  hdr('Step 8 — Private chats between friends');
+  let totalConvs = 0, totalMsgs = 0;
 
-  // Rebuild the accepted friendship pairs from the ring we built
-  const chatPairs = [];
-  const seenPairs  = new Set();
-
-  for (let i = 0; i < valid.length; i++) {
-    for (let delta = 1; delta <= 2; delta++) {
-      const u1  = valid[i];
-      const u2  = valid[(i + delta) % valid.length];
-      const key = [u1.id, u2.id].sort().join('-');
-      if (seenPairs.has(key)) continue;
-      seenPairs.add(key);
-      chatPairs.push({ u1, u2 });
-    }
-  }
-
-  let totalConvs = 0;
-  let totalMsgs  = 0;
-
-  for (const { u1, u2 } of chatPairs) {
-    // Create or find conversation
+  for (const { u1, u2 } of friendPairs) {
     const convRes = await request('POST', '/api/chat/conversation/find-or-create', {
-      userId1: u1.id,
-      userId2: u2.id,
+      userId1: u1.id, userId2: u2.id,
     }, u1.cookie);
 
-    if (convRes.status !== 200 && convRes.status !== 201) {
+    if (![200, 201].includes(convRes.status)) {
       warn(`Conv ${u1.username} ↔ ${u2.username}: ${JSON.stringify(convRes.data)}`);
       continue;
     }
 
-    const convId = convRes.data?.id;
-    totalConvs++;
-
-    // Exchange 3-6 messages alternating between both users
-    const msgPool   = [...MESSAGES].sort(() => Math.random() - 0.5).slice(0, rand([3,4,5,6]));
-    const bothUsers = [u1, u2];
-    let   turn      = 0;
+    const convId     = convRes.data?.id;
+    const msgPool    = [...MESSAGES].sort(() => Math.random() - 0.5).slice(0, rand([3, 4, 5, 6]));
+    const both       = [u1, u2];
+    let   turn       = 0;
+    let   convMsgs   = 0;
 
     for (const content of msgPool) {
-      const sender = bothUsers[turn % 2];
-      const msgRes = await request('POST', '/api/chat/new-message', {
-        conversationId: convId,
-        content,
-        type: 'TEXT',
-      }, sender.cookie);
-
-      if (msgRes.status === 200 || msgRes.status === 201) totalMsgs++;
+      const r = await request('POST', '/api/chat/new-message', {
+        conversationId: convId, content, type: 'TEXT',
+      }, both[turn % 2].cookie);
+      if ([200, 201].includes(r.status)) { totalMsgs++; convMsgs++; }
       turn++;
       await sleep(25);
     }
 
-    ok(`${G(u1.username)} ↔ ${G(u2.username)}  ${DIM(`(${msgPool.length} messages)`)}`);
+    ok(`${G(u1.username)} ↔ ${G(u2.username)}  ${DM(`(${convMsgs} messages)`)}`);
+    totalConvs++;
   }
-
   info(`${G(totalConvs)} conversations, ${G(totalMsgs)} messages`);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  //  DONE — Summary
-  // ══════════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
+  //  DONE
+  // ════════════════════════════════════════════════════════════════════════════
   console.log(`
-${B('═'.repeat(50))}
+${B('═'.repeat(52))}
 ${B('  🎉  Seed Complete!')}
-${B('═'.repeat(50))}
+${B('═'.repeat(52))}
 
-  ${C('Users         :')} ${valid.length}
+  ${C('Users         :')} ${users.length}
   ${C('Friendships   :')} ${accepted}
-  ${C('Posts created :')} ${createdPosts.length}  ${DIM(`(${approvedPosts.length} approved)`)}
+  ${C('Posts created :')} ${createdPosts.length}  ${DM(`(${approvedPosts.length} approved)`)}
   ${C('Conversations :')} ${totalConvs}
-  ${C('Messages sent :')} ${totalMsgs}
+  ${C('Messages      :')} ${totalMsgs}
 
-${B('  Seeded user credentials:')}
+${B('  Login credentials:')}
 `);
-
-  const maxName = Math.max(...valid.map(u => u.username.length));
-  for (let i = 0; i < valid.length; i++) {
-    const u = valid[i];
-    console.log(
-      `    ${C(u.username.padEnd(maxName + 2))}` +
-      `email: ${u.email.padEnd(32)}  ` +
-      `password: ${B(makePass(i))}`
-    );
-  }
+  const w = Math.max(...users.map(u => u.username.length));
+  users.forEach((u, i) => console.log(
+    `    ${C(u.username.padEnd(w+2))}` +
+    `${u.email.padEnd(35)}  pw: ${B(makePass(i))}`
+  ));
   console.log('');
 }
 
-main().catch(err => {
-  console.error(R('\nFatal error:'), err.message || err);
-  process.exit(1);
-});
+main().catch(err => { console.error(R('\nFatal:'), err.message || err); process.exit(1); });
