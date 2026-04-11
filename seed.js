@@ -8,7 +8,7 @@
  *             ★ User ID extracted directly from JWT — 100% correct
  *    Step 2 : Send friend requests (ring: each user → next 2)
  *    Step 3 : Accept all pending friend requests (small delay simulated)
- *    Step 4 : Every user creates 1 post
+ *    Step 4 : Every user creates 1 post  (with link or image where relevant)
  *    Step 5 : ⏸  PAUSE — you manually approve posts in the admin panel
  *             then type  yes + Enter to continue
  *    Step 6 : Comments on every approved post
@@ -25,6 +25,7 @@
 const https    = require('https');
 const http     = require('http');
 const readline = require('readline');
+const { Buffer } = require('buffer');
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 const args   = process.argv.slice(2);
@@ -67,6 +68,75 @@ function request(method, path, body = null, cookies = '') {
     req.end();
   });
 }
+
+// ─── Multipart/form-data POST (for /api/posts/ which uses FileInterceptor) ────
+function requestMultipart(path, fields, fileField, fileBuffer, filename, mimeType, cookies = '') {
+  return new Promise((resolve, reject) => {
+    const url      = new URL(path, BASE_URL);
+    const isHttps  = url.protocol === 'https:';
+    const boundary = `----FormBoundary${Date.now().toString(16)}`;
+
+    const parts = [];
+
+    // Text fields
+    for (const [name, value] of Object.entries(fields)) {
+      if (value === undefined || value === null) continue;
+      parts.push(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="${name}"\r\n\r\n` +
+        `${value}\r\n`
+      );
+    }
+
+    // Optional file
+    if (fileBuffer && fileField) {
+      parts.push(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="${fileField}"; filename="${filename}"\r\n` +
+        `Content-Type: ${mimeType}\r\n\r\n`
+      );
+    }
+
+    const closing = `\r\n--${boundary}--\r\n`;
+
+    // Build the final buffer
+    const textPart   = Buffer.from(parts.join(''), 'utf8');
+    const closingBuf = Buffer.from(closing, 'utf8');
+    const body       = fileBuffer
+      ? Buffer.concat([textPart, fileBuffer, closingBuf])
+      : Buffer.concat([textPart, closingBuf]);
+
+    const req = (isHttps ? https : http).request({
+      hostname : url.hostname,
+      port     : url.port || (isHttps ? 443 : 80),
+      path     : url.pathname + url.search,
+      method   : 'POST',
+      agent    : isHttps ? tlsAgent : undefined,
+      headers  : {
+        'Content-Type'  : `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': body.length,
+        ...(cookies && { Cookie: cookies }),
+      },
+    }, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => {
+        let parsed; try { parsed = JSON.parse(raw); } catch { parsed = raw; }
+        resolve({ status: res.statusCode, data: parsed });
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+// ─── Minimal valid 1×1 white JPEG (no external files / downloads needed) ──────
+// This is a hand-crafted JPEG that passes the backend signature check (0xFF 0xD8 0xFF)
+const TINY_JPEG = Buffer.from(
+  'ffd8ffe000104a46494600010100000100010000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffdb0043010909090c0b0c180d0d1832211c213232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232ffc00011080001000103012200021101031101ffc4001f0000010501010101010100000000000000000102030405060708090a0bffc400b5100002010303020403050504040000017d01020300041105122131410613516107227114328191a1082342b1c11552d1f02433627282090a161718191a25262728292a3435363738393a434445464748494a535455565758595a636465666768696a737475767778797a838485868788898a929394959697989990a0b0c0d0e0f1a1b1c1d1e1f2a2b2c2d2e2f3a3b3c3d3e3f4a4b4c4d4e4f5a5b5c5d5e5f6a6b6c6d6e6f7a7b7c7d7e7f8a8b8c8d8e8f9a9b9c9d9e9fa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae1e2e3e4e5e6e7e8e9eaf1f2f3f4f5f6f7f8f9faffc4001f0100030101010101010101010000000000000102030405060708090a0bffc400b5110002010204040304070504040001027700010203110405213106124151076171132232810814422391a1b1c109233352f0156272d10a162434e125f11718191a262728292a35363738393a434445464748494a535455565758595a636465666768696a737475767778797a82838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae2e3e4e5e6e7e8e9eaf2f3f4f5f6f7f8f9faffda000c03010002110311003f00f4a28a2803fffd9',
+  'hex'
+);
 
 // ─── JWT decode (no library needed — payload is just base64) ─────────────────
 function jwtDecode(cookieStr) {
@@ -119,26 +189,29 @@ const NAMES = ['ali','bob','cara','dan','eve','fay','gil','hana','ida','jak',
 const makePass = i => `Ax@Pass${i % 10}`;
 
 const POST_TEMPLATES = [
+  // HELP — no link / no image
   { type:'HELP',     title:'How do I handle JWT refresh tokens?',          content:'Struggling to implement a solid refresh strategy. Tips or resources?' },
   { type:'HELP',     title:'Best way to structure a NestJS monorepo?',     content:'Large app incoming. Nx or plain NestJS monorepo? Pros/cons welcome.' },
   { type:'HELP',     title:'Prisma relations are confusing me',            content:'Can someone explain @relation vs @@index? Getting schema errors daily.' },
-  { type:'RESOURCE', title:'10 VS Code extensions every dev should have', content:'My curated list of must-haves that massively improved my workflow.' },
-  { type:'RESOURCE', title:'Free DevOps learning path 2025',              content:'Linux→Docker→K8s — full free path compiled for the community.' },
-  { type:'RESOURCE', title:'Docker Compose cheatsheet',                   content:'Handy reference for the most common Docker Compose patterns. Bookmark!' },
-  { type:'MEME',     title:'When the bug disappears after adding a log',  content:'Heisenbug strikes again 😂  We all know this pain.' },
-  { type:'MEME',     title:`Me: I'll just fix this one thing`,            content:'3 hours later, 12 files changed… perfectly fine.' },
-  { type:'MEME',     title:'Senior dev on a Friday afternoon PR review',  content:'"This PR is fine" — said no senior dev ever before a weekend.' },
   { type:'HELP',     title:'WebSocket vs SSE for real-time notifications',content:'Which is better for notifs in a NestJS app? Pros and cons please.' },
-  { type:'RESOURCE', title:'PostgreSQL performance tips',                 content:'Indexing, EXPLAIN ANALYZE, query planning — everything you need.' },
-  { type:'MEME',     title:'CSS centering in 2025',                       content:'Still googling "how to center a div" after 5 years. No shame.' },
   { type:'HELP',     title:'Docker networking explained',                 content:'Bridge vs host vs overlay — when do you actually use each?' },
-  { type:'RESOURCE', title:'Git aliases that will change your life',      content:'These 10 git aliases save me 20 minutes every single day.' },
-  { type:'MEME',     title:'Works on my machine™',                        content:'Introducing the new deployment strategy: ship your laptop.' },
   { type:'HELP',     title:'Difference between async/await and Promises?',content:'I know they are related but when should I use one vs the other?' },
-  { type:'RESOURCE', title:'Clean Code principles with TypeScript',       content:'SOLID, DRY, KISS — with real TypeScript snippets. Very practical.' },
-  { type:'MEME',     title:'Documentation? What documentation?',          content:'The code IS the documentation. — every developer, ever.' },
   { type:'HELP',     title:'How to pass env vars securely to Docker?',    content:'Using .env files feels unsafe. What are the best practices here?' },
-  { type:'RESOURCE', title:'Ultimate Linux command cheatsheet',           content:'awk, sed, grep, xargs — mastering these changed everything for me.' },
+  // RESOURCE — include a relevant contentUrl (link)
+  { type:'RESOURCE', title:'10 VS Code extensions every dev should have', content:'My curated list of must-haves that massively improved my workflow.',      contentUrl:'https://code.visualstudio.com/docs/editor/extension-marketplace' },
+  { type:'RESOURCE', title:'Free DevOps learning path 2025',              content:'Linux→Docker→K8s — full free path compiled for the community.',          contentUrl:'https://roadmap.sh/devops' },
+  { type:'RESOURCE', title:'Docker Compose cheatsheet',                   content:'Handy reference for the most common Docker Compose patterns. Bookmark!', contentUrl:'https://docs.docker.com/compose/' },
+  { type:'RESOURCE', title:'PostgreSQL performance tips',                 content:'Indexing, EXPLAIN ANALYZE, query planning — everything you need.',       contentUrl:'https://www.postgresql.org/docs/current/performance-tips.html' },
+  { type:'RESOURCE', title:'Git aliases that will change your life',      content:'These 10 git aliases save me 20 minutes every single day.',             contentUrl:'https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases' },
+  { type:'RESOURCE', title:'Clean Code principles with TypeScript',       content:'SOLID, DRY, KISS — with real TypeScript snippets. Very practical.',     contentUrl:'https://github.com/labs42io/clean-code-typescript' },
+  { type:'RESOURCE', title:'Ultimate Linux command cheatsheet',           content:'awk, sed, grep, xargs — mastering these changed everything for me.',    contentUrl:'https://ss64.com/bash/' },
+  // MEME — uploaded image (tiny embedded JPEG, valid file signature)
+  { type:'MEME',     title:'When the bug disappears after adding a log',  content:'Heisenbug strikes again 😂  We all know this pain.',           image:true },
+  { type:'MEME',     title:`Me: I'll just fix this one thing`,            content:'3 hours later, 12 files changed… perfectly fine.',             image:true },
+  { type:'MEME',     title:'Senior dev on a Friday afternoon PR review',  content:'"This PR is fine" — said no senior dev ever before a weekend.', image:true },
+  { type:'MEME',     title:'CSS centering in 2025',                       content:'Still googling "how to center a div" after 5 years. No shame.', image:true },
+  { type:'MEME',     title:'Works on my machine™',                        content:'Introducing the new deployment strategy: ship your laptop.',    image:true },
+  { type:'MEME',     title:'Documentation? What documentation?',          content:'The code IS the documentation. — every developer, ever.',      image:true },
 ];
 
 const COMMENTS = [
@@ -320,15 +393,29 @@ async function main() {
     const user = users[i];
     const tpl  = POST_TEMPLATES[i % POST_TEMPLATES.length];
 
-    const res = await request('POST', '/api/posts/', {
-      type: tpl.type, title: tpl.title, content: tpl.content,
-    }, user.cookie);
+    // The /api/posts/ endpoint uses multipart/form-data (FileInterceptor)
+    const fields = { type: tpl.type, title: tpl.title, content: tpl.content };
+    if (tpl.contentUrl) fields.contentUrl = tpl.contentUrl;
+
+    let res;
+    if (tpl.image) {
+      // MEME: upload the embedded tiny JPEG as the 'image' field
+      res = await requestMultipart(
+        '/api/posts/', fields,
+        'image', TINY_JPEG, 'meme.jpg', 'image/jpeg',
+        user.cookie
+      );
+    } else {
+      // HELP / RESOURCE (with optional contentUrl) — no file upload
+      res = await requestMultipart('/api/posts/', fields, null, null, null, null, user.cookie);
+    }
 
     if ([200, 201].includes(res.status)) {
+      const extra = tpl.image ? ' 🖼️' : tpl.contentUrl ? ` 🔗 ${tpl.contentUrl.slice(0, 40)}` : '';
       createdPosts.push({ id: res.data?.id, userId: user.id });
-      ok(`${G(user.username)} → "${tpl.title.slice(0, 55)}…"`);
+      ok(`${G(user.username)} → "${tpl.title.slice(0, 50)}"${extra}`);
     } else {
-      fail(`Post by ${user.username}: ${JSON.stringify(res.data)}`);
+      fail(`Post by ${user.username}: [${res.status}] ${JSON.stringify(res.data)}`);
     }
     await sleep(60);
   }
