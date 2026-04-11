@@ -25,7 +25,8 @@
 const https    = require('https');
 const http     = require('http');
 const readline = require('readline');
-const { Buffer } = require('buffer');
+const fs       = require('fs');
+const path     = require('path');
 
 // ─── CLI ─────────────────────────────────────────────────────────────────────
 const args   = process.argv.slice(2);
@@ -131,12 +132,51 @@ function requestMultipart(path, fields, fileField, fileBuffer, filename, mimeTyp
   });
 }
 
-// ─── Minimal valid 1×1 white JPEG (no external files / downloads needed) ──────
-// This is a hand-crafted JPEG that passes the backend signature check (0xFF 0xD8 0xFF)
-const TINY_JPEG = Buffer.from(
-  'ffd8ffe000104a46494600010100000100010000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffdb0043010909090c0b0c180d0d1832211c213232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232ffc00011080001000103012200021101031101ffc4001f0000010501010101010100000000000000000102030405060708090a0bffc400b5100002010303020403050504040000017d01020300041105122131410613516107227114328191a1082342b1c11552d1f02433627282090a161718191a25262728292a3435363738393a434445464748494a535455565758595a636465666768696a737475767778797a838485868788898a929394959697989990a0b0c0d0e0f1a1b1c1d1e1f2a2b2c2d2e2f3a3b3c3d3e3f4a4b4c4d4e4f5a5b5c5d5e5f6a6b6c6d6e6f7a7b7c7d7e7f8a8b8c8d8e8f9a9b9c9d9e9fa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae1e2e3e4e5e6e7e8e9eaf1f2f3f4f5f6f7f8f9faffc4001f0100030101010101010101010000000000000102030405060708090a0bffc400b5110002010204040304070504040001027700010203110405213106124151076171132232810814422391a1b1c109233352f0156272d10a162434e125f11718191a262728292a35363738393a434445464748494a535455565758595a636465666768696a737475767778797a82838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae2e3e4e5e6e7e8e9eaf2f3f4f5f6f7f8f9faffda000c03010002110311003f00f4a28a2803fffd9',
-  'hex'
-);
+// ─── Image downloader (real images from picsum.photos, cached locally) ─────────
+const SEED_IMG_DIR = path.join(__dirname, 'seed-images');
+
+// Specific picsum IDs — each is a distinct, good-looking photo
+const MEME_IMAGE_IDS = [10, 20, 30, 40, 50, 60, 70, 80];
+
+function downloadImageToBuffer(url) {
+  return new Promise((resolve, reject) => {
+    const get = url.startsWith('https') ? https : http;
+    get.get(url, { headers: { 'User-Agent': 'seed-script/1.0' } }, res => {
+      // Follow redirects (picsum gives a 302)
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return downloadImageToBuffer(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+    }).on('error', reject);
+  });
+}
+
+async function ensureMemeImages() {
+  if (!fs.existsSync(SEED_IMG_DIR)) fs.mkdirSync(SEED_IMG_DIR, { recursive: true });
+  const buffers = [];
+  for (const id of MEME_IMAGE_IDS) {
+    const cachePath = path.join(SEED_IMG_DIR, `meme_${id}.jpg`);
+    if (fs.existsSync(cachePath)) {
+      buffers.push(fs.readFileSync(cachePath));
+      info(`Image ${id} loaded from cache`);
+    } else {
+      try {
+        process.stdout.write(`  ${C('⬇')}  Downloading meme image ${id}… `);
+        const buf = await downloadImageToBuffer(`https://picsum.photos/id/${id}/600/400`);
+        fs.writeFileSync(cachePath, buf);
+        buffers.push(buf);
+        process.stdout.write(`${G('done')} (${(buf.length/1024).toFixed(0)} KB)\n`);
+      } catch (e) {
+        warn(`Could not download image ${id}: ${e.message} — this MEME post will have no image`);
+        buffers.push(null);
+      }
+    }
+  }
+  return buffers;
+}
 
 // ─── JWT decode (no library needed — payload is just base64) ─────────────────
 function jwtDecode(cookieStr) {
@@ -266,6 +306,11 @@ async function main() {
   console.log(B('\n  🌱  ft_transcendence — Seed Script\n'));
   console.log(`  ${C('Base URL :')} ${BASE_URL}`);
   console.log(`  ${C('Users    :')} ${NUM_USERS}`);
+
+  // Download meme images before anything else (cached in ./seed-images/)
+  hdr('Pre-flight — Downloading meme images');
+  const memeImages = await ensureMemeImages();  // array of Buffers (or null on error)
+  let memeIdx = 0;  // incremented for each MEME post
 
   // ════════════════════════════════════════════════════════════════════════════
   //  STEP 1 — Register & login users, get IDs from JWT
@@ -399,12 +444,19 @@ async function main() {
 
     let res;
     if (tpl.image) {
-      // MEME: upload the embedded tiny JPEG as the 'image' field
-      res = await requestMultipart(
-        '/api/posts/', fields,
-        'image', TINY_JPEG, 'meme.jpg', 'image/jpeg',
-        user.cookie
-      );
+      // MEME: pick the next downloaded image (rotate through the pool)
+      const imgBuf = memeImages[memeIdx % memeImages.length];
+      memeIdx++;
+      if (imgBuf) {
+        res = await requestMultipart(
+          '/api/posts/', fields,
+          'image', imgBuf, 'meme.jpg', 'image/jpeg',
+          user.cookie
+        );
+      } else {
+        // Image failed to download — post without image
+        res = await requestMultipart('/api/posts/', fields, null, null, null, null, user.cookie);
+      }
     } else {
       // HELP / RESOURCE (with optional contentUrl) — no file upload
       res = await requestMultipart('/api/posts/', fields, null, null, null, null, user.cookie);

@@ -235,6 +235,25 @@ export default function AdminPage() {
         } finally { setUsersBusy(null); }
     };
 
+    const handleDeleteUser = async (e: React.MouseEvent, userId: number, username: string) => {
+        e.stopPropagation();  // prevent bubbling to the row's navigate() onClick
+        if (!window.confirm(`Delete user @${username}? This cannot be undone.`)) return;
+        setUsersBusy(userId);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || `Failed to delete user (HTTP ${res.status})`);
+            }
+            setUsers(prev => prev.filter(u => u.id !== userId));  // remove from list, no redirect
+        } catch (e: any) {
+            setError(e.message);
+        } finally { setUsersBusy(null); }
+    };
+
     const pending = posts.filter(p => p.status === 'PENDING');
     const approved = posts.filter(p => p.status === 'APPROVED');
     const displayed = activeTab === 'PENDING' ? pending : approved;
@@ -508,6 +527,15 @@ export default function AdminPage() {
                                                         <span className="mod-user-stat-value mod-user-stat-value--friends">{user.followerCount}</span>
                                                         <span className="mod-user-stat-label">Friends</span>
                                                     </div>
+                                                    {/* Delete user button */}
+                                                    <button
+                                                        className="mod-user-delete"
+                                                        type="button"
+                                                        disabled={usersBusy === user.id}
+                                                        onClick={(e) => handleDeleteUser(e, user.id, username)}
+                                                    >
+                                                        {usersBusy === user.id ? '…' : '✕ Delete'}
+                                                    </button>
                                                 </div>
                                                 <span className="mod-user-role mod-user-role--user">USER</span>
                                             </div>
