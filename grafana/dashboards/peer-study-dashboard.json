@@ -202,7 +202,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by(route, method, status) (http_request_duration_seconds_sum{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/metrics\", route!=\"/friends/pending\"}) / (sum by(route, method, status) (http_request_duration_seconds_count{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/friends/pending\"}))",
+          "expr": "sum by(route, method, status) (http_request_duration_seconds_sum{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/metrics\", route!=\"/friends/pending\"}) / (sum by(route, method, status) (http_request_duration_seconds_count{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/metrics\", route!=\"/friends/pending\"}))",
           "interval": "",
           "legendFormat": "__auto",
           "range": true,
@@ -371,7 +371,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
