@@ -467,7 +467,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
@@ -563,7 +563,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
@@ -576,7 +576,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (name) (\n  rate(container_network_receive_bytes_total{name!=\"\", name!=\"cadvisor\"}[2m])\n)",
+          "expr": "sum by (name) (\n  rate(container_network_receive_bytes_total{name!=\"\", name!=\"\"}[2m])\n)",
           "legendFormat": "↓ {{name}}",
           "range": true,
           "refId": "A"
@@ -659,7 +659,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
@@ -672,7 +672,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (name) (\n  rate(container_network_transmit_bytes_total{name!=\"\", name!=\"cadvisor\"}[2m])\n)",
+          "expr": "sum by (name) (\n  rate(container_network_transmit_bytes_total{name!=\"\", name!=\"\"}[2m])\n)",
           "legendFormat": "↑ {{name}}",
           "range": true,
           "refId": "A"
