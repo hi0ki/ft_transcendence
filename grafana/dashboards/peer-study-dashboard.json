@@ -264,8 +264,8 @@
       "pluginVersion": "12.4.2",
       "targets": [
         {
-          "editorMode": "code",
-          "expr": "sum by(route, method, status) (http_request_duration_seconds_sum{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/metrics\", route!=\"/friends/pending\"}) / (sum by(route, method, status) (http_request_duration_seconds_count{route!=\"/auth/health\", route!=\"/auth/refresh\", route!=\"/metrics\", route!=\"/friends/pending\"}))",
+          "editorMode": "builder",
+          "expr": "sum by(route, method, status) (rate(http_request_duration_seconds_sum{route!=\"/metrics\", route!=\"/auth/health\", route!=\"/auth/refresh\"}[1m])) / (sum by(route, method, status) (rate(http_request_duration_seconds_count{route!=\"/metrics\", route!=\"/auth/health\", route!=\"/auth/refresh\"}[1m])))",
           "interval": "",
           "legendFormat": "__auto",
           "range": true,
