@@ -28,11 +28,14 @@
 .mobile-header {
   display: none;
   height: 60px;
-  background: #131621;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--sidebar-bg, rgba(7, 10, 19, 0.8));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
   padding: 0 16px;
   align-items: center;
   gap: 16px;
+  z-index: 500;
 }
 
 .menu-btn {
@@ -54,9 +57,11 @@
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 999;
+  animation: fade-in 0.3s ease-out forwards;
 }
 
 /* Mobile Refinements */

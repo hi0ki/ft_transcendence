@@ -434,9 +434,12 @@ async function main() {
 
   const createdPosts = [];
 
+  // We shuffle the templates so that even with --users 10, we get a random mix of HELP, RESOURCE, and MEME posts
+  const shuffledTemplates = [...POST_TEMPLATES].sort(() => Math.random() - 0.5);
+
   for (let i = 0; i < users.length; i++) {
     const user = users[i];
-    const tpl  = POST_TEMPLATES[i % POST_TEMPLATES.length];
+    const tpl  = shuffledTemplates[i % shuffledTemplates.length];
 
     // The /api/posts/ endpoint uses multipart/form-data (FileInterceptor)
     const fields = { type: tpl.type, title: tpl.title, content: tpl.content };

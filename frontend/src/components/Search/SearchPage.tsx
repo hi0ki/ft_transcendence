@@ -127,10 +127,14 @@ const SearchPage: React.FC = () => {
         if (tab === 'posts' && hasSearched) doPostSearch(1);
     }, [type, sortBy, order]);
 
-    // Load posts on initial mount only
+    // Load data when tab changes
     useEffect(() => {
-        doPostSearch(1);
-    }, []);
+        if (tab === 'posts' && !hasSearched) {
+            doPostSearch(1);
+        } else if (tab === 'users' && !userHasSearched) {
+            doUserSearch(1);
+        }
+    }, [tab, hasSearched, userHasSearched, doPostSearch, doUserSearch]);
 
     const handleSearch = (_q: string) => {
         doSearch(1);

@@ -10,3 +10,4 @@ build/
 ssl/
 .vscode/
 .idea/
+AUTH_EFFECTS_EXPLAINED.md

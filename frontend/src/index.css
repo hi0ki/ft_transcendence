@@ -5,12 +5,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  /* Modern SaaS Themes */
+  --bg-base: #060913;
+  --card-bg: rgba(20, 30, 60, 0.6);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --accent-primary: #00C2FF;
+  --accent-secondary: #8B5CF6;
+  --success: #10B981;
+  --text-primary: #E5E7EB;
+  --text-secondary: #9CA3AF;
+
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0d0f1a;
+  color: var(--text-primary);
+  background-color: var(--bg-base);
   color-scheme: dark;
 
   font-synthesis: none;
@@ -36,14 +46,21 @@ a:hover {
 }
 
 html {
-  background: #0d0f1a;
+  background: var(--bg-base);
+  height: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0d0f1a;
+  background-color: var(--bg-base);
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(0, 194, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.12) 0%, transparent 60%);
+  background-size: 100% 100%;
+  background-attachment: fixed;
+  color: var(--text-primary);
 }
 
 h1 {
@@ -59,7 +76,20 @@ button {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in 0.4s ease-out forwards;
 }
 
 /* Scrollbar global */

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI, getAvatarSrc } from '../../services/authApi';
+import ConfirmModal from '../common/ConfirmModal';
 import './SettingsPage.css';
 
 interface ProfileFormData {
@@ -40,6 +41,7 @@ function SettingsPage() {
     const [avatarBase64, setAvatarBase64] = useState<string | null>(null);
     const [avatarLoading, setAvatarLoading] = useState(!cachedProfile);
     const [errors, setErrors] = useState<FormErrors>({});
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -116,8 +118,12 @@ function SettingsPage() {
         }
     };
 
-    const handleDeleteAccount = async () => {
-        if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    const handleDeleteAccountClick = () => {
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteAccount = async () => {
+        setShowDeleteModal(false);
 
         const res = await fetch(`${API_BASE_URL}/api/users/${currentUser?.id}`, {
             method: 'DELETE',
@@ -271,7 +277,7 @@ function SettingsPage() {
                     </button>
                     <button
                         className="settings-delete-btn"
-                        onClick={handleDeleteAccount}
+                        onClick={handleDeleteAccountClick}
                         type="button"
                     >
                         🗑 Delete My Account
@@ -286,6 +292,17 @@ function SettingsPage() {
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                title="Delete Account"
+                message="Are you sure you want to delete your account? All your data will be permanently removed. This cannot be undone."
+                confirmText="Yes, delete account"
+                cancelText="Keep my account"
+                onConfirm={confirmDeleteAccount}
+                onCancel={() => setShowDeleteModal(false)}
+                isDangerous={true}
+            />
         </div>
     );
 }
