@@ -181,6 +181,9 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
 
     // Show More if content is long OR if post has an image (image will be shown in the modal)
     const isContentTruncated = (post.content && post.content.length > MAX_CONTENT_LENGTH) || !!post.imageUrl;
+    const showMoreLabel = post.imageUrl && !(post.content && post.content.length > MAX_CONTENT_LENGTH)
+        ? 'Open post'
+        : 'Read details';
     const displayContent =
         post.content && post.content.length > MAX_CONTENT_LENGTH
             ? post.content.substring(0, MAX_CONTENT_LENGTH) + '...'
@@ -363,34 +366,38 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                         <p className="ppc-text">{displayContent}</p>
                         {isContentTruncated && (
                             <button className="ppc-show-more" onClick={() => setShowDetailModal(true)}>
-                                Show More
+                                <span>{showMoreLabel}</span>
+                                <span className="ppc-show-more-icon" aria-hidden="true">↗</span>
                             </button>
                         )}
                     </>
                 )}
 
-                {/* Image mention instead of full image */}
-                {post.imageUrl && (
-                    <div className="ppc-image-mention">
-                        <ImageIcon />
-                        <span>Image attached</span>
-                    </div>
-                )}
+                {(post.imageUrl || post.contentUrl) && (
+                    <div className="ppc-attachments">
+                        {post.imageUrl && (
+                            <button type="button" className="ppc-attachment-chip ppc-attachment-chip--image" onClick={() => setShowDetailModal(true)}>
+                                <ImageIcon />
+                                <span>Image attached</span>
+                            </button>
+                        )}
 
-                {/* Link */}
-                {post.contentUrl && (
-                    <a
-                        href={post.contentUrl.startsWith('http') ? post.contentUrl : `https://${post.contentUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ppc-link"
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                        </svg>
-                        <span>{post.contentUrl}</span>
-                    </a>
+                        {post.contentUrl && (
+                            <a
+                                href={post.contentUrl.startsWith('http') ? post.contentUrl : `https://${post.contentUrl}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ppc-attachment-link"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                </svg>
+                                <span className="ppc-attachment-link-text">{post.contentUrl}</span>
+                                <span className="ppc-attachment-link-arrow" aria-hidden="true">↗</span>
+                            </a>
+                        )}
+                    </div>
                 )}
             </div>
 
