@@ -1,10 +1,12 @@
 .comments-modal-content {
-    background-color: #1a1f30;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     width: 90%;
-    max-width: 600px;
+    max-width: 750px;
     max-height: 80vh;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
@@ -52,7 +54,8 @@
 .comment-item {
     display: flex;
     gap: 12px;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     padding: 16px;
     border-radius: 12px;
     animation: slideInRight 0.3s ease backwards;
@@ -126,21 +129,21 @@
 
 .comments-input-area {
     padding: 16px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     display: flex;
     gap: 12px;
     align-items: center;
-    background-color: #171c2b;
+    background: transparent;
 }
 
 .comment-input-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
-    background-color: #0f1423;
+    background-color: rgba(0, 0, 0, 0.2);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     padding-right: 4px;
 }
 
@@ -256,8 +259,8 @@
 
 .comment-edit-input {
     width: 100%;
-    background: #0f1423;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     border-radius: 8px;
     padding: 8px 12px;
     color: #fff;
