@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { authAPI } from '../../services/authApi';
+import ConfirmModal from '../common/ConfirmModal';
+import '../Feed/PostDetailModal.css';
 import './AdminPage.css';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || window.location.origin;
@@ -152,6 +154,7 @@ export default function AdminPage() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [usersLoading, setUsersLoading] = useState(false);
     const [usersBusy, setUsersBusy] = useState<number | null>(null);
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; confirmText: string; onConfirm: () => void }>({ isOpen: false, title: '', message: '', confirmText: '', onConfirm: () => {} });
 
     const fetchPosts = () => {
         setLoading(true);
@@ -198,22 +201,30 @@ export default function AdminPage() {
         } finally { setBusy(null); }
     };
 
-    const handleDelete = async (post: AdminPost) => {
-        if (!window.confirm(`Delete post "${post.title}"? This cannot be undone.`)) return;
-        setBusy(post.id);
-        try {
-            const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}`, {
-                method: 'DELETE',
-                credentials: 'include',
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || `Failed to delete (HTTP ${res.status})`);
+    const confirmDeletePost = (post: AdminPost) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Post',
+            message: `Delete post "${post.title}"? This cannot be undone.`,
+            confirmText: 'Delete Post',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setBusy(post.id);
+                try {
+                    const res = await fetch(`${API_BASE_URL}/posts/admin/${post.id}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.message || `Failed to delete (HTTP ${res.status})`);
+                    }
+                    setPosts(prev => prev.filter(p => p.id !== post.id));
+                } catch (e: any) {
+                    setError(e.message);
+                } finally { setBusy(null); }
             }
-            setPosts(prev => prev.filter(p => p.id !== post.id));
-        } catch (e: any) {
-            setError(e.message);
-        } finally { setBusy(null); }
+        });
     };
 
     const handleChangeRole = async (userId: number, newRole: string) => {
@@ -235,23 +246,31 @@ export default function AdminPage() {
         } finally { setUsersBusy(null); }
     };
 
-    const handleDeleteUser = async (e: React.MouseEvent, userId: number, username: string) => {
+    const confirmDeleteUser = (e: React.MouseEvent, userId: number, username: string) => {
         e.stopPropagation();  // prevent bubbling to the row's navigate() onClick
-        if (!window.confirm(`Delete user @${username}? This cannot be undone.`)) return;
-        setUsersBusy(userId);
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-                method: 'DELETE',
-                credentials: 'include',
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || `Failed to delete user (HTTP ${res.status})`);
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete User',
+            message: `Delete user @${username}? This cannot be undone.`,
+            confirmText: 'Delete User',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setUsersBusy(userId);
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.message || `Failed to delete user (HTTP ${res.status})`);
+                    }
+                    setUsers(prev => prev.filter(u => u.id !== userId));  // remove from list, no redirect
+                } catch (e: any) {
+                    setError(e.message);
+                } finally { setUsersBusy(null); }
             }
-            setUsers(prev => prev.filter(u => u.id !== userId));  // remove from list, no redirect
-        } catch (e: any) {
-            setError(e.message);
-        } finally { setUsersBusy(null); }
+        });
     };
 
     const pending = posts.filter(p => p.status === 'PENDING');
@@ -264,6 +283,16 @@ export default function AdminPage() {
     return (
         <div className="mod-page">
             {selectedPost && <PostDetailModal post={selectedPost} onClose={() => setSelectedPost(null)} />}
+
+            <ConfirmModal 
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                isDangerous={true}
+            />
 
             <div className="mod-header">
                 <div className="mod-header-left">
@@ -409,7 +438,7 @@ export default function AdminPage() {
                                             )}
                                             <button
                                                 className="mod-action mod-action--delete"
-                                                onClick={() => handleDelete(post)}
+                                                onClick={() => confirmDeletePost(post)}
                                                 disabled={isBusy}
                                             >
                                                 ✕ {isBusy ? '…' : 'Delete'}
@@ -527,12 +556,11 @@ export default function AdminPage() {
                                                         <span className="mod-user-stat-value mod-user-stat-value--friends">{user.followerCount}</span>
                                                         <span className="mod-user-stat-label">Friends</span>
                                                     </div>
-                                                    {/* Delete user button */}
                                                     <button
                                                         className="mod-user-delete"
                                                         type="button"
                                                         disabled={usersBusy === user.id}
-                                                        onClick={(e) => handleDeleteUser(e, user.id, username)}
+                                                        onClick={(e) => confirmDeleteUser(e, user.id, username)}
                                                     >
                                                         {usersBusy === user.id ? '…' : '✕ Delete'}
                                                     </button>
