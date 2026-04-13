@@ -35,6 +35,29 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onSwitchToSignUp }) => {
 
     return (
         <div className="auth-page">
+            {/* Orbiting particles */}
+            <div className="auth-particles">
+                <span className="particle p1"></span>
+                <span className="particle p2"></span>
+                <span className="particle p3"></span>
+                <span className="particle p4"></span>
+                <span className="particle p5"></span>
+                <span className="particle p6"></span>
+                <span className="particle p7"></span>
+                <span className="particle p8"></span>
+                <span className="particle p9"></span>
+                <span className="particle p10"></span>
+                <span className="particle p11"></span>
+                <span className="particle p12"></span>
+                <span className="particle p13"></span>
+                <span className="particle p14"></span>
+                <span className="particle p15"></span>
+                <span className="particle p16"></span>
+                <span className="particle p17"></span>
+                <span className="particle p18"></span>
+                <span className="particle p19"></span>
+                <span className="particle p20"></span>
+            </div>
             <div className="auth-hero">
                 <div className="auth-logo">
                     <div className="auth-logo-box">
