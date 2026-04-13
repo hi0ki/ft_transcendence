@@ -32,20 +32,32 @@
 
 /* ── Profile Card ── */
 .profile-card {
-    background: #131621;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     margin-bottom: 20px;
     width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: fade-in 0.5s ease-out forwards;
 }
 
 /* ── Banner ── */
 .profile-banner {
-    height: 160px;
-    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0ea5e9 100%);
+    height: 180px;
+    background: linear-gradient(270deg, var(--accent-secondary, #8B5CF6) 0%, #2563eb 50%, var(--accent-primary, #00C2FF) 100%);
+    background-size: 200% 200%;
+    animation: gradient-pan 12s ease infinite;
     position: relative;
     width: 100%;
+}
+
+@keyframes gradient-pan {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .profile-banner-fade {
@@ -426,12 +438,15 @@
 .profile-tabs {
     display: flex;
     gap: 0;
-    background: #131621;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     width: 100%;
     margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .profile-tab {
@@ -495,18 +510,20 @@
 }
 
 .post-card {
-    background: #131621;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
     padding: 20px 24px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left: 3px solid rgba(99, 102, 241, 0.4);
-    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fade-in 0.4s ease-out forwards;
 }
 
 .post-card:hover {
-    border-left-color: #6366f1;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 0 16px rgba(0, 194, 255, 0.05);
+    border-color: rgba(0, 194, 255, 0.15);
 }
 
 /* Post header with avatar */
@@ -603,21 +620,23 @@
 
 /* ── Profile Post Card (ppc-*) — home-style ── */
 .ppc-card {
-    background: #131621;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
     padding: 18px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left: 3px solid rgba(99, 102, 241, 0.35);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: border-left-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fade-in 0.4s ease-out forwards;
 }
 
 .ppc-card:hover {
-    border-left-color: #6366f1;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 0 16px rgba(0, 194, 255, 0.05);
+    border-color: rgba(0, 194, 255, 0.15);
 }
 
 .ppc-header {

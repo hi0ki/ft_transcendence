@@ -9,6 +9,7 @@ import type { ReactionType, ReactionWithUser } from '../../services/reactionsApi
 import CommentsModal from '../Comments/CommentsModal';
 import type { Comment } from '../Comments/CommentsModal';
 import PostDetailModal from '../Feed/PostDetailModal';
+import ConfirmModal from '../common/ConfirmModal';
 import { getAchievementProgress, type AchievementProgress } from '../../services/achievementsApi';
 import './ProfilePage.css';
 
@@ -658,6 +659,7 @@ function ProfilePage() {
     const [showFriendsPopup, setShowFriendsPopup] = useState(false);
     const [friendsList, setFriendsList] = useState<Friend[]>([]);
     const [friendsListLoading, setFriendsListLoading] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; confirmText: string; onConfirm: () => void }>({ isOpen: false, title: '', message: '', confirmText: '', onConfirm: () => {} });
 
     const openFriendsPopup = async () => {
         if (!profileData?.user?.id) return;
@@ -721,21 +723,29 @@ function ProfilePage() {
         myUsername
     );
 
-    const handleDeletePost = async (postId: number) => {
-        if (!window.confirm('Delete this post? This cannot be undone.')) return;
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
-                method: 'DELETE',
-                credentials: 'include',
-            });
-            if (res.ok) {
-                setPosts(prev => prev.filter(p => p.id !== postId));
-            } else {
-                alert('Failed to delete post');
+    const handleDeletePost = (postId: number) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Post',
+            message: 'Delete this post? This cannot be undone.',
+            confirmText: 'Delete Post',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    if (res.ok) {
+                        setPosts(prev => prev.filter(p => p.id !== postId));
+                    } else {
+                        alert('Failed to delete post');
+                    }
+                } catch {
+                    alert('Failed to delete post');
+                }
             }
-        } catch {
-            alert('Failed to delete post');
-        }
+        });
     };
 
     const handleEditPost = async (postId: number, data: { title: string; content: string; contentUrl?: string | null }) => {
@@ -779,6 +789,15 @@ function ProfilePage() {
 
     return (
         <>
+            <ConfirmModal 
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                isDangerous={true}
+            />
         <div className="profile-page">
             <div className="profile-container">
 
@@ -812,6 +831,18 @@ function ProfilePage() {
                             </div>
                             {joinedAt && <p className="profile-joined">Member since {joinedAt}</p>}
                             {bio && <p className="profile-bio">{bio}</p>}
+
+                            <div className="profile-socials" style={{ display: 'flex', gap: '14px', marginBottom: '20px' }}>
+                                <a href="#" style={{ color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s', display: 'flex' }} onMouseOver={e => e.currentTarget.style.color = '#fff'} onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                </a>
+                                <a href="#" style={{ color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s', display: 'flex' }} onMouseOver={e => e.currentTarget.style.color = '#00C2FF'} onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                </a>
+                                <a href="#" style={{ color: 'rgba(255,255,255,0.3)', transition: 'color 0.2s', display: 'flex' }} onMouseOver={e => e.currentTarget.style.color = '#1DA1F2'} onMouseOut={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                                </a>
+                            </div>
 
                             <div className="profile-stats">
                                 <div className="stat-item">
@@ -883,16 +914,24 @@ function ProfilePage() {
                                                 className="profile-follow-btn profile-follow-btn--friends"
                                                 type="button"
                                                 disabled={friendLoading}
-                                                onClick={async () => {
+                                                onClick={() => {
                                                     if (!profileData?.user?.id) return;
-                                                    if (!window.confirm(`Remove @${username} as a friend?`)) return;
-                                                    setFriendLoading(true);
-                                                    try {
-                                                        await friendsAPI.removeFriend(profileData.user.id);
-                                                        setFriendStatus({ status: 'NONE' });
-                                                    } catch { /* ignore */ } finally {
-                                                        setFriendLoading(false);
-                                                    }
+                                                    setConfirmModal({
+                                                        isOpen: true,
+                                                        title: 'Remove Friend',
+                                                        message: `Remove @${username} as a friend?`,
+                                                        confirmText: 'Remove',
+                                                        onConfirm: async () => {
+                                                            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                            setFriendLoading(true);
+                                                            try {
+                                                                await friendsAPI.removeFriend(profileData.user.id);
+                                                                setFriendStatus({ status: 'NONE' });
+                                                            } catch { /* ignore */ } finally {
+                                                                setFriendLoading(false);
+                                                            }
+                                                        }
+                                                    });
                                                 }}
                                             >
                                                 {friendLoading ? '...' : '✓ Friends · Remove'}
@@ -969,17 +1008,25 @@ function ProfilePage() {
                                 <button
                                     className="profile-delete-btn"
                                     type="button"
-                                    onClick={async () => {
-                                        if (!window.confirm(`Delete user @${username}? This cannot be undone.`)) return;
-                                        const res = await fetch(`${API_BASE_URL}/api/users/${profileData?.user?.id}`, {
-                                            method: 'DELETE',
-                                            credentials: 'include',
+                                    onClick={() => {
+                                        setConfirmModal({
+                                            isOpen: true,
+                                            title: 'Delete User',
+                                            message: `Delete user @${username}? This cannot be undone.`,
+                                            confirmText: 'Delete User',
+                                            onConfirm: async () => {
+                                                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                                const res = await fetch(`${API_BASE_URL}/api/users/${profileData?.user?.id}`, {
+                                                    method: 'DELETE',
+                                                    credentials: 'include',
+                                                });
+                                                if (res.ok) {
+                                                    navigate('/home');
+                                                } else {
+                                                    alert('Failed to delete user');
+                                                }
+                                            }
                                         });
-                                        if (res.ok) {
-                                            navigate('/home');
-                                        } else {
-                                            alert('Failed to delete user');
-                                        }
                                     }}
                                 >
                                     🗑 Delete User
@@ -1011,8 +1058,16 @@ function ProfilePage() {
                 {/* ── Posts ── */}
                 <div className="profile-posts">
                     {filteredPosts.length === 0 ? (
-                        <div className="ppc-empty">
-                            No {activeTab === 'HELP' ? 'help' : activeTab === 'RESOURCE' ? 'resource' : 'meme'} posts yet.
+                        <div className="ppc-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', background: 'rgba(20, 30, 60, 0.4)', borderRadius: '16px', border: '1px dashed rgba(255, 255, 255, 0.1)' }}>
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6, marginBottom: '16px', filter: 'drop-shadow(0 0 8px rgba(14, 165, 233, 0.4))' }}>
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <path d="M8 12h8" />
+                                <path d="M8 16h8" />
+                                <path d="M8 8h2" />
+                            </svg>
+                            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.5)' }}>
+                                No {activeTab === 'HELP' ? 'help' : activeTab === 'RESOURCE' ? 'resource' : 'meme'} posts yet.
+                            </p>
                         </div>
                     ) : (
                         filteredPosts.map(post => (
