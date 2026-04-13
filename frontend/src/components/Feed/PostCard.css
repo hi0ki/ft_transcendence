@@ -1,13 +1,23 @@
 .post-card {
-    background-color: #171c2b;
-    border-radius: 12px;
+    background-color: var(--card-bg, rgba(20, 30, 60, 0.6));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
     padding: 24px;
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fade-in 0.4s ease-out forwards;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 0 16px rgba(0, 194, 255, 0.05);
+    border-color: rgba(0, 194, 255, 0.15);
 }
 
 .post-header-container {
@@ -64,10 +74,11 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 12px;
-    border-radius: 16px;
+    padding: 4px 14px;
+    border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2) inset;
 }
 
 .type-help {
@@ -146,7 +157,8 @@
 
 .post-link-card:hover {
     background-color: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--accent-primary, #00C2FF);
+    box-shadow: 0 0 12px rgba(0, 194, 255, 0.1);
 }
 
 .link-icon-container {

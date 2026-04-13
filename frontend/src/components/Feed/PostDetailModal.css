@@ -1,10 +1,37 @@
 .post-detail-modal-content {
-    width: 90vw;
-    max-width: 800px;
-    max-height: 85vh;
+    background-color: #111827;
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    padding: 24px;
+    width: 90vw !important;
+    max-width: 800px !important;
+    max-height: 85vh !important;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(99, 102, 241, 0.5) rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Sticky header — scoped to beat AdminPage.css specificity */
+.post-detail-modal-content > .modal-header {
+    position: sticky !important;
+    top: -24px !important;
+    z-index: 50 !important;
+    margin: -24px -24px 24px -24px !important;
+    padding: 24px !important;
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.5);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0;
+    gap: 16px;
 }
 
 .post-detail-modal-content>* {
@@ -35,7 +62,7 @@
     gap: 12px;
     align-items: flex-start;
     padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
 }
 
 .post-detail-avatar {
@@ -98,9 +125,9 @@
 .post-image {
     display: flex;
     justify-content: center;
-    background-color: #0f1423;
+    background-color: rgba(0, 0, 0, 0.2);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
     overflow: hidden;
     margin-top: 8px;
 }
