@@ -410,86 +410,118 @@
     word-break: break-word;
 }
 
-/* Indicators row: image badge + link + tags */
-.mod-card-indicators {
+/* Attachments row: image/link pills */
+.mod-card-attachments {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 8px;
     min-height: 0;
 }
 
-.mod-indicator {
+.mod-attachment {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.76rem;
+    gap: 7px;
+    font-size: 0.78rem;
     font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
+    padding: 7px 11px;
+    border-radius: 999px;
     text-decoration: none;
     white-space: nowrap;
-    max-width: 300px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+}
+
+.mod-attachment-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.mod-attachment--image {
+    background: rgba(251, 146, 60, 0.08);
+    color: #fdba74;
+    border: 1px solid rgba(251, 146, 60, 0.16);
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.mod-attachment--image:hover {
+    background: rgba(251, 146, 60, 0.12);
+    border-color: rgba(251, 146, 60, 0.24);
+    box-shadow: 0 8px 18px rgba(251, 146, 60, 0.08);
+    transform: translateY(-1px);
+}
+
+.mod-attachment--link {
+    background: rgba(0, 194, 255, 0.08);
+    color: #7dd3fc;
+    border: 1px solid rgba(0, 194, 255, 0.16);
+}
+
+.mod-attachment--link:hover {
+    background: rgba(0, 194, 255, 0.12);
+    border-color: rgba(0, 194, 255, 0.28);
+    box-shadow: 0 8px 18px rgba(0, 194, 255, 0.08);
+    transform: translateY(-1px);
+}
+
+.mod-attachment-text {
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.mod-indicator--image {
-    background: rgba(255, 255, 255, 0.03);
-    color: #fb923c;
-    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
+.mod-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
 }
 
-.mod-indicator--link {
-    background: rgba(255, 255, 255, 0.03);
-    color: #38bdf8;
-    border: 1px solid var(--border-light, rgba(255, 255, 255, 0.08));
-}
-
-.mod-indicator--link:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
+.mod-tag-pill {
+    background: rgba(99, 102, 241, 0.1);
+    color: #c4b5fd;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    letter-spacing: 0.02em;
 }
 
 /* Show more */
 .mod-show-more {
-    background: none;
-    border: none;
-    color: #0ea5e9;
-    font-size: 0.82rem;
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #dbeafe;
+    font-size: 0.78rem;
+    font-weight: 700;
     cursor: pointer;
-    padding: 0;
+    padding: 6px 12px;
+    border-radius: 999px;
     font-family: inherit;
     text-align: left;
-    transition: color 0.15s;
-    display: inline;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .mod-show-more:hover {
-    color: #38bdf8;
-}
-
-
-
-/* Tag pills */
-.mod-card-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 2px;
-}
-
-.mod-tag-pill {
-    background: rgba(99, 102, 241, 0.12);
-    color: #a5b4fc;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: 20px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(0, 194, 255, 0.22);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
 }
 
 /* ── Action bar ── */

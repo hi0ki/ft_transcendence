@@ -40,6 +40,22 @@ interface AdminUser {
 
 const MAX_PREVIEW_LENGTH = 300;
 
+const MAX_LINK_LABEL_LENGTH = 42;
+
+function getLinkLabel(value: string): string {
+    const normalized = formatUrl(value);
+
+    try {
+        const parsed = new URL(normalized);
+        const host = parsed.hostname.replace(/^www\./, '');
+        const path = `${parsed.pathname}${parsed.search}`;
+        const label = `${host}${path === '/' ? '' : path}`;
+        return label.length > MAX_LINK_LABEL_LENGTH ? `${label.substring(0, MAX_LINK_LABEL_LENGTH)}…` : label;
+    } catch {
+        return value.length > MAX_LINK_LABEL_LENGTH ? `${value.substring(0, MAX_LINK_LABEL_LENGTH)}…` : value;
+    }
+}
+
 function timeAgo(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const m = Math.floor(diff / 60000);
@@ -405,25 +421,38 @@ export default function AdminPage() {
                                                 </p>
                                             )}
 
-                                            <div className="mod-card-indicators">
+                                            <div className="mod-card-attachments">
                                                 {post.imageUrl && (
-                                                    <span className="mod-indicator mod-indicator--image">📷 Has image</span>
+                                                    <button
+                                                        type="button"
+                                                        className="mod-attachment mod-attachment--image"
+                                                        onClick={() => setSelectedPost(post)}
+                                                    >
+                                                        <span className="mod-attachment-icon">🖼</span>
+                                                        <span className="mod-attachment-text">Media attached</span>
+                                                    </button>
                                                 )}
                                                 {post.contentUrl && (
                                                     <a
                                                         href={formatUrl(post.contentUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="mod-indicator mod-indicator--link"
+                                                        className="mod-attachment mod-attachment--link"
                                                         onClick={e => e.stopPropagation()}
                                                     >
-                                                        🔗 {post.contentUrl.length > 50 ? post.contentUrl.substring(0, 50) + '…' : post.contentUrl}
+                                                        <span className="mod-attachment-icon">↗</span>
+                                                        <span className="mod-attachment-text">{getLinkLabel(post.contentUrl)}</span>
                                                     </a>
                                                 )}
-                                                {post.tags && post.tags.length > 0 && post.tags.map(tag => (
-                                                    <span key={tag} className="mod-tag-pill">{tag}</span>
-                                                ))}
                                             </div>
+
+                                            {post.tags && post.tags.length > 0 && (
+                                                <div className="mod-card-tags">
+                                                    {post.tags.map(tag => (
+                                                        <span key={tag} className="mod-tag-pill">{tag}</span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="mod-card-actions">
