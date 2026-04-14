@@ -174,7 +174,7 @@
 }
 
 .nav-item-badge {
-    background-color: var(--badge-bg);
+    background: var(--badge-bg);
     color: white;
     font-size: 0.75rem;
     font-weight: 700;
@@ -186,10 +186,12 @@
     display: inline-flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 6px 14px rgba(0, 194, 255, 0.25);
 }
 
 .nav-item--active .nav-item-badge {
-    background-color: rgba(255, 255, 255, 0.2);
+    background: var(--badge-bg);
+    color: #ffffff;
 }
 
 /* Footer / User Profile */

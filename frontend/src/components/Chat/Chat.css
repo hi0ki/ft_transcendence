@@ -356,7 +356,9 @@
 }
 
 .msg--own .msg-bubble {
-    background: rgba(15, 23, 42, 0.9);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
     color: #f1f5f9;
 }
 

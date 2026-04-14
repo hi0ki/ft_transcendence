@@ -1,13 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD';
+export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
 
 export const REACTION_EMOJI: Record<ReactionType, string> = {
-    LIKE: '👍', LOVE: '❤️', HAHA: '😂', WOW: '😮', SAD: '😢',
+    LIKE: '👍', LOVE: '❤️', HAHA: '😂', WOW: '😮', SAD: '😢', ANGRY: '😡',
 };
 
 export const REACTION_LABELS: Record<ReactionType, string> = {
-    LIKE: 'Like', LOVE: 'Love', HAHA: 'Haha', WOW: 'Wow', SAD: 'Sad',
+    LIKE: 'Like', LOVE: 'Love', HAHA: 'Haha', WOW: 'Wow', SAD: 'Sad', ANGRY: 'Angry',
 };
 
 export interface ReactionCounts {

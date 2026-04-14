@@ -39,7 +39,15 @@ interface PostCardProps {
 
 const MAX_CONTENT_LENGTH = 200;
 const MAX_CONTENT_LINES = 8;
-const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
+const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+
+function getReactionEmoji(type: string): string {
+    return REACTION_EMOJI[type as ReactionType] || '❓';
+}
+
+function getReactionLabel(type: string): string {
+    return REACTION_LABELS[type as ReactionType] || 'Reaction';
+}
 
 const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMore, onViewPost, commentCount: externalCommentCount, readOnly = false }) => {
     const navigate = useNavigate();
@@ -296,14 +304,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                                 src={r.user?.profile?.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + r.userId}
                                 alt={r.user?.profile?.username || 'User'}
                                 className="reactions-summary-avatar"
-                                title={(r.user?.profile?.username || 'Unknown') + ' reacted ' + REACTION_LABELS[r.type]}
+                                title={(r.user?.profile?.username || 'Unknown') + ' reacted ' + getReactionLabel(r.type)}
                             />
                         ))}
                     </div>
                     <div className="reactions-summary-emojis">
                         {/* Show unique reaction types */}
                         {[...new Set(reactionsUsers.map(r => r.type))].map(type => (
-                            <span key={type} className="reactions-summary-emoji">{REACTION_EMOJI[type]}</span>
+                            <span key={type} className="reactions-summary-emoji">{getReactionEmoji(type)}</span>
                         ))}
                     </div>
                     <span className="reactions-summary-text">
@@ -415,8 +423,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onComment, onShare, onShowMor
                                         <span className="reactions-popup-name">
                                             {r.user?.profile?.username || r.user?.email || 'Unknown'}
                                         </span>
-                                        <span className="reactions-popup-emoji" title={REACTION_LABELS[r.type]}>
-                                            {REACTION_EMOJI[r.type]}
+                                        <span className="reactions-popup-emoji" title={getReactionLabel(r.type)}>
+                                            {getReactionEmoji(r.type)}
                                         </span>
                                     </div>
                                 ))

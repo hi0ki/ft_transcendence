@@ -8,11 +8,11 @@
  *             ★ User ID extracted directly from JWT — 100% correct
  *    Step 2 : Send friend requests (ring: each user → next 2)
  *    Step 3 : Accept all pending friend requests (small delay simulated)
- *    Step 4 : Every user creates 1 post  (with link or image where relevant)
+ *    Step 4 : Every user creates 1 post  (all posts include an image)
  *    Step 5 : ⏸  PAUSE — you manually approve posts in the admin panel
  *             then type  yes + Enter to continue
- *    Step 6 : Comments on every approved post
- *    Step 7 : Reactions on every approved post
+ *    Step 6 : Every user comments on every approved post
+ *    Step 7 : Every user reacts on every approved post
  *    Step 8 : Private chat conversations between the friends we just made
  *
  *  Usage:
@@ -135,8 +135,21 @@ function requestMultipart(path, fields, fileField, fileBuffer, filename, mimeTyp
 // ─── Image downloader (real images from picsum.photos, cached locally) ─────────
 const SEED_IMG_DIR = path.join(__dirname, 'seed-images');
 
-// Specific picsum IDs — each is a distinct, good-looking photo
-const MEME_IMAGE_IDS = [10, 20, 30, 40, 50, 60, 70, 80];
+// Curated image queries by post type.
+// HELP/RESOURCE are tech-focused; MEME can stay broad/fun.
+const IMAGE_URLS_BY_TYPE = {
+  HELP: [
+    'https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
+    'https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
+  ],
+  RESOURCE: [
+    'https://images.pexels.com/photos/546819/pexels-photo-546819.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
+    'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop',
+  ],
+  MEME: [
+    'https://picsum.photos/id/1025/600/400',
+  ],
+};
 
 function downloadImageToBuffer(url) {
   return new Promise((resolve, reject) => {
@@ -154,28 +167,43 @@ function downloadImageToBuffer(url) {
   });
 }
 
-async function ensureMemeImages() {
+const FALLBACK_IMAGE = {
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j3ioAAAAASUVORK5CYII=',
+    'base64'
+  ),
+  filename: 'fallback.png',
+  mimeType: 'image/png',
+};
+
+async function ensurePostImagesByType() {
   if (!fs.existsSync(SEED_IMG_DIR)) fs.mkdirSync(SEED_IMG_DIR, { recursive: true });
-  const buffers = [];
-  for (const id of MEME_IMAGE_IDS) {
-    const cachePath = path.join(SEED_IMG_DIR, `meme_${id}.jpg`);
-    if (fs.existsSync(cachePath)) {
-      buffers.push(fs.readFileSync(cachePath));
-      info(`Image ${id} loaded from cache`);
-    } else {
+  const imagesByType = { HELP: [], RESOURCE: [], MEME: [] };
+
+  for (const [type, urls] of Object.entries(IMAGE_URLS_BY_TYPE)) {
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      const cachePath = path.join(SEED_IMG_DIR, `${type.toLowerCase()}_${i + 1}.jpg`);
+      if (fs.existsSync(cachePath)) {
+        imagesByType[type].push({ buffer: fs.readFileSync(cachePath), filename: 'post.jpg', mimeType: 'image/jpeg' });
+        info(`${type} image ${i + 1} loaded from cache`);
+        continue;
+      }
+
       try {
-        process.stdout.write(`  ${C('⬇')}  Downloading meme image ${id}… `);
-        const buf = await downloadImageToBuffer(`https://picsum.photos/id/${id}/600/400`);
+        process.stdout.write(`  ${C('⬇')}  Downloading ${type} image ${i + 1}… `);
+        const buf = await downloadImageToBuffer(url);
         fs.writeFileSync(cachePath, buf);
-        buffers.push(buf);
+        imagesByType[type].push({ buffer: buf, filename: 'post.jpg', mimeType: 'image/jpeg' });
         process.stdout.write(`${G('done')} (${(buf.length/1024).toFixed(0)} KB)\n`);
       } catch (e) {
-        warn(`Could not download image ${id}: ${e.message} — this MEME post will have no image`);
-        buffers.push(null);
+        warn(`Could not download ${type} image ${i + 1}: ${e.message} — using a local fallback image`);
+        imagesByType[type].push(FALLBACK_IMAGE);
       }
     }
   }
-  return buffers;
+
+  return imagesByType;
 }
 
 // ─── JWT decode (no library needed — payload is just base64) ─────────────────
@@ -229,29 +257,16 @@ const NAMES = ['ali','bob','cara','dan','eve','fay','gil','hana','ida','jak',
 const makePass = i => `Ax@Pass${i % 10}`;
 
 const POST_TEMPLATES = [
-  // HELP — no link / no image
-  { type:'HELP',     title:'How do I handle JWT refresh tokens?',          content:'Struggling to implement a solid refresh strategy. Tips or resources?' },
-  { type:'HELP',     title:'Best way to structure a NestJS monorepo?',     content:'Large app incoming. Nx or plain NestJS monorepo? Pros/cons welcome.' },
-  { type:'HELP',     title:'Prisma relations are confusing me',            content:'Can someone explain @relation vs @@index? Getting schema errors daily.' },
-  { type:'HELP',     title:'WebSocket vs SSE for real-time notifications',content:'Which is better for notifs in a NestJS app? Pros and cons please.' },
-  { type:'HELP',     title:'Docker networking explained',                 content:'Bridge vs host vs overlay — when do you actually use each?' },
-  { type:'HELP',     title:'Difference between async/await and Promises?',content:'I know they are related but when should I use one vs the other?' },
-  { type:'HELP',     title:'How to pass env vars securely to Docker?',    content:'Using .env files feels unsafe. What are the best practices here?' },
-  // RESOURCE — include a relevant contentUrl (link)
-  { type:'RESOURCE', title:'10 VS Code extensions every dev should have', content:'My curated list of must-haves that massively improved my workflow.',      contentUrl:'https://code.visualstudio.com/docs/editor/extension-marketplace' },
-  { type:'RESOURCE', title:'Free DevOps learning path 2025',              content:'Linux→Docker→K8s — full free path compiled for the community.',          contentUrl:'https://roadmap.sh/devops' },
-  { type:'RESOURCE', title:'Docker Compose cheatsheet',                   content:'Handy reference for the most common Docker Compose patterns. Bookmark!', contentUrl:'https://docs.docker.com/compose/' },
-  { type:'RESOURCE', title:'PostgreSQL performance tips',                 content:'Indexing, EXPLAIN ANALYZE, query planning — everything you need.',       contentUrl:'https://www.postgresql.org/docs/current/performance-tips.html' },
-  { type:'RESOURCE', title:'Git aliases that will change your life',      content:'These 10 git aliases save me 20 minutes every single day.',             contentUrl:'https://git-scm.com/book/en/v2/Git-Basics-Git-Aliases' },
-  { type:'RESOURCE', title:'Clean Code principles with TypeScript',       content:'SOLID, DRY, KISS — with real TypeScript snippets. Very practical.',     contentUrl:'https://github.com/labs42io/clean-code-typescript' },
-  { type:'RESOURCE', title:'Ultimate Linux command cheatsheet',           content:'awk, sed, grep, xargs — mastering these changed everything for me.',    contentUrl:'https://ss64.com/bash/' },
-  // MEME — uploaded image (tiny embedded JPEG, valid file signature)
-  { type:'MEME',     title:'When the bug disappears after adding a log',  content:'Heisenbug strikes again 😂  We all know this pain.',           image:true },
-  { type:'MEME',     title:`Me: I'll just fix this one thing`,            content:'3 hours later, 12 files changed… perfectly fine.',             image:true },
-  { type:'MEME',     title:'Senior dev on a Friday afternoon PR review',  content:'"This PR is fine" — said no senior dev ever before a weekend.', image:true },
-  { type:'MEME',     title:'CSS centering in 2025',                       content:'Still googling "how to center a div" after 5 years. No shame.', image:true },
-  { type:'MEME',     title:'Works on my machine™',                        content:'Introducing the new deployment strategy: ship your laptop.',    image:true },
-  { type:'MEME',     title:'Documentation? What documentation?',          content:'The code IS the documentation. — every developer, ever.',      image:true },
+  { type:'HELP',     title:'How do I handle JWT refresh tokens?',         content:'Struggling to implement a solid refresh strategy. Tips or resources?', image:true },
+  { type:'HELP',     title:'Best way to structure a NestJS monorepo?',    content:'Large app incoming. Nx or plain NestJS monorepo? Pros and cons welcome.', image:true },
+  { type:'HELP',     title:'Prisma relations are confusing me',           content:'Can someone explain relation fields vs indexes? Getting schema errors daily.', image:true },
+  { type:'HELP',     title:'WebSocket vs SSE for real-time notifications', content:'Which is better for notifs in a NestJS app? Pros and cons please.', image:true },
+  { type:'RESOURCE', title:'10 VS Code extensions every dev should have', content:'My curated list of must-haves that improved my workflow.', contentUrl:'https://code.visualstudio.com/docs/editor/extension-marketplace', image:true },
+  { type:'RESOURCE', title:'Free DevOps learning path 2025',              content:'Linux → Docker → K8s — full free path compiled for the community.', contentUrl:'https://roadmap.sh/devops', image:true },
+  { type:'RESOURCE', title:'Docker Compose cheatsheet',                   content:'Handy reference for the most common Docker Compose patterns. Bookmark it.', contentUrl:'https://docs.docker.com/compose/', image:true },
+  { type:'MEME',     title:'When the bug disappears after adding a log',  content:'Heisenbug strikes again 😂 We all know this pain.', image:true },
+  { type:'MEME',     title:`Me: I'll just fix this one thing`,             content:'3 hours later, 12 files changed. Perfectly fine.', image:true },
+  { type:'MEME',     title:'Works on my machine™',                        content:'Introducing the new deployment strategy: ship your laptop.', image:true },
 ];
 
 const COMMENTS = [
@@ -307,10 +322,10 @@ async function main() {
   console.log(`  ${C('Base URL :')} ${BASE_URL}`);
   console.log(`  ${C('Users    :')} ${NUM_USERS}`);
 
-  // Download meme images before anything else (cached in ./seed-images/)
-  hdr('Pre-flight — Downloading meme images');
-  const memeImages = await ensureMemeImages();  // array of Buffers (or null on error)
-  let memeIdx = 0;  // incremented for each MEME post
+  // Download post images before anything else (cached in ./seed-images/)
+  hdr('Pre-flight — Downloading post images');
+  const postImagesByType = await ensurePostImagesByType();
+  const postImageIdxByType = { HELP: 0, RESOURCE: 0, MEME: 0 };
 
   // ════════════════════════════════════════════════════════════════════════════
   //  STEP 1 — Register & login users, get IDs from JWT
@@ -434,7 +449,7 @@ async function main() {
 
   const createdPosts = [];
 
-  // We shuffle the templates so that even with --users 10, we get a random mix of HELP, RESOURCE, and MEME posts
+  // We shuffle the templates so that even with --users 10, we get a balanced mix of HELP, RESOURCE, and MEME posts
   const shuffledTemplates = [...POST_TEMPLATES].sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < users.length; i++) {
@@ -447,22 +462,20 @@ async function main() {
 
     let res;
     if (tpl.image) {
-      // MEME: pick the next downloaded image (rotate through the pool)
-      const imgBuf = memeImages[memeIdx % memeImages.length];
-      memeIdx++;
-      if (imgBuf) {
+      // Pick an image from the pool that matches the current post type
+      const pool = postImagesByType[tpl.type] || [];
+      const idx = postImageIdxByType[tpl.type]++;
+      const img = pool.length ? pool[idx % pool.length] : FALLBACK_IMAGE;
+      if (img?.buffer) {
         res = await requestMultipart(
           '/api/posts/', fields,
-          'image', imgBuf, 'meme.jpg', 'image/jpeg',
+          'image', img.buffer, img.filename, img.mimeType,
           user.cookie
         );
       } else {
         // Image failed to download — post without image
         res = await requestMultipart('/api/posts/', fields, null, null, null, null, user.cookie);
       }
-    } else {
-      // HELP / RESOURCE (with optional contentUrl) — no file upload
-      res = await requestMultipart('/api/posts/', fields, null, null, null, null, user.cookie);
     }
 
     if ([200, 201].includes(res.status)) {
@@ -521,15 +534,10 @@ ${B('═'.repeat(52))}
     hdr('Step 6 — Adding comments');
     let total = 0;
 
-    for (const post of approvedPosts) {
-      const commenters = users
-        .filter(u => u.id !== post.userId)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, rand([2, 3, 4]));
-
-      for (const c of commenters) {
+    for (const [postIndex, post] of approvedPosts.entries()) {
+      for (const [userIndex, c] of users.entries()) {
         const res = await request('POST', '/api/comments/', {
-          postId: post.id, content: rand(COMMENTS),
+          postId: post.id, content: COMMENTS[(postIndex + userIndex) % COMMENTS.length],
         }, c.cookie);
         if ([200, 201].includes(res.status)) total++;
         else warn(`Comment by ${c.username}: ${JSON.stringify(res.data)}`);
@@ -546,11 +554,10 @@ ${B('═'.repeat(52))}
     hdr('Step 7 — Adding reactions');
     let total = 0;
 
-    for (const post of approvedPosts) {
-      for (const reactor of users.filter(u => u.id !== post.userId)) {
-        if (Math.random() > 0.65) continue;  // ~65% chance
+    for (const [postIndex, post] of approvedPosts.entries()) {
+      for (const [userIndex, reactor] of users.entries()) {
         const res = await request('POST', '/api/reactions/toggle', {
-          postId: post.id, type: rand(REACTION_TYPES),
+          postId: post.id, type: REACTION_TYPES[(postIndex + userIndex) % REACTION_TYPES.length],
         }, reactor.cookie);
         if ([200, 201].includes(res.status)) total++;
         await sleep(25);

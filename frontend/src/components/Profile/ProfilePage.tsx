@@ -40,7 +40,15 @@ const ImageIcon = () => (
     </svg>
 );
 
-const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD'];
+const REACTION_TYPES: ReactionType[] = ['LIKE', 'LOVE', 'HAHA', 'WOW', 'SAD', 'ANGRY'];
+
+function getReactionEmoji(type: string): string {
+    return REACTION_EMOJI[type as ReactionType] || '❓';
+}
+
+function getReactionLabel(type: string): string {
+    return REACTION_LABELS[type as ReactionType] || 'Reaction';
+}
 const MAX_CONTENT_LENGTH = 150;
 
 // helpers
@@ -416,7 +424,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                     </div>
                     <div className="ppc-reactions-emojis">
                         {[...new Set(reactionsUsers.map(r => r.type))].map(type => (
-                            <span key={type}>{REACTION_EMOJI[type]}</span>
+                            <span key={type}>{getReactionEmoji(type)}</span>
                         ))}
                     </div>
                     <span className="ppc-reactions-text">
@@ -502,8 +510,8 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
                                         <span className="reactions-popup-name">
                                             {r.user?.profile?.username || r.user?.email || 'Unknown'}
                                         </span>
-                                        <span className="reactions-popup-emoji" title={REACTION_LABELS[r.type]}>
-                                            {REACTION_EMOJI[r.type]}
+                                        <span className="reactions-popup-emoji" title={getReactionLabel(r.type)}>
+                                            {getReactionEmoji(r.type)}
                                         </span>
                                     </div>
                                 ))

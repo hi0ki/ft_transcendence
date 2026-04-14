@@ -100,14 +100,35 @@ function SettingsPage() {
             return;
         }
 
+        const pendingSkill = skillInput.trim();
+        const normalized = new Set(form.skills.map(s => s.toLowerCase()));
+        const skillsToSave = pendingSkill && !normalized.has(pendingSkill.toLowerCase())
+            ? [...form.skills, pendingSkill]
+            : form.skills;
+
+        if (skillsToSave !== form.skills) {
+            setForm(prev => ({ ...prev, skills: skillsToSave }));
+            setSkillInput('');
+        }
+
         setIsSaving(true);
         try {
-            await authAPI.updateProfile({
+            const updated = await authAPI.updateProfile({
                 username: form.username,
                 bio: form.bio,
-                skills: form.skills,
+                skills: skillsToSave,
                 avatarUrl: avatarBase64 ?? undefined,
             });
+
+            if (updated) {
+                sessionStorage.setItem('user_profile', JSON.stringify({
+                    username: updated.username,
+                    bio: updated.bio || '',
+                    avatarUrl: updated.avatarUrl || null,
+                    skills: updated.skills || [],
+                }));
+            }
+
             navigate('/profile');
         } catch (err) {
             if (err instanceof Error) {
