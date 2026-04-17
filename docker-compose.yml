@@ -57,8 +57,6 @@ services:
     container_name: auth_service
     build: backend/auth
     restart: always
-    ports:
-      - "3002:3000"
     networks:
       - my-app-network
     env_file:
