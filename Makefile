@@ -2,16 +2,19 @@ all :
 	docker compose up --build -d  
 
 down :
-	docker compose down 
+	docker compose down
 
-logs :
+down -v:
+	docker compose down -v
+
+restart :
+	docker compose restart
+
+logs:
 	docker compose logs -f
 
 ps :
 	docker compose ps
-
-restart :
-	docker compose restart
 
 clean : down
 	docker system prune -a --volumes -f
