@@ -16,6 +16,7 @@ A real-time social platform built as a microservices architecture where peers ca
 - [Features List](#features-list)
 - [Modules](#modules)
 - [Instructions](#instructions)
+- [Monitoring (Prometheus + Grafana)](#monitoring-prometheus--grafana)
 - [Individual Contributions](#individual-contributions)
 - [Resources](#resources)
 - [Known Limitations](#known-limitations)
@@ -38,7 +39,7 @@ A real-time social platform built as a microservices architecture where peers ca
 - **Achievements & Gamification** — Unlock badges for posting, reacting, and commenting milestones
 - **Security** — JWT authentication, rate limiting, XSS sanitization, input validation, Helmet headers, image magic-byte validation
 
-The application runs entirely via **Docker Compose** with six containerized services communicating over an internal bridge network, fronted by an Nginx reverse proxy with SSL termination.
+The application runs entirely via **Docker Compose** with containerized app and observability services communicating over an internal bridge network, fronted by an Nginx reverse proxy with SSL termination.
 
 ---
 
@@ -344,7 +345,7 @@ make
 docker compose up --build -d
 ```
 
-This will start 6 services:
+This will start 9 services:
 
 | Service | Internal Port | Description |
 |---------|--------------|-------------|
@@ -354,6 +355,9 @@ This will start 6 services:
 | **chat_service** | 3000 | WebSocket server |
 | **core_service** | 3000 | Additional API layer |
 | **postgres** | 5432 | PostgreSQL database |
+| **prometheus** | 9090 | Metrics collection and scraping |
+| **grafana** | 3000 | Metrics dashboards and visualization |
+| **cadvisor** | 8080 | Container-level resource metrics |
 
 ### Access the Application
 
@@ -386,6 +390,45 @@ make clean
 # Rebuild from scratch
 make re
 ```
+
+## Monitoring (Prometheus + Grafana)
+
+This project includes an observability stack with **Prometheus**, **Grafana**, and **cAdvisor**:
+
+- **Prometheus** scrapes metrics from:
+  - `auth_service` (`https://auth_service:3000/metrics`)
+  - `cadvisor` (`http://cadvisor:8080`)
+- **Grafana** is pre-provisioned with:
+  - a default **Prometheus** datasource
+  - dashboards loaded automatically from `grafana/dashboards/`
+- **cAdvisor** exposes Docker/container CPU, memory, network, and filesystem metrics.
+
+### Access URLs
+
+- **Grafana UI:** [http://localhost:3000](http://localhost:3000)
+- **Prometheus UI:** [http://localhost:9090](http://localhost:9090)
+- **cAdvisor UI:** [http://localhost:8080](http://localhost:8080)
+
+### Grafana Login
+
+- Default user: `admin`
+- Default password: `admin`
+
+On first login, Grafana may ask you to change the default password.
+
+### Quick Validation
+
+1. Start the stack:
+
+   ```bash
+   make
+   ```
+
+2. Open Prometheus and verify targets are **UP**:
+   - [http://localhost:9090/targets](http://localhost:9090/targets)
+
+3. Open Grafana and confirm dashboards are available:
+   - Dashboards should appear automatically from provisioning.
 
 ### Database Management
 
